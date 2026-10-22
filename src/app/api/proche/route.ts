@@ -8,6 +8,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { signer, verifier } from "@/lib/jeton";
 import { journaliser } from "@/lib/journal";
+import { adresseComplete } from "@/lib/pays";
 import { accepterConvention, charger } from "@/lib/serveur/paiement";
 
 export const runtime = "nodejs";
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
   const d = await db();
   const c = await charger(d, dossierId);
   if (!c || c.dos.statut !== "PRE_DOSSIER") return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
+  if (!adresseComplete(c.cli)) return NextResponse.json({ erreur: "Votre adresse postale est incomplète : revenez à l'étape « Vos coordonnées »." }, { status: 409 });
 
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";
   await accepterConvention(d, c.dos, c.cli, ip);

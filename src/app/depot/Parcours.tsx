@@ -9,6 +9,7 @@ import { jour, versJour } from "@/lib/calendrier";
 import { apresPaiement, CONTENUS, SUGGESTIONS } from "@/lib/contenus";
 import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
+import { adresseComplete, adresseEnLignes, nomPays, PAYS } from "@/lib/pays";
 import { useContenus } from "../composants/Contenus";
 import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, troisFois, type CodeProcedure } from "@/lib/procedures";
 import type { ResultatTriage } from "@/lib/triage";
@@ -118,7 +119,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const [avisPrealable, setAvisPrealable] = useState(false);
 
   // Coordonnées et paiement
-  const [coord, setCoord] = useState({ civilite: "", prenom: "", nom: "", email: "", telephone: "" });
+  const [coord, setCoord] = useState({ civilite: "", prenom: "", nom: "", email: "", telephone: "", adresse: "", codePostal: "", ville: "", pays: "FR" });
   const [algerien, setAlgerien] = useState<boolean | null>(null);
   const [consent, setConsent] = useState(false);
   const [jeton, setJeton] = useState<string | null>(null);
@@ -162,7 +163,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       setEcheance(j.dateEcheance ?? null);
       setAvisPrealable(j.avisPrealable);
       setTriage(j.triage);
-      setCoord(j.coordonnees);
+      setCoord({ adresse: "", codePostal: "", ville: "", pays: "FR", ...j.coordonnees });
       setAlgerien(j.algerien);
       const q = j.qualification ?? {};
       setVisaType(q.visaType ?? null);
@@ -442,10 +443,15 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     coord.nom.trim() &&
     /\S+@\S+\.\S+/.test(coord.email) &&
     coord.telephone.replace(/\D/g, "").length >= 8 &&
+    adresseComplete(coord) &&
     (!demanderAlgerien || algerien !== null);
   const obtenir = (triage?.ceQueLeRecoursPeutObtenir || contenu?.obtenir) ?? "";
   // Textes de l'IA : en français pour l'avocat ; traduits dans la langue du récit pour l'affichage, si c'est la langue de l'écran.
   const langueEcran = useLangue();
+  const listePays = useMemo(
+    () => PAYS.map((c) => [c, nomPays(c, langueEcran)] as const).sort((a, b) => (a[0] === "FR" ? -1 : b[0] === "FR" ? 1 : a[1].localeCompare(b[1], langueEcran))),
+    [langueEcran],
+  );
   const traductionIA = triage?.traduction && triage.traduction.langue === langueEcran ? triage.traduction : null;
   const obtenirAffiche =
     langueEcran === "fr" ? obtenir : (traductionIA?.obtenir ?? (contenu ? t(contenu.obtenir) : ""));
@@ -463,6 +469,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         civilite: (coord.civilite || undefined) as "MADAME" | "MONSIEUR" | undefined,
         prenom: coord.prenom,
         nom: coord.nom,
+        adresse: adresseEnLignes(coord).join(", ") || undefined,
         reference: reference ?? "—",
         procedureLibelle: libelleOffre,
         recoursPrealable: estRecoursPrealable(procedure) && !avisPrealable,
@@ -1081,6 +1088,35 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         <label htmlFor="q_tel">{t("Téléphone")} *</label>
                         <input id="q_tel" type="tel" inputMode="tel" autoComplete="tel" value={coord.telephone} onChange={(e) => setCoord({ ...coord, telephone: e.target.value })} />
                       </div>
+                      <div className="f full">
+                        <label htmlFor="q_adresse">{t("Adresse postale")} *</label>
+                        <input id="q_adresse" type="text" autoComplete="street-address" value={coord.adresse} onChange={(e) => setCoord({ ...coord, adresse: e.target.value })} />
+                        <span className="help">{t("Elle figure sur votre facture, votre convention d'honoraires et vos actes.")}</span>
+                      </div>
+                      <div className="f">
+                        <label htmlFor="q_cp">
+                          {t("Code postal")}
+                          {coord.pays === "FR" ? " *" : ""}
+                        </label>
+                        <input id="q_cp" type="text" inputMode={coord.pays === "FR" ? "numeric" : "text"} autoComplete="postal-code" value={coord.codePostal} onChange={(e) => setCoord({ ...coord, codePostal: e.target.value })} />
+                      </div>
+                      <div className="f">
+                        <label htmlFor="q_ville">{t("Ville")} *</label>
+                        <input id="q_ville" type="text" autoComplete="address-level2" value={coord.ville} onChange={(e) => setCoord({ ...coord, ville: e.target.value })} />
+                      </div>
+                      <div className="f full">
+                        <label htmlFor="q_pays">{t("Pays")} *</label>
+                        <select id="q_pays" autoComplete="country" value={coord.pays} onChange={(e) => setCoord({ ...coord, pays: e.target.value })}>
+                          {listePays.map(([code, nom]) => (
+                            <option key={code} value={code}>
+                              {nom}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {coord.pays === "FR" && coord.codePostal.trim() !== "" && !/^\d{5}$/.test(coord.codePostal.trim()) && (
+                        <p className="erreur full">{t("Code postal : 5 chiffres.")}</p>
+                      )}
                       {demanderAlgerien && (
                         <div className="f full">
                           <label>{t("Êtes-vous de nationalité algérienne ?")} *</label>

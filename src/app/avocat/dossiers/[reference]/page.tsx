@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
+import { adresseEnLignes } from "@/lib/pays";
 import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { appelDe, premiereInstance } from "@/lib/serveur/appel";
 import { equipe, journalDossier, TYPES_ECHEANCE } from "@/lib/serveur/cabinet";
@@ -232,6 +233,7 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                   <Valeur l="Code client" v={x.cli.code} />
                   <Valeur l="E-mail" v={x.cli.email} />
                   <Valeur l="Téléphone" v={x.cli.telephone} />
+                  <Valeur l="Adresse postale" v={adresseEnLignes(x.cli).join(", ") || null} />
                   <Valeur l="Langue" v={x.cli.langue} />
                   <Valeur l="Nationalité algérienne" v={x.cli.algerien == null ? null : x.cli.algerien ? "Oui" : "Non"} />
                   <Valeur l="Préfecture" v={dos.prefecture} />

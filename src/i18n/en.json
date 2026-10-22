@@ -597,5 +597,11 @@
   "Lire l'avenant complet": "Read the full amendment",
   "Votre avocat vous propose de faire appel": "Your lawyer proposes an appeal",
   "Votre avocat vous propose de faire appel : dossier {ref}": "Your lawyer proposes an appeal: case {ref}",
-  "Appel devant la cour administrative d'appel": "Appeal before the administrative court of appeal"
+  "Appel devant la cour administrative d'appel": "Appeal before the administrative court of appeal",
+  "Adresse postale": "Postal address",
+  "Elle figure sur votre facture, votre convention d'honoraires et vos actes.": "It appears on your invoice, your fee agreement and your legal documents.",
+  "Code postal": "Postcode",
+  "Ville": "City",
+  "Pays": "Country",
+  "Code postal : 5 chiffres.": "Postcode: 5 digits."
 }

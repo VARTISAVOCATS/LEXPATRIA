@@ -597,5 +597,11 @@
   "Lire l'avenant complet": "Leer el anexo completo",
   "Votre avocat vous propose de faire appel": "Su abogado le propone apelar",
   "Votre avocat vous propose de faire appel : dossier {ref}": "Su abogado le propone apelar: expediente {ref}",
-  "Appel devant la cour administrative d'appel": "Apelación ante el tribunal administrativo de apelación"
+  "Appel devant la cour administrative d'appel": "Apelación ante el tribunal administrativo de apelación",
+  "Adresse postale": "Dirección postal",
+  "Elle figure sur votre facture, votre convention d'honoraires et vos actes.": "Figura en su factura, su convenio de honorarios y sus escritos.",
+  "Code postal": "Código postal",
+  "Ville": "Ciudad",
+  "Pays": "País",
+  "Code postal : 5 chiffres.": "Código postal: 5 cifras."
 }

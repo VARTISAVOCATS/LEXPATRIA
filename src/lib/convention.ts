@@ -17,6 +17,7 @@ export interface DonneesConvention {
   civilite?: "MADAME" | "MONSIEUR";
   prenom?: string;
   nom?: string;
+  adresse?: string; // adresse postale sur une ligne
   reference: string;
   procedureLibelle: string;
   recoursPrealable: boolean; // visa, naturalisation : mission jusqu'à la réponse de l'administration
@@ -56,7 +57,7 @@ ${CABINET},
 D'UNE PART,
 
 ET
-${qui}, ci-après « le Client »,
+${qui}${d.adresse ? `, demeurant ${d.adresse}` : ""}, ci-après « le Client »,
 D'AUTRE PART.
 
 EXPOSÉ PRÉALABLE

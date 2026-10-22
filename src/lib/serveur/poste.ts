@@ -21,6 +21,7 @@ import {
   type CodeModele,
   type DonneesActe,
 } from "@/lib/modeles";
+import { adresseEnLignes } from "@/lib/pays";
 import { rang } from "@/lib/statuts";
 import { minimiser } from "@/lib/triage";
 import { valeur } from "./connexions";
@@ -56,6 +57,7 @@ export async function donneesActe(d: Base, dos: Dossier): Promise<DonneesActe> {
     avocat: avocat ? { prenom: avocat.prenom, nom: avocat.nom } : null,
     pieces: lesPieces.filter((p) => !p.manquante).map((p) => p.libelle),
     reference: dos.reference,
+    adresse: cli ? adresseEnLignes(cli).join(", ") || null : null,
     appel: await infoAppel(d, dos),
   };
 }

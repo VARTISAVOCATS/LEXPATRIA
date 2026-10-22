@@ -597,5 +597,11 @@
   "Lire l'avenant complet": "قراءة الملحق كاملاً",
   "Votre avocat vous propose de faire appel": "يقترح عليك محاميك الاستئناف",
   "Votre avocat vous propose de faire appel : dossier {ref}": "يقترح عليك محاميك الاستئناف: الملف {ref}",
-  "Appel devant la cour administrative d'appel": "الاستئناف أمام محكمة الاستئناف الإدارية"
+  "Appel devant la cour administrative d'appel": "الاستئناف أمام محكمة الاستئناف الإدارية",
+  "Adresse postale": "العنوان البريدي",
+  "Elle figure sur votre facture, votre convention d'honoraires et vos actes.": "يظهر في فاتورتك واتفاقية الأتعاب والوثائق القانونية الخاصة بك.",
+  "Code postal": "الرمز البريدي",
+  "Ville": "المدينة",
+  "Pays": "البلد",
+  "Code postal : 5 chiffres.": "الرمز البريدي: 5 أرقام."
 }

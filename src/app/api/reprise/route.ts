@@ -27,7 +27,7 @@ export async function GET(req: Request) {
     triage: dos.triage,
     qualification: q,
     etapeAtteinte: dos.etapeAtteinte,
-    coordonnees: { civilite: cli.civilite ?? "", prenom: cli.prenom ?? "", nom: cli.nom ?? "", email: cli.email ?? "", telephone: cli.telephone ?? "" },
+    coordonnees: { civilite: cli.civilite ?? "", prenom: cli.prenom ?? "", nom: cli.nom ?? "", email: cli.email ?? "", telephone: cli.telephone ?? "", adresse: cli.adresse ?? "", codePostal: cli.codePostal ?? "", ville: cli.ville ?? "", pays: cli.pays ?? "FR" },
     algerien: cli.algerien,
   });
 }

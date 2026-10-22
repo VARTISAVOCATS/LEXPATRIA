@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { verifier } from "@/lib/jeton";
+import { adresseComplete } from "@/lib/pays";
 import { accepterConvention, charger, creerIntention, marquerPaye } from "@/lib/serveur/paiement";
 
 export const runtime = "nodejs";
@@ -29,6 +30,8 @@ export async function POST(req: Request) {
   const attendu = proche ? "ATTENTE_PROCHE" : "PRE_DOSSIER";
   if (!c || c.dos.statut !== attendu) return NextResponse.json({ erreur: "Ce dossier ne peut plus être réglé ici." }, { status: 409 });
 
+  // Adresse postale exigée avant tout paiement (facture, convention, actes).
+  if (!adresseComplete(c.cli)) return NextResponse.json({ erreur: "Votre adresse postale est incomplète : revenez à l'étape « Vos coordonnées »." }, { status: 409 });
   if (!proche) {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";
     await accepterConvention(d, c.dos, c.cli, ip);

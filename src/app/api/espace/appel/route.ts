@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
+import { adresseComplete } from "@/lib/pays";
 import { renoncerAppel } from "@/lib/serveur/appel";
 import { accesClient } from "@/lib/serveur/dossiers";
 import { accepterConvention, charger, creerIntention, marquerPaye } from "@/lib/serveur/paiement";
@@ -30,6 +31,7 @@ export async function POST(req: Request) {
   }
 
   const x = (await charger(d, dos.id))!;
+  if (!adresseComplete(x.cli)) return NextResponse.json({ erreur: "Votre adresse postale est incomplète : écrivez à votre avocat pour la compléter." }, { status: 409 });
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";
   await accepterConvention(d, x.dos, x.cli, ip);
   const r = await creerIntention(d, x.dos, x.cli, false);

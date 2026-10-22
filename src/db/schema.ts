@@ -80,6 +80,10 @@ export const clients = pgTable("clients", {
   telephone: text("telephone"),
   dateNaissance: text("date_naissance"), // AAAA-MM-JJ
   nationalite: text("nationalite"),
+  adresse: text("adresse"), // adresse postale, exigée avant le paiement (facture, actes, convention)
+  codePostal: text("code_postal"),
+  ville: text("ville"),
+  pays: text("pays"), // ISO 3166-1 alpha-2
   algerien: boolean("algerien"),
   langue: text("langue").notNull().default("fr"),
   consentRelances: boolean("consent_relances").notNull().default(false),

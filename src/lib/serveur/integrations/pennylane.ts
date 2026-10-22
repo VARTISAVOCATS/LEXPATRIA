@@ -1,11 +1,13 @@
 // Pennylane (API v2) : une facture par paiement reçu, au nom du client (mention « réglée par un tiers » le cas échéant).
 // Les prix de la plateforme sont TTC ; la facture porte le prix HT et la TVA à 20 %.
-// Sans adresse postale du client, la facture est créée en brouillon pour être complétée dans Pennylane avant finalisation.
+// L'adresse postale du client est exigée avant le paiement. La facture est finalisée directement pour un client résidant
+// dans l'Union européenne ; hors Union, elle est créée en brouillon : le régime de TVA est à vérifier avant finalisation.
 
 import { and, eq, isNull } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, dossiers, paiements } from "@/db/schema";
 import { journaliser } from "@/lib/journal";
+import { adresseComplete, UNION_EUROPEENNE } from "@/lib/pays";
 import { valeur } from "../connexions";
 import { appelJson, messageErreur, tracer } from "./commun";
 
@@ -33,7 +35,7 @@ async function client(d: Base, clientId: string): Promise<number> {
     last_name: (c.nom ?? "XXX").toUpperCase(),
     emails: c.email ? [c.email] : [],
     external_reference: c.code,
-    billing_address: { address: "", postal_code: "", city: "", country: "FR" },
+    billing_address: { address: c.adresse ?? "", postal_code: c.codePostal ?? "", city: c.ville ?? "", country: c.pays ?? "FR" },
     payment_conditions: "upon_receipt",
   });
   await d.update(clients).set({ pennylaneId: String(r.id) }).where(eq(clients.id, c.id));
@@ -46,6 +48,8 @@ export async function facturer(d: Base, paiementId: string) {
   const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, p.dossierId));
   try {
     const customerId = await client(d, dos.clientId);
+    const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
+    const brouillon = !adresseComplete(cli) || !UNION_EUROPEENNE.has(cli.pays ?? "");
     const jour = p.creeLe.toISOString().slice(0, 10);
     const lignes = (p.lignes as { libelle: string; montant: number }[]).map((l) => ({
       label: `${l.libelle} — dossier ${dos.reference} — réglé en ligne le ${jour.split("-").reverse().join("/")}${p.parTiers ? " (réglé par un tiers)" : ""}`,
@@ -58,7 +62,7 @@ export async function facturer(d: Base, paiementId: string) {
       customer_id: customerId,
       date: jour,
       deadline: jour,
-      draft: true, // adresse du client à compléter dans Pennylane avant finalisation
+      draft: brouillon, // hors Union européenne : TVA à vérifier avant finalisation
       external_reference: `LEXPATRIA-${dos.reference}-${p.id}`,
       invoice_lines: lignes,
     });
@@ -84,6 +88,6 @@ export async function synchroniserPennylane(d: Base) {
       erreurs++;
     }
   }
-  await tracer(d, "pennylane", erreurs === 0, `${faites} facture(s) créée(s) en brouillon${erreurs ? `, ${erreurs} en erreur (détail dans les paiements du dossier)` : ""}.`);
+  await tracer(d, "pennylane", erreurs === 0, `${faites} facture(s) créée(s)${erreurs ? `, ${erreurs} en erreur (détail dans les paiements du dossier)` : ""}.`);
   return { pennylane: { factures: faites, erreurs } };
 }

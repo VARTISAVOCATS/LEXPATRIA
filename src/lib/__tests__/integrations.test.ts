@@ -13,6 +13,7 @@ import { synchroniserAbsences } from "@/lib/serveur/integrations/outlook";
 import { facturer, prixHT } from "@/lib/serveur/integrations/pennylane";
 import { enregistrerNumero, paquetTelerecours } from "@/lib/serveur/integrations/telerecours";
 import { compatible, texteVersPdf } from "@/lib/serveur/pdf";
+import { adresseComplete, adresseEnLignes } from "@/lib/pays";
 
 const membre = async (email: string) => (await (await db()).select().from(schema.utilisateurs).where(eq(schema.utilisateurs.email, email)))[0];
 const relire = async (id: string) => (await (await db()).select().from(schema.dossiers).where(eq(schema.dossiers.id, id)))[0];
@@ -36,6 +37,16 @@ afterEach(() => {
   vi.unstubAllGlobals();
   for (const k of ["PENNYLANE_API_KEY", "MS_TENANT_ID", "MS_CLIENT_ID", "MS_CLIENT_SECRET"]) delete process.env[k];
   viderCacheConnexions();
+});
+
+describe("adresse postale", () => {
+  it("exige rue, ville, pays et, en France, un code postal à 5 chiffres", () => {
+    expect(adresseComplete({ adresse: "12 rue de la Paix", codePostal: "75002", ville: "Paris", pays: "FR" })).toBe(true);
+    expect(adresseComplete({ adresse: "12 rue de la Paix", codePostal: "7500", ville: "Paris", pays: "FR" })).toBe(false);
+    expect(adresseComplete({ adresse: "Cité 500 logements, bât. B", codePostal: "", ville: "Oran", pays: "DZ" })).toBe(true);
+    expect(adresseComplete({ adresse: "", ville: "Oran", pays: "DZ" })).toBe(false);
+    expect(adresseEnLignes({ adresse: "Cité 500 logements", codePostal: "31000", ville: "Oran", pays: "DZ" })).toEqual(["Cité 500 logements", "31000 Oran", "ALGÉRIE"]);
+  });
 });
 
 describe("PDF", () => {
@@ -109,6 +120,17 @@ describe("Pennylane", () => {
     expect(apres.pennylaneId).toBe("501");
     await facturer(d, p.id); // pas deux fois
     expect(appels.length).toBe(2);
+
+    // Client résidant en France, adresse complète : facture finalisée ; hors Union européenne : brouillon (TVA à vérifier).
+    for (const [pays, codePostal, brouillon] of [["FR", "75011", false], ["DZ", "16000", true]] as const) {
+      const { dos: autre } = await dossierAvecActe("REQUETE_REFUS_TITRE", "DEPOSE");
+      await d.update(schema.clients).set({ adresse: "12 rue de la Paix", codePostal, ville: "Ville", pays, pennylaneId: null }).where(eq(schema.clients.id, autre.clientId));
+      const [q] = await d.insert(schema.paiements).values({ dossierId: autre.id, montant: 99_000, lignes: [{ diligence: "REQUETE", libelle: "Requête", montant: 99_000 }], statut: "PAYE" }).returning();
+      await facturer(d, q.id);
+      const client = appels.at(-2)!.corps as { billing_address: { country: string; postal_code: string } };
+      expect(client.billing_address).toMatchObject({ country: pays, postal_code: codePostal });
+      expect((appels.at(-1)!.corps as { draft: boolean }).draft).toBe(brouillon);
+    }
   });
 });
 

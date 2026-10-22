@@ -119,6 +119,8 @@ export interface DonneesActe {
   avocat: { prenom: string; nom: string } | null;
   pieces: string[];
   reference: string;
+  /** Adresse postale du client sur une ligne. */
+  adresse?: string | null;
   /** Dossier d'appel : jugement attaqué (date du jugement = dateDecision, notification = dateNotification). */
   appel?: { tribunal: string; numero?: string | null; referencePremiere: string } | null;
 }
@@ -244,7 +246,7 @@ function enTete(d: DonneesActe, titre: string, sousTitre: string) {
 ${titre}
 ${sousTitre}
 
-POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${MANQUANT}
+POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${v(d.adresse)}
 
 Ayant pour avocat : ${avocatConstitue(d)}
 
@@ -527,7 +529,7 @@ ${signature(d)}`;
 REQUÊTE D'APPEL
 (articles R. 811-1 et suivants du code de justice administrative)
 
-POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${MANQUANT}
+POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${v(d.adresse)}
 
 Ayant pour avocat : ${avocatConstitue(d)}
 

@@ -2,6 +2,7 @@
 // Seul le minimum est demandé avant paiement ; tout le reste vient après.
 
 import { NextResponse } from "next/server";
+import { adresseComplete } from "@/lib/pays";
 import { z } from "zod";
 import { db, prochainCodeClient, prochaineReference, schema } from "@/db";
 import { jour, versJour } from "@/lib/calendrier";
@@ -38,6 +39,10 @@ const Corps = z.object({
     nom: z.string().trim().min(1).max(80),
     email: z.string().trim().email().max(200),
     telephone: z.string().trim().min(6).max(30),
+    adresse: z.string().trim().min(5).max(200),
+    codePostal: z.string().trim().max(20).default(""),
+    ville: z.string().trim().min(2).max(100),
+    pays: z.string().length(2),
   }),
   algerien: z.boolean().nullable().optional(),
   consentRelances: z.boolean().default(false),
@@ -55,6 +60,7 @@ export async function POST(req: Request) {
   const p = Corps.safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ erreur: "Vérifiez les informations saisies." }, { status: 400 });
   const c = p.data;
+  if (!adresseComplete(c.coordonnees)) return NextResponse.json({ erreur: "Vérifiez votre adresse postale." }, { status: 400 });
 
   // Le délai est recalculé côté serveur : le navigateur n'est jamais cru sur parole.
   const delai = evaluerDelai({
