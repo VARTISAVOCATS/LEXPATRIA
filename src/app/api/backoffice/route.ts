@@ -23,6 +23,7 @@ const Corps = z.discriminatedUnion("action", [
     role: z.enum(["ASSOCIE", "AVOCAT", "SECRETARIAT"]),
   }),
   z.object({ action: z.literal("membreActif"), id: z.string().max(40), actif: z.boolean() }),
+  z.object({ action: z.literal("remunerationMembre"), id: z.string().max(40), mode: z.enum(["A_L_ACTE", "COLLABORATEUR_FIXE_VARIABLE", "AUCUNE"]) }),
 ]);
 
 export async function POST(req: Request) {
@@ -62,6 +63,22 @@ export async function POST(req: Request) {
       .values({ id: createId(), prenom: x.prenom, nom: x.nom, email: x.email.toLowerCase(), role: x.role })
       .onConflictDoUpdate({ target: schema.utilisateurs.email, set: { prenom: x.prenom, nom: x.nom, role: x.role, actif: true } });
     await journaliser(d, { acteur: m.id, action: "MEMBRE_ENREGISTRE", details: { email: x.email.toLowerCase(), role: x.role } });
+    return NextResponse.json({ ok: true });
+  }
+  if (x.action === "remunerationMembre") {
+    // Fixe et variable : valeurs du cabinet par défaut (4 500 € HT par mois, 20 % au-delà de 13 500 € HT), si rien n'est encore enregistré.
+    const [u] = await d.select().from(schema.utilisateurs).where(eq(schema.utilisateurs.id, x.id));
+    if (!u) return NextResponse.json({ erreur: "Membre introuvable." }, { status: 404 });
+    await d
+      .update(schema.utilisateurs)
+      .set({
+        remuneration: x.mode,
+        ...(x.mode === "COLLABORATEUR_FIXE_VARIABLE"
+          ? { fixeMensuelHT: u.fixeMensuelHT ?? 450_000, seuilVariableHT: u.seuilVariableHT ?? 1_350_000, tauxVariable: u.tauxVariable ?? 0.2 }
+          : {}),
+      })
+      .where(eq(schema.utilisateurs.id, x.id));
+    await journaliser(d, { acteur: m.id, action: "REMUNERATION_MODIFIEE", details: { id: x.id, de: u.remuneration, vers: x.mode } });
     return NextResponse.json({ ok: true });
   }
   if (x.id === m.id && !x.actif) return NextResponse.json({ erreur: "Vous ne pouvez pas désactiver votre propre compte." }, { status: 422 });

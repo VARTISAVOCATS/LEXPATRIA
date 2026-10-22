@@ -12,7 +12,12 @@ import { FormMessage, FormPiece } from "../../../espace/[reference]/Formulaires"
 import { ActionForm } from "../../Actions";
 import { Cadre } from "../../cadre";
 import { donneesPoste } from "./donnees-poste";
+import DepotEnvoi, { type ProprietesDepot } from "./DepotEnvoi";
 import PosteTravail from "./PosteTravail";
+import { adresseDepuisActe, ACTES_COURRIER, envoisDuDossier } from "@/lib/serveur/integrations/maileva";
+import { attestationValide, dernierActe } from "@/lib/serveur/poste";
+import { JURIDICTIONNELS, LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
+import { valeur } from "@/lib/serveur/connexions";
 
 export const metadata = { title: "Dossier — Espace cabinet", robots: { index: false } };
 
@@ -79,6 +84,24 @@ export default async function FicheDossier({ params, searchParams }: { params: P
         const nonLus = x.messages.filter((y) => y.auteur === "CLIENT" && !y.luLe).length;
         const ref = dos.reference;
         const poste = onglet === "travail" ? await donneesPoste(d, dos, m) : null;
+        let depot: ProprietesDepot | null = null;
+        if (onglet === "travail") {
+          const acte = await dernierActe(d, dos.id);
+          const type = acte?.type as CodeModele | undefined;
+          const mode = type && ACTES_COURRIER.includes(type) ? "COURRIER" : type && JURIDICTIONNELS.includes(type) ? "TELERECOURS" : null;
+          if (acte && mode)
+            depot = {
+              reference: dos.reference,
+              mode,
+              atteste: !!(await attestationValide(d, acte)),
+              libelleActe: LIBELLES_MODELE[type!],
+              adresse: adresseDepuisActe(acte.contenu),
+              envois: (await envoisDuDossier(d, dos.id)).map((e) => ({ id: e.id, statut: e.statut, destinataire: e.destinataire, le: frDateHeure(e.creeLe), message: e.message })),
+              numeroRequete: dos.numeroRequete,
+              statut: dos.statut,
+              mailevaConfigure: !!(await valeur("MAILEVA_CLIENT_ID")),
+            };
+        }
         const [parent, appel] = await Promise.all([premiereInstance(d, dos), dos.dossierParentId ? Promise.resolve(null) : appelDe(d, dos.id)]);
         const peutProposerAppel =
           !parent && !appel && !dos.avisPrealable && peutFaireAppel(dos.procedure) && (statut === "JUGE" || statut === "CLOS") && (m.role === "ASSOCIE" || dos.avocatId === m.id);
@@ -101,6 +124,11 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                 {x.cli.algerien && <span className="pill warn">Accord franco-algérien</span>}
                 <span>{x.avocat ? `Me ${x.avocat.prenom} ${x.avocat.nom}` : "Non attribué"}</span>
                 {statut === "PAYE" && dos.acceptationAvant && <span className="pill warn">à accepter avant {frDateHeure(dos.acceptationAvant)}</span>}
+                {dos.sharepointUrl && (
+                  <a className="pill n" href={dos.sharepointUrl} target="_blank" rel="noreferrer">
+                    Dossier SharePoint
+                  </a>
+                )}
                 {parent && (
                   <Link className="pill ai" href={`/avocat/dossiers/${parent.reference}`}>
                     Appel du dossier {parent.reference}
@@ -173,6 +201,7 @@ export default async function FicheDossier({ params, searchParams }: { params: P
             </nav>
 
             {onglet === "travail" && poste && <PosteTravail {...poste} />}
+            {onglet === "travail" && depot && <DepotEnvoi {...depot} />}
 
             {onglet === "dossier" && (
               <div className="cab-deux">
@@ -350,10 +379,27 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                         </span>
                         <b>
                           {formatEuros(p.montant)} <span className={`pill ${p.statut === "PAYE" ? "ok" : "warn"}`}>{p.statut}</span>
+                          {p.pennylaneId && <span className="pill n">facture Pennylane n° {p.pennylaneId}</span>}
+                          {p.pennylaneErreur && <span className="pill bad" title={p.pennylaneErreur}>Pennylane : erreur, nouvel essai automatique</span>}
                         </b>
                       </li>
                     ))}
                   </ul>
+                </section>
+                <section className="card">
+                  <h2>Classement SharePoint</h2>
+                  <p className="note">
+                    Pièces, actes attestés, convention et attestation de prise en charge sont classés automatiquement dans SharePoint (toutes les 15 minutes), dès que Microsoft 365 est
+                    configuré.
+                  </p>
+                  {dos.sharepointUrl && (
+                    <p>
+                      <a href={dos.sharepointUrl} target="_blank" rel="noreferrer">
+                        Ouvrir le dossier SharePoint
+                      </a>
+                    </p>
+                  )}
+                  <ActionForm api="/api/avocat/integrations" base={{ reference: ref, action: "sharepoint" }} libelle="Classer maintenant" classe="btn sm ghost" />
                 </section>
               </div>
             )}

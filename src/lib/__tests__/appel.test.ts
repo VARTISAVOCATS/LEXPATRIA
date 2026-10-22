@@ -6,6 +6,7 @@ import { genererModele, modelesPour } from "@/lib/modeles";
 import { appelDe, delaiAppelEstime, proposerAppel, renoncerAppel } from "@/lib/serveur/appel";
 import { accepter, changerStatut } from "@/lib/serveur/cabinet";
 import { indicateurs } from "@/lib/serveur/indicateurs";
+import { ecrireParametre } from "@/lib/serveur/parametres";
 import { accepterConvention, charger, creerIntention, marquerPaye, offre } from "@/lib/serveur/paiement";
 
 const membre = async (email: string) => (await (await db()).select().from(schema.utilisateurs).where(eq(schema.utilisateurs.email, email)))[0];
@@ -109,5 +110,22 @@ describe("indicateurs", () => {
     const kachi = x.parAvocat.find((a) => a.nom === "Boualem Kachi")!;
     expect(kachi.recus).toBeGreaterThanOrEqual(1);
     expect(kachi.acceptesSous48h).toBe(kachi.acceptes);
+  });
+
+  it("rémunère à l'acte : un acte compte une fois, hors avis écrits, au tarif du back office", async () => {
+    const d = await db();
+    const kachi = await membre("boualem.kachi@exemple.invalid");
+    const rafik = await membre("rafik.rabia@exemple.invalid");
+    await d.update(schema.utilisateurs).set({ remuneration: "A_L_ACTE" }).where(eq(schema.utilisateurs.id, kachi.id));
+    const dos = await jugement("acte@exemple.invalid", "PRIS_EN_CHARGE");
+    for (const [type, version] of [["REQUETE_REFUS_TITRE", 1], ["REQUETE_REFUS_TITRE", 2], ["AVIS_ECRIT", 1]] as const) {
+      const [a] = await d.insert(schema.actes).values({ dossierId: dos.id, type, version, contenu: "x" }).returning();
+      await d.insert(schema.attestations).values({ acteId: a.id, avocatId: kachi.id, version, empreinte: "e", texte: "t" });
+    }
+    const avant = (await indicateurs(d, "30")).parAvocat.find((a) => a.id === kachi.id)!;
+    expect(avant.actesRemunerables).toBe(1);
+    expect(avant.montantActesHT).toBe(20_000);
+    expect((await ecrireParametre(d, "remuneration", { acteHT: 25_000 }, rafik.id)).ok).toBe(true);
+    expect((await indicateurs(d, "30")).parAvocat.find((a) => a.id === kachi.id)!.montantActesHT).toBe(25_000);
   });
 });

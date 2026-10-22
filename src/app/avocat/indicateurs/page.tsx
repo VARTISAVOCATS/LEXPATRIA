@@ -124,6 +124,8 @@ export default function Indicateurs({ searchParams }: { searchParams: Promise<{ 
                         <th>Avis transmis</th>
                         <th>Mots modifiés (moy.)</th>
                         <th>Revue (moy.)</th>
+                        <th>Actes rémunérables</th>
+                        <th>À l&apos;acte HT</th>
                         <th>Base HT</th>
                         <th>Variable HT estimé</th>
                       </tr>
@@ -141,6 +143,8 @@ export default function Indicateurs({ searchParams }: { searchParams: Promise<{ 
                           <td>{a.avisTransmis}</td>
                           <td>{nb(a.motsModifiesMoyen, "")}</td>
                           <td>{nb(a.revueMoyenneMin, "min")}</td>
+                          <td>{a.actesRemunerables}</td>
+                          <td>{a.montantActesHT == null ? "—" : formatEuros(a.montantActesHT)}</td>
                           <td>{formatEuros(a.baseHT)}</td>
                           <td>{a.variableHT == null ? "—" : formatEuros(a.variableHT)}</td>
                         </tr>
@@ -149,7 +153,8 @@ export default function Indicateurs({ searchParams }: { searchParams: Promise<{ 
                   </table>
                 </div>
                 <p className="note">
-                  Base HT : honoraires réglés (hors remboursements) des dossiers dont l&apos;avocat a attesté un acte sur la période, comptés une fois par dossier. Le variable est une
+                  À l&apos;acte : {formatEuros(x.tarifActeHT)} HT par acte attesté (montant modifiable au back office, rubrique « Contenus et tarifs »), pour les avocats rémunérés à
+                  l&apos;acte ; un acte compte une fois même s&apos;il est attesté à nouveau après modification, et les avis écrits ne sont pas comptés. Base HT : honoraires réglés (hors remboursements) des dossiers dont l&apos;avocat a attesté un acte sur la période, comptés une fois par dossier. Le variable est une
                   estimation selon le seuil et le taux enregistrés pour le collaborateur ; il est validé par un associé avant tout règlement.
                 </p>
               </section>

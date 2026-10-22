@@ -37,13 +37,18 @@ Contrôle : `https://<domaine>/api/sante` doit répondre `{"ok":true}`.
 
 ## 4. Brancher les services
 
-Les clés se saisissent au choix dans le fichier `.env` ou, plus simplement, au back office : Espace cabinet › Back office › Connexions (API), avec un bouton « Tester la connexion » pour Stripe, Brevo, Anthropic, le stockage OVH et Microsoft 365.
+Les clés se saisissent au choix dans le fichier `.env` ou, plus simplement, au back office : Espace cabinet › Back office › Connexions (API), avec un bouton « Tester la connexion » pour Stripe, Brevo, Anthropic, le stockage OVH, Microsoft 365, Pennylane et Maileva. La date et le résultat de la dernière synchronisation de chaque intégration s'y affichent.
 
 
 - **Stripe** : Développeurs > Webhooks > ajouter `https://<domaine>/api/stripe/webhook`, événement `payment_intent.succeeded` ; reporter la clé de signature dans `STRIPE_WEBHOOK_SECRET`. Vérifier Klarna, Apple Pay et Google Pay (domaine à enregistrer dans Stripe pour Apple Pay).
 - **Brevo** : authentifier le domaine d'envoi (SPF, DKIM, DMARC), créer l'expéditeur `EMAIL_EXPEDITEUR`, activer le SMS.
 - **Anthropic** : clé API dédiée à Lexpatria ; demander la non-conservation des données.
 - **Pixels et Matomo** : renseigner les identifiants ; ils ne se chargent qu'après accord du visiteur.
+- **Microsoft 365 (Outlook et SharePoint)** : portail Azure › Inscriptions d'applications › nouvelle application ; créer un secret client ; autorisations d'**application** Microsoft Graph `Calendars.ReadWrite` et `Sites.ReadWrite.All`, puis « Accorder le consentement administrateur ». Saisir l'adresse du site SharePoint qui recevra les dossiers. Les absences posées dans Outlook en « Absent du bureau » sont importées ; les échéances sont inscrites dans l'agenda de l'avocat avec la seule référence du dossier.
+- **Pennylane** : jeton d'API v2 (droits clients et factures clients). Chaque paiement crée une facture en brouillon au nom du client ; la compléter (adresse) et la finaliser dans Pennylane.
+- **Maileva** : identifiants de l'application et du compte. Laisser l'environnement vide pour les essais (aucun courrier réel), puis saisir `production`.
+- **Télérecours** : aucune clé ; il n'existe pas d'interface de dépôt automatique. Le poste de travail fournit l'archive à déposer et enregistre le numéro de requête.
+- **Tâche planifiée** : la tâche toutes les 15 minutes (`/api/taches/relances`) assure aussi les synchronisations Outlook, SharePoint, Pennylane et le suivi Maileva.
 
 ## 5. Mettre à jour
 

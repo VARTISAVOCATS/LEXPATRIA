@@ -6,6 +6,7 @@ import { and, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import type { Base } from "@/db";
 import { actes, attestations, dossiers, journal, paiements, utilisateurs } from "@/db/schema";
 import { echeanceAvis, jourParis } from "./agenda";
+import { lireParametre } from "./parametres";
 
 export type Periode = "30" | "90" | "365" | "annee";
 export const PERIODES: [Periode, string][] = [
@@ -36,6 +37,8 @@ export interface LigneAvocat {
   revueMoyenneMin: number | null;
   baseHT: number; // honoraires HT des dossiers dont l'acte a été attesté sur la période
   variableHT: number | null; // part variable estimée (collaborateur : taux au-delà du seuil)
+  actesRemunerables: number; // actes distincts attestés (un par dossier et par type d'acte, hors avis écrits)
+  montantActesHT: number | null; // rétrocession à l'acte (avocats rémunérés à l'acte)
   mode: string;
 }
 
@@ -101,6 +104,7 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
   }
 
   // Par avocat.
+  const remuneration = await lireParametre(d, "remuneration");
   const equipe = (await d.select().from(utilisateurs)).filter((u) => u.actif && (u.role === "AVOCAT" || u.role === "ASSOCIE"));
   const atts = await d
     .select({ a: attestations, acte: { dossierId: actes.dossierId, type: actes.type, motsModifies: actes.motsModifies, tempsRevueS: actes.tempsRevueS } })
@@ -130,6 +134,8 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
       u.remuneration === "COLLABORATEUR_FIXE_VARIABLE" && u.seuilVariableHT != null && u.tauxVariable != null
         ? Math.max(0, Math.round((baseHT - u.seuilVariableHT) * u.tauxVariable))
         : null;
+    // Un acte est rémunéré une fois, à sa première attestation : les nouvelles versions du même acte ne comptent pas.
+    const actesRemunerables = new Set(mesAtts.filter((x) => x.acte.type !== "AVIS_ECRIT").map((x) => `${x.acte.dossierId}:${x.acte.type}`)).size;
     return {
       id: u.id,
       nom: `${u.prenom} ${u.nom}`,
@@ -143,6 +149,8 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
       revueMoyenneMin: moyenne(mesAtts.map((x) => x.acte.tempsRevueS / 60)),
       baseHT,
       variableHT,
+      actesRemunerables,
+      montantActesHT: u.remuneration === "A_L_ACTE" ? actesRemunerables * remuneration.acteHT : null,
       mode: u.remuneration,
     };
   });
@@ -161,5 +169,6 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
     enSouffrance,
     parProcedure: [...parProcedure.entries()].sort((a, b) => b[1].montant - a[1].montant),
     parAvocat,
+    tarifActeHT: remuneration.acteHT,
   };
 }

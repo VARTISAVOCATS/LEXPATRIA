@@ -34,6 +34,10 @@ const schemaDelais = z.object({
   acceptationUrgenceH: z.number().int().min(1).max(24),
 });
 
+const schemaRemuneration = z.object({
+  acteHT: z.number().int().min(0).max(1_000_000), // centimes HT
+});
+
 export const ACCUEIL_DEFAUT = {
   titre: "Une décision de la préfecture ou du consulat à contester ?",
   sousTitre:
@@ -74,6 +78,13 @@ export const PARAMETRES = {
     aide: "Au-delà, le dossier est réattribué (lot 3).",
     schema: schemaDelais,
     defaut: { acceptationNormaleH: 2, acceptationUrgenceH: 1 },
+    public: false,
+  },
+  remuneration: {
+    libelle: "Rémunération à l'acte (HT)",
+    aide: "Montant versé à l'avocat rémunéré à l'acte pour chaque acte attesté. Un acte compte une fois, même s'il est modifié et attesté à nouveau ; les avis écrits ne sont pas comptés.",
+    schema: schemaRemuneration,
+    defaut: { acteHT: 20_000 },
     public: false,
   },
 } as const;

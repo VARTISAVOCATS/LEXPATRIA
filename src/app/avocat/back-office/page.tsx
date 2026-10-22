@@ -5,13 +5,13 @@ import { LIBELLES_DILIGENCE } from "@/lib/procedures";
 import { CLES_PARAMETRES, PARAMETRES, type CleParametre } from "@/lib/parametres";
 import { dernieresPropositions, type ChangementPropose } from "@/lib/serveur/assistant";
 import { equipe } from "@/lib/serveur/cabinet";
-import { chiffrementDisponible, etatConnexions } from "@/lib/serveur/connexions";
+import { chiffrementDisponible, etatConnexions, nomSynchro } from "@/lib/serveur/connexions";
 import { historique, lireParametre } from "@/lib/serveur/parametres";
 import { frDateHeure } from "@/lib/statuts";
 import { ActionForm } from "../Actions";
 import { Cadre } from "../cadre";
 import { FormConnexion } from "./Connexions";
-import { Assistant, EditeurAccueil, EditeurAvocats, EditeurDelais, EditeurFaq, EditeurTarifs } from "./Editeurs";
+import { Assistant, EditeurAccueil, EditeurAvocats, EditeurDelais, EditeurFaq, EditeurRemuneration, EditeurTarifs } from "./Editeurs";
 
 export const metadata = { title: "Back office — Espace cabinet", robots: { index: false } };
 
@@ -31,6 +31,7 @@ function ecarts(c: ChangementPropose): string[] {
   if (c.type === "attribution") return [c.ouverte ? "Reçoit de nouveau des dossiers" : "Ne reçoit plus de nouveaux dossiers"];
   const avant = c.avant as Record<string, unknown> | unknown[];
   const apres = c.valeur as Record<string, unknown> | unknown[];
+  if (c.cle === "remuneration") return [`Rémunération par acte : ${euros((avant as Record<string, unknown>).acteHT)} HT → ${euros((apres as Record<string, unknown>).acteHT)} HT`];
   if (c.cle === "tarifs") {
     return Object.keys(apres as object)
       .filter((k) => (avant as Record<string, unknown>)[k] !== (apres as Record<string, unknown>)[k])
@@ -148,6 +149,7 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                         {cle === "avocats" && <EditeurAvocats valeur={valeur as { nom: string; titre: string; photo: string | null }[]} />}
                         {cle === "accueil" && <EditeurAccueil valeur={valeur as { titre: string; sousTitre: string }} />}
                         {cle === "delais" && <EditeurDelais valeur={valeur as { acceptationNormaleH: number; acceptationUrgenceH: number }} />}
+                        {cle === "remuneration" && <EditeurRemuneration valeur={valeur as { acteHT: number }} />}
                       </section>
                     );
                   }),
@@ -169,6 +171,7 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                         <th>E-mail</th>
                         <th>Rôle</th>
                         <th>Attribution</th>
+                        <th>Rémunération</th>
                         <th>Compte</th>
                       </tr>
                     </thead>
@@ -181,6 +184,31 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                           <td>{u.email}</td>
                           <td>{u.role}</td>
                           <td>{u.attributionOuverte ? "ouverte" : "suspendue"}</td>
+                          <td>
+                            {u.role === "AVOCAT" || u.role === "ASSOCIE" ? (
+                              <ActionForm
+                                api="/api/backoffice"
+                                base={{ action: "remunerationMembre", id: u.id }}
+                                champs={[
+                                  {
+                                    nom: "mode",
+                                    type: "select",
+                                    label: "",
+                                    defaut: u.remuneration,
+                                    options: [
+                                      ["A_L_ACTE", "À l'acte"],
+                                      ["COLLABORATEUR_FIXE_VARIABLE", "Fixe et variable"],
+                                      ["AUCUNE", "Aucune"],
+                                    ],
+                                  },
+                                ]}
+                                libelle="Enregistrer"
+                                classe="btn sm ghost"
+                              />
+                            ) : (
+                              "—"
+                            )}
+                          </td>
                           <td>
                             <ActionForm
                               api="/api/backoffice"
@@ -262,6 +290,11 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                         Dernier essai le {frDateHeure(c.testLe)} : {c.testMessage}
                       </p>
                     )}
+                    {c.syncs.map((x) => (
+                      <p key={x.service} className="note">
+                        <span className={`pill ${x.ok ? "ok" : "bad"}`}>{nomSynchro(x.service)}</span> dernière exécution le {frDateHeure(x.le)} : {x.message}
+                      </p>
+                    ))}
                     <p className="note">Où trouver ces informations : {c.ou}</p>
                     <FormConnexion service={c.id} champs={c.champs} testable={c.test} />
                   </section>

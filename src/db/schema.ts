@@ -83,6 +83,7 @@ export const clients = pgTable("clients", {
   algerien: boolean("algerien"),
   langue: text("langue").notNull().default("fr"),
   consentRelances: boolean("consent_relances").notNull().default(false),
+  pennylaneId: text("pennylane_id"), // client créé dans Pennylane
   creeLe: cree(),
 });
 
@@ -149,6 +150,8 @@ export const paiements = pgTable("paiements", {
   parTiers: boolean("par_tiers").notNull().default(false),
   statut: text("statut").notNull(), // EN_ATTENTE | PAYE | ECHOUE | REMBOURSE | PARTIEL
   rembourseMontant: integer("rembourse_montant"),
+  pennylaneId: text("pennylane_id"), // facture créée dans Pennylane
+  pennylaneErreur: text("pennylane_erreur"),
   creeLe: cree(),
 });
 
@@ -207,6 +210,7 @@ export const echeances = pgTable("echeances", {
   date: text("date").notNull(),
   faite: boolean("faite").notNull().default(false),
   rappelLe: text("rappel_le"), // AAAA-MM-JJ du dernier rappel envoyé à l'avocat (la veille, puis le jour)
+  outlookId: text("outlook_id"), // événement créé dans l'agenda Outlook de l'avocat
 });
 
 /** Journal inaltérable : chaque entrée chaîne l'empreinte de la précédente. */
@@ -294,4 +298,38 @@ export const connexions = pgTable("connexions", {
   testLe: timestamp("test_le", { withTimezone: true }),
   testOk: boolean("test_ok"),
   testMessage: text("test_message"),
+});
+
+// ---------- Lot 5 : intégrations ----------
+
+/** Documents classés dans SharePoint (un document n'est déposé qu'une fois). */
+export const archives = pgTable("archives", {
+  id: id(),
+  dossierId: text("dossier_id").notNull().references(() => dossiers.id),
+  cle: text("cle").notNull(), // piece:<id>:<i> | acte:<id>:v<n> | convention:<id> | avis
+  chemin: text("chemin").notNull(),
+  le: cree(),
+});
+
+/** Courriers recommandés envoyés par Maileva. */
+export const envois = pgTable("envois", {
+  id: id(),
+  dossierId: text("dossier_id").notNull().references(() => dossiers.id),
+  acteId: text("acte_id").notNull().references(() => actes.id),
+  prestataire: text("prestataire").notNull().default("MAILEVA"),
+  idExterne: text("id_externe"),
+  statut: text("statut").notNull(), // SIMULE | ENVOYE | DISTRIBUE | ERREUR | statut Maileva
+  destinataire: text("destinataire").notNull(),
+  par: text("par").notNull(),
+  message: text("message"),
+  creeLe: cree(),
+  majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Dernière exécution de chaque synchronisation (affichée au back office). */
+export const synchronisations = pgTable("synchronisations", {
+  service: text("service").primaryKey(), // outlook | sharepoint | pennylane | maileva
+  le: timestamp("le", { withTimezone: true }).notNull(),
+  ok: boolean("ok").notNull(),
+  message: text("message").notNull(),
 });

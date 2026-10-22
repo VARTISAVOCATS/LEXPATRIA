@@ -6,7 +6,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { db, type Base } from "@/db";
-import { connexions } from "@/db/schema";
+import { connexions, synchronisations } from "@/db/schema";
 import { CHAMPS_CONNUS, connecteur, CONNECTEURS } from "@/lib/connecteurs";
 import { journaliser } from "@/lib/journal";
 
@@ -95,6 +95,7 @@ const apercu = (v: string, secret: boolean) => (secret ? `••••${v.slice(
 /** État de chaque connexion pour l'écran du back office (sans aucun secret). */
 export async function etatConnexions(d: Base) {
   const lignes = new Map((await d.select().from(connexions)).map((l) => [l.service, l]));
+  const sync = new Map((await d.select().from(synchronisations)).map((x) => [x.service, x]));
   return CONNECTEURS.map((c) => {
     const l = lignes.get(c.id);
     const stockes = l ? dechiffrer(l.chiffre) : {};
@@ -112,9 +113,15 @@ export async function etatConnexions(d: Base) {
     // Sans champ obligatoire (pixels, autre API) : « configuré » dès qu'une valeur est renseignée.
     const complet = requis.length ? requis.every((x) => x.source) : champs.some((x) => x.source);
     const facultatif = requis.length === 0;
-    return { ...c, champs, complet, facultatif, majLe: l?.majLe ?? null, testLe: l?.testLe ?? null, testOk: l?.testOk ?? null, testMessage: l?.testMessage ?? null };
+    const syncs = (SYNCHRO[c.id] ?? []).map((s) => sync.get(s)).filter((x) => !!x);
+    return { ...c, champs, complet, facultatif, majLe: l?.majLe ?? null, testLe: l?.testLe ?? null, testOk: l?.testOk ?? null, testMessage: l?.testMessage ?? null, syncs };
   });
 }
+
+/** Synchronisations de chaque connecteur (tâche planifiée), affichées au back office. */
+const SYNCHRO: Record<string, string[]> = { microsoft365: ["outlook", "sharepoint"], pennylane: ["pennylane"], maileva: ["maileva"] };
+const NOMS_SYNCHRO: Record<string, string> = { outlook: "Agendas Outlook", sharepoint: "Classement SharePoint", pennylane: "Factures", maileva: "Suivi des envois" };
+export const nomSynchro = (s: string) => NOMS_SYNCHRO[s] ?? s;
 
 /** Enregistre les champs saisis : vide = inchangé ; EFFACER = retire la valeur du back office. */
 export async function enregistrerConnexion(d: Base, service: string, saisie: Record<string, string>, par: string): Promise<{ ok: boolean; erreur?: string }> {
@@ -199,6 +206,19 @@ export async function testerConnexion(d: Base, service: string, par: string): Pr
           body: new URLSearchParams({ client_id: id, client_secret: secret, grant_type: "client_credentials", scope: "https://graph.microsoft.com/.default" }),
         });
         res = r.ok ? { ok: true, message: "Application reconnue par Microsoft 365." } : { ok: false, message: `Microsoft refuse les identifiants (code ${r.status}).` };
+        break;
+      }
+      case "pennylane": {
+        const k = await v("PENNYLANE_API_KEY");
+        if (!k) throw new Error("Jeton d'API absent.");
+        const r = await appel("https://app.pennylane.com/api/external/v2/customer_invoices?limit=1", { headers: { authorization: `Bearer ${k}`, accept: "application/json" } });
+        res = r.ok ? { ok: true, message: "Jeton accepté par Pennylane (lecture des factures clients)." } : { ok: false, message: `Pennylane refuse le jeton (code ${r.status}).` };
+        break;
+      }
+      case "maileva": {
+        const { jetonMaileva } = await import("./integrations/maileva");
+        const { c } = await jetonMaileva();
+        res = { ok: true, message: `Identifiants acceptés par Maileva (${c.bac ? "environnement de test : aucun courrier réel" : "production"}).` };
         break;
       }
       case "autre": {

@@ -10,6 +10,8 @@ import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { stripe } from "@/lib/stripe";
 import { attribuer } from "./attribution";
+import { valeur } from "./connexions";
+import { facturer } from "./integrations/pennylane";
 import { envoyer } from "./notifications";
 import { lireParametre } from "./parametres";
 
@@ -113,6 +115,8 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
     .where(eq(dossiers.id, dossierId))
     .returning();
   await journaliser(d, { dossierId, acteur: "SYSTEME", action: "PAIEMENT_RECU", details: { montant: maj[0].montant, parTiers: maj[0].parTiers } });
+  // Facture Pennylane (si configuré) ; en cas d'échec, la tâche planifiée reprend.
+  if (await valeur("PENNYLANE_API_KEY")) await facturer(d, maj[0].id).catch(() => undefined);
   // Appel : le dossier reste à l'avocat de la première instance, qui est prévenu et l'accepte comme tout dossier.
   if (dos.dossierParentId && dos.avocatId) {
     const delais = await lireParametre(d, "delais");

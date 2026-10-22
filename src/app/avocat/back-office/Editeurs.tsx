@@ -179,6 +179,27 @@ export function EditeurDelais({ valeur }: { valeur: { acceptationNormaleH: numbe
   );
 }
 
+export function EditeurRemuneration({ valeur }: { valeur: { acteHT: number } }) {
+  const [v, setV] = useState(String(valeur.acteHT / 100).replace(".", ","));
+  const e = useEnregistrer();
+  return (
+    <form
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        e.enregistrer({ action: "parametre", cle: "remuneration", valeur: { acteHT: Math.round(Number(v.replace(",", ".")) * 100) } });
+      }}
+    >
+      <div className="bo-tarifs">
+        <label className="af-c">
+          <span>Par acte attesté (€ HT)</span>
+          <input className="champ" inputMode="decimal" value={v} onChange={(x) => setV(x.target.value)} />
+        </label>
+      </div>
+      <Pied {...e} />
+    </form>
+  );
+}
+
 export function Assistant() {
   const [demande, setDemande] = useState("");
   const e = useEnregistrer();
