@@ -120,15 +120,6 @@ export const CONNECTEURS: Connecteur[] = [
     test: true,
   },
   {
-    id: "signature",
-    nom: "Signature électronique (Yousign)",
-    usage: "Signature des avenants et documents par le client.",
-    ou: "Yousign › Paramètres › Clés API.",
-    champs: [{ nom: "YOUSIGN_API_KEY", libelle: "Clé API", secret: true, requis: true }],
-    test: false,
-    lot: "Lot 5",
-  },
-  {
     id: "autre",
     nom: "Autre API",
     usage: "Tout autre service que le cabinet souhaite brancher (l'agent de développement s'en sert pour l'intégrer).",
