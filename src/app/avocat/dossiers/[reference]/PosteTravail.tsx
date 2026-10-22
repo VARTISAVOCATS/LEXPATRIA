@@ -40,6 +40,7 @@ export interface ProprietesPoste {
   transmisLe: string | null;
   priseEnCharge: { le: string } | null;
   dateLimiteVerifiee: boolean;
+  avisTransmisLe: string | null;
 }
 
 async function poster(corps: object) {
@@ -295,7 +296,15 @@ export default function PosteTravail(p: ProprietesPoste) {
                 <p className="box">
                   Version {p.attestation.version} attestée le {p.attestation.le}. Toute modification ultérieure demandera une nouvelle attestation.
                 </p>
-                {p.transmisLe ? (
+                {p.acte?.type === "AVIS_ECRIT" ? (
+                  p.avisTransmisLe ? (
+                    <p className="note">Avis transmis au client le {p.avisTransmisLe}.</p>
+                  ) : (
+                    <button className="btn cta sm" disabled={!!envoi} onClick={() => agir("transmettreAvis")}>
+                      Transmettre l&apos;avis au client
+                    </button>
+                  )
+                ) : p.transmisLe ? (
                   <p className="note">Transmis au secrétariat pour dépôt le {p.transmisLe}.</p>
                 ) : (
                   <button className="btn cta sm" disabled={!!envoi} onClick={() => agir("transmettre")}>

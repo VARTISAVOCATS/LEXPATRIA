@@ -65,6 +65,7 @@ export const indisponibilites = pgTable("indisponibilites", {
   debut: timestamp("debut", { withTimezone: true }).notNull(),
   fin: timestamp("fin", { withTimezone: true }).notNull(),
   source: text("source").notNull().default("PLATEFORME"), // PLATEFORME | OUTLOOK
+  motif: text("motif").notNull().default("CONGES"), // CONGES | FORMATION | AUDIENCE_EXTERIEURE | INDISPONIBLE
   outlookId: text("outlook_id"),
 });
 
@@ -117,6 +118,7 @@ export const dossiers = pgTable("dossiers", {
   analyse: jsonb("analyse"), // analyse de l'IA pour l'avocat (jamais transmise au client) : résumé, questions, vigilance…
   priseEnCharge: jsonb("prise_en_charge"), // attestation de prise en charge signée par l'avocat : { texte, le, avocatId, empreinte }
   transmisSecretariatLe: timestamp("transmis_secretariat_le", { withTimezone: true }),
+  avisTransmisLe: timestamp("avis_transmis_le", { withTimezone: true }), // consultations : avis écrit remis au client
   derniereRelanceLe: timestamp("derniere_relance_le", { withTimezone: true }),
   creeLe: cree(),
   majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),
@@ -203,6 +205,7 @@ export const echeances = pgTable("echeances", {
   type: text("type").notNull(), // DATE_LIMITE | MEMOIRE_COMPLEMENTAIRE | AUDIENCE | CLOTURE | APPEL | REPONSE_MOTIFS
   date: text("date").notNull(),
   faite: boolean("faite").notNull().default(false),
+  rappelLe: text("rappel_le"), // AAAA-MM-JJ du dernier rappel envoyé à l'avocat (la veille, puis le jour)
 });
 
 /** Journal inaltérable : chaque entrée chaîne l'empreinte de la précédente. */

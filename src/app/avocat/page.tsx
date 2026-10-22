@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { consultations, questionsEnAttente } from "@/lib/serveur/agenda";
 import { journee } from "@/lib/serveur/cabinet";
 import { compteurs } from "@/lib/serveur/dossiers";
 import { frDate, frDateHeure } from "@/lib/statuts";
@@ -24,7 +25,8 @@ export default function MaJournee() {
     <Cadre actif="journee">
       {async (m) => {
         const d = await db();
-        const [j, c] = await Promise.all([journee(d, m), compteurs(d, m)]);
+        const [j, c, avis, questions] = await Promise.all([journee(d, m), compteurs(d, m), consultations(d, m, "a_rendre"), questionsEnAttente(d, m)]);
+        const maintenant = new Date();
         return (
           <div className="cab-grille">
             <section className="cab-kpi">
@@ -39,6 +41,14 @@ export default function MaJournee() {
               <Link href="/avocat/dossiers?filtre=termines" className="kpi">
                 <b>{c.termines}</b>
                 <span>Terminés</span>
+              </Link>
+              <Link href="/avocat/questions" className="kpi">
+                <b>{questions.length}</b>
+                <span>Questions en attente</span>
+              </Link>
+              <Link href="/avocat/consultations" className="kpi">
+                <b>{avis.length}</b>
+                <span>Avis à rendre</span>
               </Link>
             </section>
 
@@ -65,6 +75,25 @@ export default function MaJournee() {
                 </ul>
               )}
             </section>
+
+            {avis.length > 0 && (
+              <section className="card">
+                <h2>Avis à rendre</h2>
+                <p className="note">Sous 48 heures ouvrées après le paiement.</p>
+                <ul className="esp-lignes">
+                  {avis.slice(0, 8).map((x) => (
+                    <li key={x.dos.id}>
+                      <Link href={`/avocat/dossiers/${x.dos.reference}?onglet=travail`}>
+                        <b>{x.dos.reference}</b> · {x.cli.prenom} {x.cli.nom}
+                      </Link>
+                      <span className={`pill ${x.rendreAvant && x.rendreAvant < maintenant ? "bad" : "warn"}`}>
+                        {x.rendreAvant ? `avant ${frDateHeure(x.rendreAvant)}` : "paiement non reçu"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             <section className="card">
               <h2>Dates limites à vérifier</h2>

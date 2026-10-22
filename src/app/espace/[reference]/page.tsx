@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { tServeur } from "@/i18n/serveur";
 import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { avisDuClient } from "@/lib/serveur/agenda";
 import { accesClient, detailDossier, marquerLus } from "@/lib/serveur/dossiers";
 import { clientConnecte } from "@/lib/serveur/session";
 import type { FichierStocke } from "@/lib/serveur/stockage";
@@ -41,6 +42,8 @@ export default async function DossierClient({ params, searchParams }: { params: 
   const dos = await accesClient(d, email, reference);
   if (!dos) notFound();
   const x = await detailDossier(d, dos);
+  const avis = await avisDuClient(d, dos);
+  const consultation = dos.avisPrealable || dos.procedure === "DIAGNOSTIC";
   const { t } = await tServeur();
   const statut = dos.statut as Statut;
   const nomAvocat = x.avocat ? `${x.avocat.prenom} ${x.avocat.nom}` : null;
@@ -181,7 +184,16 @@ export default async function DossierClient({ params, searchParams }: { params: 
           {onglet === "documents" && (
             <section className="card">
               <h2>{t("Vos documents")}</h2>
-              {dos.priseEnCharge ? (
+              {avis && (
+                <details className="esp-conv esp-avis" open>
+                  <summary>{t("Avis écrit de votre avocat, remis le {date}", { date: frDateHeure(avis.le) })}</summary>
+                  <pre>{avis.texte}</pre>
+                </details>
+              )}
+              {consultation && !avis && rang(statut) < rang("CLOS") && (
+                <p className="note">{t("L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.")}</p>
+              )}
+              {consultation ? null : dos.priseEnCharge ? (
                 <details className="esp-conv" open>
                   <summary>{t("Attestation de prise en charge, signée le {date}", { date: frDateHeure(new Date((dos.priseEnCharge as { le: string }).le)) })}</summary>
                   <pre>{(dos.priseEnCharge as { texte: string }).texte}</pre>
@@ -189,7 +201,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
               ) : (
                 <p className="note">{t("Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.")}</p>
               )}
-              {x.attestations.length > 0 ? (
+              {consultation ? null : x.attestations.length > 0 ? (
                 <p className="box">
                   {t("Votre avocat a vérifié et signé l'acte déposé pour vous le {date}.", { date: frDateHeure(x.attestations[0].le) })}
                 </p>

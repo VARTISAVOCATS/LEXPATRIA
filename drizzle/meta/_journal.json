@@ -36,6 +36,13 @@
       "when": 1792660168637,
       "tag": "0004_poste_travail",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792663705723,
+      "tag": "0005_agenda_consultations",
+      "breakpoints": true
     }
   ]
 }

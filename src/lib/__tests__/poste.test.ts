@@ -115,3 +115,11 @@ describe("désignation du préfet", () => {
     expect(prefet("Préfecture du Val-de-Marne", true)).toBe("Préfet du Val-de-Marne");
   });
 });
+
+describe("adresses des recours préalables", () => {
+  it("reprend les adresses de la CRRV et de la SDANF", () => {
+    const base = { procedure: "REFUS_VISA", reponses: {}, avocat: null, pieces: [], reference: "D1" };
+    expect(genererModele("RAPO_VISA", base)).toContain("BP 83609\n44036 Nantes Cedex 01");
+    expect(genererModele("RAPO_NATURALISATION", { ...base, procedure: "NATURALISATION" })).toContain("12 rue Francis-Le-Carval\n44404 Rezé Cedex");
+  });
+});

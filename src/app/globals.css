@@ -213,3 +213,10 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .pt-reponse { border-top: 1px solid var(--rule); padding-top: 10px; font-size: 14px; }
 .pt-reponse p { white-space: pre-wrap; margin: 4px 0 0; }
 .esp .note.warn { display: inline-block; }
+
+/* Lot 3, étape 2 : questions, consultations */
+.esp-tabs.sous a { font-size: 13.5px; padding: 8px 12px; }
+.qr { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.qr textarea { width: 100%; font-family: inherit; line-height: 1.5; }
+.qr-msg { margin: 8px 0 0; padding: 10px 14px; border-left: 3px solid var(--rule); color: var(--ink-2); white-space: pre-wrap; font-size: 14.5px; }
+.esp-avis pre { white-space: pre-wrap; font-family: inherit; line-height: 1.6; }

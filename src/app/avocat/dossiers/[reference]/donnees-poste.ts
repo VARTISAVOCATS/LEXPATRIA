@@ -29,5 +29,6 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
     transmisLe: dos.transmisSecretariatLe ? frDateHeure(dos.transmisSecretariatLe) : null,
     priseEnCharge: pc ? { le: frDateHeure(new Date(pc.le)) } : null,
     dateLimiteVerifiee: dos.dateLimiteVerifiee,
+    avisTransmisLe: dos.avisTransmisLe ? frDateHeure(dos.avisTransmisLe) : null,
   };
 }

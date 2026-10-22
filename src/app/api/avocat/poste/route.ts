@@ -4,12 +4,13 @@ import { z } from "zod";
 import { db } from "@/db";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import { accesEquipe } from "@/lib/serveur/dossiers";
+import { transmettreAvis } from "@/lib/serveur/agenda";
 import * as poste from "@/lib/serveur/poste";
 import { membreConnecte } from "@/lib/serveur/session";
 
 const Corps = z.object({
   reference: z.string().max(20),
-  action: z.enum(["analyser", "trancher", "generer", "enregistrer", "attester", "transmettre", "priseEnCharge", "question"]),
+  action: z.enum(["analyser", "trancher", "generer", "enregistrer", "attester", "transmettre", "priseEnCharge", "question", "transmettreAvis"]),
   id: z.string().max(20).optional(),
   tranche: z.boolean().optional(),
   modele: z.string().max(40).optional(),
@@ -47,7 +48,9 @@ export async function POST(req: Request) {
                 ? await poste.attester(d, m, dos)
                 : x.action === "transmettre"
                   ? await poste.transmettre(d, m, dos)
-                  : await poste.signerPriseEnCharge(d, m, dos);
+                  : x.action === "transmettreAvis"
+                    ? await transmettreAvis(d, m, dos)
+                    : await poste.signerPriseEnCharge(d, m, dos);
     return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ erreur: r.erreur }, { status: 422 });
   } catch {
     return NextResponse.json({ erreur: "Le service d'intelligence artificielle n'a pas répondu. Réessayez." }, { status: 502 });

@@ -580,5 +580,7 @@
   "Échoué": "فشل",
   "Étape actuelle": "المرحلة الحالية",
   "Attestation de prise en charge, signée le {date}": "شهادة التكفّل، موقّعة في {date}",
-  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "ستكون شهادة التكفّل متاحة بمجرد أن يتحقق محاميك من تواريخ ملفك."
+  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "ستكون شهادة التكفّل متاحة بمجرد أن يتحقق محاميك من تواريخ ملفك.",
+  "Avis écrit de votre avocat, remis le {date}": "الرأي المكتوب لمحاميك، سُلِّم بتاريخ {date}",
+  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "سيكون الرأي المكتوب لمحاميك متاحًا هنا خلال 48 ساعة عمل من تاريخ الدفع."
 }

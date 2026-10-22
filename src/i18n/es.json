@@ -580,5 +580,7 @@
   "Échoué": "Fallido",
   "Étape actuelle": "Etapa actual",
   "Attestation de prise en charge, signée le {date}": "Certificado de asunción del expediente, firmado el {date}",
-  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Su certificado de asunción del expediente estará disponible en cuanto su abogado haya verificado las fechas de su expediente."
+  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Su certificado de asunción del expediente estará disponible en cuanto su abogado haya verificado las fechas de su expediente.",
+  "Avis écrit de votre avocat, remis le {date}": "Dictamen escrito de su abogado, entregado el {date}",
+  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "El dictamen escrito de su abogado estará disponible aquí en un plazo de 48 horas hábiles tras su pago."
 }

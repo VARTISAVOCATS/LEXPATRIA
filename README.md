@@ -15,7 +15,7 @@ Référence fonctionnelle : cahier des charges « Plateforme LEXPATRIA Avocats �
 
 1. Socle et parcours public jusqu'au paiement (fait, prêt à la mise en ligne)
 2. Espace client (fait : connexion par code, suivi, échanges, pièces, documents, paiements)
-3. Espace avocat et secrétariat (fait : ma journée, dossiers, acceptation, date limite vérifiée, étapes, pièces, échéances, journal, disponibilités ; à venir : rédaction des actes et attestation)
+3. Espace avocat et secrétariat (fait : ma journée, dossiers, acceptation, date limite vérifiée, étapes, pièces, échéances, journal, disponibilités, poste de travail avec projets d'actes et attestation, agenda avec rappels et absences, questions des clients avec réponse proposée, consultations à 48 heures ouvrées ; à venir : espace appel, indicateurs, modèles d'actes du cabinet modifiables au back office)
 4. Back office (fait : contenus et tarifs modifiables, équipe, historique avec retour arrière, assistant de modification validé par un associé)
 5. Intégrations (SharePoint, Outlook, Pennylane, Maileva)
 6. Sources juridiques

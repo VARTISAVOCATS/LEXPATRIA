@@ -156,12 +156,20 @@ export async function disponibilites(d: Base, avocatId: string) {
     .orderBy(indisponibilites.debut);
 }
 
-export async function ajouterIndisponibilite(d: Base, par: string, avocatId: string, debut: string, fin: string): Promise<Resultat> {
+export const MOTIFS_ABSENCE: Record<string, string> = {
+  CONGES: "Congés",
+  FORMATION: "Formation",
+  AUDIENCE_EXTERIEURE: "Audience extérieure",
+  INDISPONIBLE: "Indisponible",
+};
+
+export async function ajouterIndisponibilite(d: Base, par: string, avocatId: string, debut: string, fin: string, motif = "CONGES"): Promise<Resultat> {
   const a = new Date(`${debut}T00:00:00`);
   const b = new Date(`${fin}T23:59:59`);
   if (isNaN(a.getTime()) || isNaN(b.getTime()) || b < a) return refus("Période invalide.");
-  await d.insert(indisponibilites).values({ avocatId, debut: a, fin: b });
-  await journaliser(d, { acteur: par, action: "INDISPONIBILITE_AJOUTEE", details: { avocatId, debut, fin } });
+  if (!(motif in MOTIFS_ABSENCE)) return refus("Motif inconnu.");
+  await d.insert(indisponibilites).values({ avocatId, debut: a, fin: b, motif });
+  await journaliser(d, { acteur: par, action: "INDISPONIBILITE_AJOUTEE", details: { avocatId, debut, fin, motif } });
   return { ok: true };
 }
 

@@ -271,11 +271,15 @@ export async function controleCroise(d: Base, dos: Dossier): Promise<Controle[]>
     const premiere = acte.contenu.split("\n").find((l) => l.trim()) ?? "";
     lignes.push({ libelle: "Tribunal compétent indiqué", ok: /TRIBUNAL ADMINISTRATIF DE/i.test(premiere) && !premiere.includes("XXX") });
   }
-  lignes.push({ libelle: "Date limite vérifiée par l'avocat", ok: dos.dateLimiteVerifiee });
-  lignes.push({ libelle: dos.dateLimite ? `Dépôt avant la date limite du ${dos.dateLimite.split("-").reverse().join("/")}` : "Dépôt avant la date limite", ok: !!dos.dateLimite && aujourdhui <= dos.dateLimite });
+  // Un avis écrit (consultation) n'est pas déposé : pas de contrôle de date limite du recours.
+  const avis = acte?.type === "AVIS_ECRIT";
+  if (!avis) {
+    lignes.push({ libelle: "Date limite vérifiée par l'avocat", ok: dos.dateLimiteVerifiee });
+    lignes.push({ libelle: dos.dateLimite ? `Dépôt avant la date limite du ${dos.dateLimite.split("-").reverse().join("/")}` : "Dépôt avant la date limite", ok: !!dos.dateLimite && aujourdhui <= dos.dateLimite });
+  }
   lignes.push({ libelle: "Aucune mention XXX restante", ok: !!acte && compterManquants(acte.contenu) === 0 });
-  lignes.push({ libelle: "Avocat constitué nommé", ok: !!acte && !!x.avocat && acte.contenu.includes(`${x.avocat.prenom} ${x.avocat.nom}`) });
-  lignes.push({ libelle: "Points de vigilance tranchés", ok: !!analyse && analyse.vigilance.every((p) => p.tranche) });
+  lignes.push({ libelle: avis ? "Avocat signataire nommé" : "Avocat constitué nommé", ok: !!acte && !!x.avocat && acte.contenu.includes(`${x.avocat.prenom} ${x.avocat.nom}`) });
+  lignes.push({ libelle: "Points de vigilance tranchés", ok: avis ? !analyse || analyse.vigilance.every((p) => p.tranche) : !!analyse && analyse.vigilance.every((p) => p.tranche) });
   return lignes;
 }
 

@@ -580,5 +580,7 @@
   "Échoué": "Failed",
   "Étape actuelle": "Current stage",
   "Attestation de prise en charge, signée le {date}": "Certificate of representation, signed on {date}",
-  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Your certificate of representation will be available once your lawyer has checked the dates in your case."
+  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Your certificate of representation will be available once your lawyer has checked the dates in your case.",
+  "Avis écrit de votre avocat, remis le {date}": "Written opinion from your lawyer, delivered on {date}",
+  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "Your lawyer's written opinion will be available here within 48 business hours of your payment."
 }

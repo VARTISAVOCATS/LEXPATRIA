@@ -12,10 +12,14 @@ import { lireParametre } from "./parametres";
 
 export async function attribuer(d: Base, dossierId: string, urgent: boolean) {
   const maintenant = new Date();
+  // Absent maintenant, ou absent dans les 2 jours ouvrés (20 heures ouvrées) : pas de nouveau dossier,
+  // l'avocat n'aurait pas le temps de le traiter avant son départ.
+  const h = ajouterHeuresOuvrees(maintenant, 20);
+  const horizon = instantParis(h.jour, h.minutes);
   const absents = d
     .select({ id: indisponibilites.avocatId })
     .from(indisponibilites)
-    .where(and(lte(indisponibilites.debut, maintenant), gte(indisponibilites.fin, maintenant)));
+    .where(and(lte(indisponibilites.debut, horizon), gte(indisponibilites.fin, maintenant)));
 
   const candidats = await d
     .select({

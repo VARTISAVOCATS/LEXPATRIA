@@ -11,6 +11,7 @@ const Corps = z.object({
   debut: z.string().max(10).optional(),
   fin: z.string().max(10).optional(),
   id: z.string().max(40).optional(),
+  motif: z.string().max(30).optional(),
   ouverte: z.boolean().optional(),
 });
 
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
   const d = await db();
   const r =
     c.data.action === "ajouter"
-      ? await ajouterIndisponibilite(d, m.id, cible, c.data.debut ?? "", c.data.fin ?? "")
+      ? await ajouterIndisponibilite(d, m.id, cible, c.data.debut ?? "", c.data.fin ?? "", c.data.motif)
       : c.data.action === "supprimer"
         ? await supprimerIndisponibilite(d, m, c.data.id ?? "")
         : await basculerAttribution(d, m.id, cible, !!c.data.ouverte);
