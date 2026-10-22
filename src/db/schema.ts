@@ -21,6 +21,7 @@ export const modeRemuneration = pgEnum("mode_remuneration", [
 export const statutDossier = pgEnum("statut_dossier", [
   "PRE_DOSSIER", // parcours commencé, non payé (supprimé après 30 jours)
   "ATTENTE_PROCHE", // convention acceptée, en attente du règlement par un proche
+  "APPEL_PROPOSE", // appel proposé par l'avocat, en attente de l'accord et du règlement du client
   "PAYE", // payé, en attente d'acceptation par l'avocat
   "PRIS_EN_CHARGE",
   "EN_REDACTION",

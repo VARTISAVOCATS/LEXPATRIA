@@ -4,6 +4,7 @@ import { PROCEDURES, type CodeProcedure } from "./procedures";
 export type Statut =
   | "PRE_DOSSIER"
   | "ATTENTE_PROCHE"
+  | "APPEL_PROPOSE"
   | "PAYE"
   | "PRIS_EN_CHARGE"
   | "EN_REDACTION"
@@ -19,6 +20,7 @@ export type Statut =
 export const LIBELLES_STATUT: Record<Statut, string> = {
   PRE_DOSSIER: "Dépôt non terminé",
   ATTENTE_PROCHE: "En attente du règlement par un proche",
+  APPEL_PROPOSE: "Appel proposé par votre avocat",
   PAYE: "Dossier reçu",
   PRIS_EN_CHARGE: "Pris en charge par votre avocat",
   EN_REDACTION: "Rédaction en cours",
@@ -43,6 +45,7 @@ export function etapesSuivi(procedure: string): Statut[] {
 export const ORDRE_STATUTS: Statut[] = [
   "PRE_DOSSIER",
   "ATTENTE_PROCHE",
+  "APPEL_PROPOSE",
   "PAYE",
   "PRIS_EN_CHARGE",
   "EN_REDACTION",
@@ -55,6 +58,9 @@ export const ORDRE_STATUTS: Statut[] = [
   "CLOS",
   "CLOS_REMBOURSE",
 ];
+
+/** Une procédure juridictionnelle (passée devant le tribunal) peut donner lieu à un appel. */
+export const peutFaireAppel = (procedure: string) => etapesSuivi(procedure).includes("JUGE");
 
 export const rang = (s: string) => ORDRE_STATUTS.indexOf(s as Statut);
 

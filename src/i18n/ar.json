@@ -582,5 +582,20 @@
   "Attestation de prise en charge, signée le {date}": "شهادة التكفّل، موقّعة في {date}",
   "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "ستكون شهادة التكفّل متاحة بمجرد أن يتحقق محاميك من تواريخ ملفك.",
   "Avis écrit de votre avocat, remis le {date}": "الرأي المكتوب لمحاميك، سُلِّم بتاريخ {date}",
-  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "سيكون الرأي المكتوب لمحاميك متاحًا هنا خلال 48 ساعة عمل من تاريخ الدفع."
+  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "سيكون الرأي المكتوب لمحاميك متاحًا هنا خلال 48 ساعة عمل من تاريخ الدفع.",
+  "Appel du dossier {ref}": "استئناف الملف {ref}",
+  "Appel proposé par votre avocat": "استئناف مقترح من محاميك",
+  "Avenant d'appel, en résumé": "ملحق الاستئناف باختصار",
+  "Confirmer": "تأكيد",
+  "Confirmez-vous ne pas vouloir faire appel ? Votre avocat en sera informé.": "هل تؤكد أنك لا ترغب في الاستئناف؟ سيتم إبلاغ محاميك.",
+  "Dossier d'appel {ref}": "ملف الاستئناف {ref}",
+  "J'accepte l'avenant d'appel à la convention d'honoraires.": "أوافق على ملحق الاستئناف لاتفاقية الأتعاب.",
+  "Je ne souhaite pas faire appel": "لا أرغب في الاستئناف",
+  "Jugement du {date}. Date limite d'appel estimée : {limite}, vérifiée par votre avocat.": "حكم صادر بتاريخ {date}. الأجل التقديري للاستئناف: {limite}، ويتحقق منه محاميك.",
+  "L'action a échoué. Réessayez.": "تعذّر تنفيذ الإجراء. يرجى المحاولة مرة أخرى.",
+  "L'avis de votre avocat sur l'opportunité de l'appel se trouve dans les échanges de votre premier dossier.": "رأي محاميك بشأن جدوى الاستئناف موجود في رسائل ملفك الأول.",
+  "Lire l'avenant complet": "قراءة الملحق كاملاً",
+  "Votre avocat vous propose de faire appel": "يقترح عليك محاميك الاستئناف",
+  "Votre avocat vous propose de faire appel : dossier {ref}": "يقترح عليك محاميك الاستئناف: الملف {ref}",
+  "Appel devant la cour administrative d'appel": "الاستئناف أمام محكمة الاستئناف الإدارية"
 }

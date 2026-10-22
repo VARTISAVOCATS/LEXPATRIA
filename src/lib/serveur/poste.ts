@@ -56,7 +56,15 @@ export async function donneesActe(d: Base, dos: Dossier): Promise<DonneesActe> {
     avocat: avocat ? { prenom: avocat.prenom, nom: avocat.nom } : null,
     pieces: lesPieces.filter((p) => !p.manquante).map((p) => p.libelle),
     reference: dos.reference,
+    appel: await infoAppel(d, dos),
   };
+}
+
+/** Dossier d'appel : tribunal et numéro du jugement, lus sur le dossier de première instance. */
+async function infoAppel(d: Base, dos: Dossier) {
+  if (!dos.dossierParentId) return null;
+  const [p] = await d.select().from(dossiers).where(eq(dossiers.id, dos.dossierParentId));
+  return { tribunal: dos.tribunal ?? p?.tribunal ?? tribunalCompetent(dos.prefecture), numero: p?.numeroRequete ?? null, referencePremiere: p?.reference ?? "" };
 }
 
 // ---------- Analyse ----------
@@ -121,7 +129,7 @@ function analyseSimulee(dos: Dossier, x: DonneesActe): Omit<Analyse, "vigilance"
     resume: `${x.civilite === "MADAME" ? "Madame" : "Monsieur"} ${x.prenom ?? ""} ${x.nom ?? ""}, ${procedureLibelle(dos.procedure).toLowerCase()}.${dos.recit ? ` Récit : « ${minimiser(dos.recit).slice(0, 400)} »` : ""}`,
     questions: questions[dos.procedure] ?? ["Quelle est la décision contestée et sa date de notification ?"],
     appuis,
-    strategie: `${LIBELLES_MODELE[modelesPour(dos.procedure, dos.avisPrealable)[0]]} ; centrer la discussion sur ${appuis.length ? "les éléments d'insertion et de vie familiale" : "la régularité de la décision"}.`,
+    strategie: `${LIBELLES_MODELE[modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId)[0]]} ; centrer la discussion sur ${appuis.length ? "les éléments d'insertion et de vie familiale" : "la régularité de la décision"}.`,
     vigilance: [],
   };
 }
@@ -196,7 +204,7 @@ export async function dernierActe(d: Base, dossierId: string) {
 
 export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: CodeModele): Promise<Resultat> {
   if (!peutTravailler(m, dos)) return refus("Dossier attribué à un autre avocat.");
-  if (!modelesPour(dos.procedure, dos.avisPrealable).includes(modele)) return refus("Modèle non prévu pour cette procédure.");
+  if (!modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId).includes(modele)) return refus("Modèle non prévu pour cette procédure.");
   const x = await donneesActe(d, dos);
   let projet = genererModele(modele, x);
   const cle = await valeur("ANTHROPIC_API_KEY");
@@ -269,7 +277,8 @@ export async function controleCroise(d: Base, dos: Dossier): Promise<Controle[]>
   const lignes: Controle[] = [];
   if (acte && JURIDICTIONNELS.includes(acte.type as CodeModele)) {
     const premiere = acte.contenu.split("\n").find((l) => l.trim()) ?? "";
-    lignes.push({ libelle: "Tribunal compétent indiqué", ok: /TRIBUNAL ADMINISTRATIF DE/i.test(premiere) && !premiere.includes("XXX") });
+    const juridiction = acte.type === "REQUETE_APPEL" ? /COUR ADMINISTRATIVE D'APPEL DE/i : /TRIBUNAL ADMINISTRATIF DE|COUR ADMINISTRATIVE D'APPEL DE/i;
+    lignes.push({ libelle: acte.type === "REQUETE_APPEL" ? "Cour compétente indiquée" : "Juridiction compétente indiquée", ok: juridiction.test(premiere) && !premiere.includes("XXX") });
   }
   // Un avis écrit (consultation) n'est pas déposé : pas de contrôle de date limite du recours.
   const avis = acte?.type === "AVIS_ECRIT";

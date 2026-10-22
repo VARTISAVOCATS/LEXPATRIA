@@ -5,7 +5,7 @@
 
 import { formatEuros, type Diligence } from "./procedures";
 
-export const VERSION_CONVENTION = "2026-10-21.1";
+export const VERSION_CONVENTION = "2026-10-22.1";
 
 export interface LigneHonoraires {
   diligence: Diligence;
@@ -23,6 +23,8 @@ export interface DonneesConvention {
   lignes: LigneHonoraires[];
   troisFois: boolean;
   dateLimite?: string; // JJ/MM/AAAA
+  /** Avenant d'appel : référence du dossier de première instance. */
+  appelDe?: string;
 }
 
 export const MEDIATEUR =
@@ -40,11 +42,13 @@ export function texteConvention(d: DonneesConvention): string {
       : "Le client identifié lors du dépôt";
   const total = d.lignes.reduce((s, l) => s + l.montant, 0);
   const lignes = d.lignes.map((l) => `- ${l.libelle} : ${formatEuros(l.montant)} TTC`).join("\n");
-  const mission = d.recoursPrealable
+  const mission = d.appelDe
+    ? `La mission couvre l'instance d'appel : rédaction et dépôt de la requête d'appel, tous les mémoires utiles et la plaidoirie devant la cour lorsque l'avocat l'estime opportune. Elle complète la convention acceptée pour le dossier de première instance ${d.appelDe}, dont les autres stipulations demeurent.`
+    : d.recoursPrealable
     ? "La mission s'achève à la réponse de l'administration ou à la naissance d'une décision implicite de rejet. En cas de rejet, la requête devant le tribunal administratif fait l'objet d'une proposition distincte."
     : "La mission couvre l'ensemble de la première instance : rédaction et dépôt de la requête, tous les mémoires utiles et la plaidoirie à l'audience lorsque l'avocat l'estime opportune.";
 
-  return `CONVENTION D'HONORAIRES — DOSSIER ${d.reference}
+  return `${d.appelDe ? "AVENANT D'APPEL À LA CONVENTION D'HONORAIRES" : "CONVENTION D'HONORAIRES"} — DOSSIER ${d.reference}
 Version ${VERSION_CONVENTION}
 
 ENTRE
@@ -61,8 +65,8 @@ Le Client a été informé que le Cabinet n'intervient pas au titre de l'aide ju
 ARTICLE 1 — OBJET ET PÉRIMÈTRE
 Le Client confie au Cabinet la mission suivante : ${d.procedureLibelle}.
 ${mission}
-Sont exclus de la mission : l'appel, les procédures de référé non prévues ci-dessous, l'exécution de la décision et toute procédure devant le juge judiciaire. L'appel et les référés font, le cas échéant, l'objet d'un avenant soumis à l'accord du Client.
-Le Cabinet est tenu d'une obligation de moyens. Le Client s'engage à fournir des informations exactes et les pièces demandées dans les meilleurs délais. Avant le dépôt, l'avocat attribué examine le dossier, vérifie la date de notification de la décision et le délai de recours.
+Sont exclus de la mission : ${d.appelDe ? "le pourvoi en cassation" : "l'appel"}, les procédures de référé non prévues ci-dessous, l'exécution de la décision et toute procédure devant le juge judiciaire. ${d.appelDe ? "Les référés font" : "L'appel et les référés font"}, le cas échéant, l'objet d'un avenant soumis à l'accord du Client.
+Le Cabinet est tenu d'une obligation de moyens. Le Client s'engage à fournir des informations exactes et les pièces demandées dans les meilleurs délais. Avant le dépôt, l'avocat attribué examine le dossier, vérifie la date de notification de la décision et le délai de recours${d.appelDe ? " (ici, la date de notification du jugement et le délai d'appel)" : ""}.
 
 ARTICLE 2 — HONORAIRES
 Les honoraires sont fixés forfaitairement comme suit :
@@ -90,7 +94,7 @@ Toute contestation relative aux honoraires est portée devant le Bâtonnier de l
 Le Client reconnaît avoir reçu l'information relative à l'existence d'un médiateur de la consommation. Conformément aux articles L.612-1 et L.616-1 du Code de la consommation, il peut, en cas de différend avec le Cabinet et après une réclamation écrite adressée au Cabinet, recourir au ${MEDIATEUR}.
 
 ARTICLE 7 — STIPULATIONS DIVERSES
-La convention est conclue à distance, par voie électronique. La case d'acceptation cochée par le Client vaut signature ; la date, l'heure, la version et l'empreinte du texte accepté sont conservées et le Client peut relire à tout moment le texte exact accepté dans son espace. La convention est soumise au droit français.${d.dateLimite ? `\n\nDate limite de recours estimée au jour de la convention, sous réserve de vérification par l'avocat : ${d.dateLimite}.` : ""}
+La convention est conclue à distance, par voie électronique. La case d'acceptation cochée par le Client vaut signature ; la date, l'heure, la version et l'empreinte du texte accepté sont conservées et le Client peut relire à tout moment le texte exact accepté dans son espace. La convention est soumise au droit français.${d.dateLimite ? `\n\nDate limite ${d.appelDe ? "d'appel" : "de recours"} estimée au jour de la convention, sous réserve de vérification par l'avocat : ${d.dateLimite}.` : ""}
 `;
 }
 
@@ -98,7 +102,7 @@ La convention est conclue à distance, par voie électronique. La case d'accepta
 export function resumeConvention(d: DonneesConvention): string[] {
   const total = d.lignes.reduce((s, l) => s + l.montant, 0);
   return [
-    `Forfait ferme de ${formatEuros(total)} TTC pour ${d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance, plaidoirie comprise"}.`,
+    `Forfait ferme de ${formatEuros(total)} TTC pour ${d.appelDe ? "toute l'instance d'appel, plaidoirie comprise" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance, plaidoirie comprise"}.`,
     "Un avocat du cabinet examine le dossier, rédige, atteste et dépose l'acte.",
     "Délai déjà expiré au jour du paiement : remboursement, 69 € conservés pour l'avis écrit.",
   ];

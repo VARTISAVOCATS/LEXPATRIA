@@ -3,12 +3,14 @@
 
 import { and, eq } from "drizzle-orm";
 import type { Base } from "@/db";
-import { clients, conventions, dossiers, paiements } from "@/db/schema";
-import { texteConvention, VERSION_CONVENTION } from "@/lib/convention";
+import { clients, conventions, dossiers, paiements, utilisateurs } from "@/db/schema";
+import { ajouterHeuresOuvrees, instantParis } from "@/lib/calendrier";
+import { texteConvention, VERSION_CONVENTION, type DonneesConvention } from "@/lib/convention";
 import { empreinteTexte, journaliser } from "@/lib/journal";
-import { composerOffre, estRecoursPrealable, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { stripe } from "@/lib/stripe";
 import { attribuer } from "./attribution";
+import { envoyer } from "./notifications";
 import { lireParametre } from "./parametres";
 
 export const SEUIL_TROIS_FOIS = 10_000; // centimes
@@ -23,11 +25,36 @@ export async function charger(d: Base, dossierId: string) {
 export async function offre(d: Base, dos: typeof dossiers.$inferSelect) {
   const code = dos.procedure as CodeProcedure;
   const tarifs = await lireParametre(d, "tarifs");
-  const lignes = composerOffre(code, { urgence: dos.traitement === "URGENCE", avisPrealable: dos.avisPrealable }, tarifs);
+  // Appel : forfait d'appel seul, sans majoration d'urgence.
+  const lignes = dos.dossierParentId
+    ? [{ diligence: "APPEL" as const, libelle: LIBELLES_DILIGENCE.APPEL, montant: tarifs.APPEL }]
+    : composerOffre(code, { urgence: dos.traitement === "URGENCE", avisPrealable: dos.avisPrealable }, tarifs);
   return { code, lignes, total: lignes.reduce((s, l) => s + l.montant, 0) };
 }
 
 const frDate = (iso?: string | null) => (iso ? iso.split("-").reverse().join("/") : undefined);
+
+/** Données de la convention (ou de l'avenant d'appel) d'un dossier, pour l'afficher puis l'archiver à l'identique. */
+export async function donneesConvention(d: Base, dos: typeof dossiers.$inferSelect, cli: typeof clients.$inferSelect): Promise<DonneesConvention> {
+  const { code, lignes, total } = await offre(d, dos);
+  const parent = dos.dossierParentId ? (await d.select().from(dossiers).where(eq(dossiers.id, dos.dossierParentId)))[0] : null;
+  return {
+    civilite: (cli.civilite as "MADAME" | "MONSIEUR") ?? undefined,
+    prenom: cli.prenom ?? undefined,
+    nom: cli.nom ?? undefined,
+    reference: dos.reference,
+    procedureLibelle: parent
+      ? `Appel devant la cour administrative d'appel du jugement rendu dans le dossier ${parent.reference} (${PROCEDURES[code].libelle})`
+      : dos.avisPrealable
+        ? "Avis écrit d'un avocat sur votre situation"
+        : PROCEDURES[code].libelle,
+    recoursPrealable: estRecoursPrealable(code) && !dos.avisPrealable && !parent,
+    appelDe: parent?.reference,
+    lignes,
+    troisFois: total >= SEUIL_TROIS_FOIS,
+    dateLimite: frDate(dos.dateLimite),
+  };
+}
 
 export async function accepterConvention(
   d: Base,
@@ -35,20 +62,12 @@ export async function accepterConvention(
   cli: typeof clients.$inferSelect,
   ip: string,
 ) {
-  const { code, lignes, total } = await offre(d, dos);
-  const texte = texteConvention({
-    civilite: (cli.civilite as "MADAME" | "MONSIEUR") ?? undefined,
-    prenom: cli.prenom ?? undefined,
-    nom: cli.nom ?? undefined,
-    reference: dos.reference,
-    procedureLibelle: dos.avisPrealable ? "Avis écrit d'un avocat sur votre situation" : PROCEDURES[code].libelle,
-    recoursPrealable: estRecoursPrealable(code) && !dos.avisPrealable,
-    lignes,
-    troisFois: total >= SEUIL_TROIS_FOIS,
-    dateLimite: frDate(dos.dateLimite),
-  });
+  const donnees = await donneesConvention(d, dos, cli);
+  const texte = texteConvention(donnees);
+  const parent = !!donnees.appelDe;
   await d.insert(conventions).values({
     dossierId: dos.id,
+    type: parent ? "AVENANT_APPEL" : "CONVENTION",
     version: VERSION_CONVENTION,
     texte,
     empreinte: empreinteTexte(texte),
@@ -94,5 +113,20 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
     .where(eq(dossiers.id, dossierId))
     .returning();
   await journaliser(d, { dossierId, acteur: "SYSTEME", action: "PAIEMENT_RECU", details: { montant: maj[0].montant, parTiers: maj[0].parTiers } });
+  // Appel : le dossier reste à l'avocat de la première instance, qui est prévenu et l'accepte comme tout dossier.
+  if (dos.dossierParentId && dos.avocatId) {
+    const delais = await lireParametre(d, "delais");
+    const h = ajouterHeuresOuvrees(new Date(), delais.acceptationNormaleH);
+    await d.update(dossiers).set({ acceptationAvant: instantParis(h.jour, h.minutes) }).where(eq(dossiers.id, dossierId));
+    const [av] = await d.select().from(utilisateurs).where(eq(utilisateurs.id, dos.avocatId));
+    if (av)
+      await envoyer({
+        canal: "EMAIL",
+        destinataire: av.email,
+        sujet: `Appel accepté et réglé — dossier ${dos.reference}`,
+        texte: `Le client a accepté et réglé l'appel. Dossier ${dos.reference} à accepter.\n${process.env.URL_PUBLIQUE ?? "https://lexpatria.fr"}/avocat/dossiers/${dos.reference}`,
+      });
+    return;
+  }
   await attribuer(d, dossierId, dos.traitement === "URGENCE");
 }

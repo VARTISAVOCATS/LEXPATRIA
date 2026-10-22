@@ -19,7 +19,8 @@ export type CodeModele =
   | "RAPO_VISA"
   | "RAPO_NATURALISATION"
   | "MISE_EN_DEMEURE"
-  | "AVIS_ECRIT";
+  | "AVIS_ECRIT"
+  | "REQUETE_APPEL";
 
 export const LIBELLES_MODELE: Record<CodeModele, string> = {
   REQUETE_OQTF: "Requête en annulation · OQTF",
@@ -34,11 +35,13 @@ export const LIBELLES_MODELE: Record<CodeModele, string> = {
   RAPO_NATURALISATION: "Recours préalable · naturalisation",
   MISE_EN_DEMEURE: "Mise en demeure de la préfecture",
   AVIS_ECRIT: "Avis écrit au client",
+  REQUETE_APPEL: "Requête d'appel devant la cour administrative d'appel",
 };
 
 /** Modèles proposés selon la procédure (le premier est celui de la mission). */
-export function modelesPour(procedure: string, avisPrealable: boolean): CodeModele[] {
+export function modelesPour(procedure: string, avisPrealable: boolean, appel = false): CodeModele[] {
   if (avisPrealable) return ["AVIS_ECRIT"];
+  if (appel) return ["REQUETE_APPEL", "MEMOIRE_COMPLEMENTAIRE"];
   switch (procedure as CodeProcedure) {
     case "OQTF":
       return ["REQUETE_OQTF", "REQUETE_SOMMAIRE", "MEMOIRE_COMPLEMENTAIRE"];
@@ -64,6 +67,7 @@ export function modelesPour(procedure: string, avisPrealable: boolean): CodeMode
 
 /** Actes juridictionnels : un tribunal compétent doit y figurer. */
 export const JURIDICTIONNELS: CodeModele[] = [
+  "REQUETE_APPEL",
   "REQUETE_OQTF",
   "REQUETE_REFUS_TITRE",
   "REQUETE_SOMMAIRE",
@@ -86,6 +90,14 @@ const TRIBUNAUX: [RegExp, string][] = [
   [/yvelines|versailles|\b78\b/i, "Versailles"],
 ];
 
+/** Cour administrative d'appel compétente selon le tribunal de première instance (Île-de-France). */
+export function courAppel(tribunal?: string | null): string {
+  const t = (tribunal ?? "").toLowerCase();
+  if (/paris|melun|montreuil/.test(t)) return "Paris";
+  if (/cergy|versailles/.test(t)) return "Versailles";
+  return MANQUANT;
+}
+
 export function tribunalCompetent(prefecture?: string | null): string {
   if (!prefecture) return MANQUANT;
   return TRIBUNAUX.find(([re]) => re.test(prefecture))?.[1] ?? MANQUANT;
@@ -107,6 +119,8 @@ export interface DonneesActe {
   avocat: { prenom: string; nom: string } | null;
   pieces: string[];
   reference: string;
+  /** Dossier d'appel : jugement attaqué (date du jugement = dateDecision, notification = dateNotification). */
+  appel?: { tribunal: string; numero?: string | null; referencePremiere: string } | null;
 }
 
 /** « Préfecture du Val-de-Marne » → « préfet du Val-de-Marne » ; « Préfecture de police » → « préfet de police ». */
@@ -504,6 +518,48 @@ Je vous mets en demeure de ${MANQUANT} dans un délai de ${MANQUANT} jours à co
 Je vous prie d'agréer, Monsieur le Préfet, l'expression de ma haute considération.
 
 ${signature(d)}`;
+
+    case "REQUETE_APPEL": {
+      const a = d.appel;
+      const tribunal = a?.tribunal && a.tribunal !== MANQUANT ? a.tribunal : MANQUANT;
+      return `COUR ADMINISTRATIVE D'APPEL DE ${courAppel(tribunal).toUpperCase()}
+
+REQUÊTE D'APPEL
+(articles R. 811-1 et suivants du code de justice administrative)
+
+POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${MANQUANT}
+
+Ayant pour avocat : ${avocatConstitue(d)}
+
+CONTRE : le jugement n° ${v(a?.numero)} du tribunal administratif de ${tribunal} du ${fr(d.dateDecision)}, notifié le ${fr(d.dateNotification)}
+
+I. FAITS ET PROCÉDURE
+
+Par une décision du ${MANQUANT}, le ${prefet(d.prefecture)} a ${objetDecision({ ...d, reponses: d.reponses ?? {} })}.
+Par une requête enregistrée le ${MANQUANT}, ${identite(d)} en a demandé l'annulation au tribunal administratif de ${tribunal}.
+Par le jugement attaqué, le tribunal a rejeté sa demande au motif que ${MANQUANT}.
+C'est le jugement dont il est relevé appel.
+
+II. DISCUSSION
+
+A. Sur la régularité du jugement
+${MANQUANT} (omission à statuer, insuffisance de motivation, méconnaissance du contradictoire).
+
+B. Sur le bien-fondé du jugement
+C'est à tort que le tribunal a jugé que ${MANQUANT}.
+Par l'effet dévolutif de l'appel, ${identite(d)} reprend les moyens soulevés en première instance : ${MANQUANT}.
+
+PAR CES MOTIFS,
+et tous autres à produire, déduire ou suppléer, au besoin d'office, ${identite(d)} demande à la cour de :
+— annuler le jugement n° ${v(a?.numero)} du tribunal administratif de ${tribunal} du ${fr(d.dateDecision)} ;
+— annuler la décision du ${prefet(d.prefecture)} du ${MANQUANT} ;
+— enjoindre au ${prefet(d.prefecture)} de ${MANQUANT} dans un délai de ${MANQUANT} à compter de la notification de l'arrêt, sous astreinte de ${MANQUANT} euros par jour de retard ;
+— mettre à la charge de l'État la somme de ${MANQUANT} euros au titre de l'article L. 761-1 du code de justice administrative.
+
+${signature(d)}
+
+${bordereau({ ...d, pieces: ["Jugement attaqué", ...d.pieces] })}`;
+    }
 
     case "AVIS_ECRIT":
       return `LEXPATRIA Avocats — SELARL VARTIS Avocats

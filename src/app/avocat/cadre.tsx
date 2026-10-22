@@ -24,7 +24,7 @@ export async function Cadre({ actif, children }: { actif: string; children: (m: 
     ["questions", "Questions", "/avocat/questions", nQuestions],
     ["consultations", "Consultations", "/avocat/consultations", nAvis],
   ];
-  if (m?.role === "ASSOCIE") onglets.push(["backoffice", "Back office", "/avocat/back-office"]);
+  if (m?.role === "ASSOCIE") onglets.push(["indicateurs", "Indicateurs", "/avocat/indicateurs"], ["backoffice", "Back office", "/avocat/back-office"]);
   return (
     <>
       <EnteteEspace

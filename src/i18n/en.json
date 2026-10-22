@@ -582,5 +582,20 @@
   "Attestation de prise en charge, signée le {date}": "Certificate of representation, signed on {date}",
   "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Your certificate of representation will be available once your lawyer has checked the dates in your case.",
   "Avis écrit de votre avocat, remis le {date}": "Written opinion from your lawyer, delivered on {date}",
-  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "Your lawyer's written opinion will be available here within 48 business hours of your payment."
+  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "Your lawyer's written opinion will be available here within 48 business hours of your payment.",
+  "Appel du dossier {ref}": "Appeal of case {ref}",
+  "Appel proposé par votre avocat": "Appeal proposed by your lawyer",
+  "Avenant d'appel, en résumé": "Appeal amendment, in brief",
+  "Confirmer": "Confirm",
+  "Confirmez-vous ne pas vouloir faire appel ? Votre avocat en sera informé.": "Do you confirm that you do not wish to appeal? Your lawyer will be informed.",
+  "Dossier d'appel {ref}": "Appeal case {ref}",
+  "J'accepte l'avenant d'appel à la convention d'honoraires.": "I accept the appeal amendment to the fee agreement.",
+  "Je ne souhaite pas faire appel": "I do not wish to appeal",
+  "Jugement du {date}. Date limite d'appel estimée : {limite}, vérifiée par votre avocat.": "Judgment of {date}. Estimated appeal deadline: {limite}, checked by your lawyer.",
+  "L'action a échoué. Réessayez.": "The action failed. Please try again.",
+  "L'avis de votre avocat sur l'opportunité de l'appel se trouve dans les échanges de votre premier dossier.": "Your lawyer's opinion on whether to appeal is in the messages of your first case.",
+  "Lire l'avenant complet": "Read the full amendment",
+  "Votre avocat vous propose de faire appel": "Your lawyer proposes an appeal",
+  "Votre avocat vous propose de faire appel : dossier {ref}": "Your lawyer proposes an appeal: case {ref}",
+  "Appel devant la cour administrative d'appel": "Appeal before the administrative court of appeal"
 }

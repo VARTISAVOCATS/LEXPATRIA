@@ -61,7 +61,7 @@ export async function dossiersEquipe(d: Base, m: Membre, filtre: Filtre, recherc
   const conds = [ne(dossiers.statut, "PRE_DOSSIER")];
   if (!voitTout(m)) conds.push(eq(dossiers.avocatId, m.id));
   if (filtre === "a_prendre") conds.push(eq(dossiers.statut, "PAYE"));
-  if (filtre === "en_cours") conds.push(notInArray(dossiers.statut, ["PAYE", "CLOS", "CLOS_REMBOURSE", "ATTENTE_PROCHE"]));
+  if (filtre === "en_cours") conds.push(notInArray(dossiers.statut, ["PAYE", "CLOS", "CLOS_REMBOURSE", "ATTENTE_PROCHE", "APPEL_PROPOSE"]));
   if (filtre === "termines") conds.push(inArray(dossiers.statut, ["CLOS", "CLOS_REMBOURSE"]));
   if (recherche?.trim()) {
     const q = `%${recherche.trim().toLowerCase()}%`;
@@ -88,7 +88,7 @@ export async function compteurs(d: Base, m: Membre) {
   const [r] = await d
     .select({
       aPrendre: sql<number>`count(*) filter (where ${dossiers.statut} = 'PAYE')`,
-      enCours: sql<number>`count(*) filter (where ${dossiers.statut} not in ('PRE_DOSSIER','PAYE','CLOS','CLOS_REMBOURSE','ATTENTE_PROCHE'))`,
+      enCours: sql<number>`count(*) filter (where ${dossiers.statut} not in ('PRE_DOSSIER','PAYE','CLOS','CLOS_REMBOURSE','ATTENTE_PROCHE','APPEL_PROPOSE'))`,
       termines: sql<number>`count(*) filter (where ${dossiers.statut} in ('CLOS','CLOS_REMBOURSE'))`,
       tous: sql<number>`count(*) filter (where ${dossiers.statut} <> 'PRE_DOSSIER')`,
     })

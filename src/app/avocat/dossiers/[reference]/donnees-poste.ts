@@ -20,7 +20,7 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
     analyse: (dos.analyse as Analyse | null) ?? null,
     acte: acte ? { id: acte.id, type: acte.type, version: acte.version, contenu: acte.contenu, motsModifies: acte.motsModifies, tempsRevueS: acte.tempsRevueS } : null,
     versions: memeType.map((a) => ({ id: a.id, version: a.version, le: frDateHeure(a.creeLe), mots: a.motsModifies })),
-    modeles: modelesPour(dos.procedure, dos.avisPrealable).map((c) => [c, LIBELLES_MODELE[c]]),
+    modeles: modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId).map((c) => [c, LIBELLES_MODELE[c]]),
     libelleActe: acte ? (LIBELLES_MODELE[acte.type as CodeModele] ?? acte.type) : null,
     controle: await controleCroise(d, dos),
     attestation: att ? { le: frDateHeure(att.le), version: att.version } : null,

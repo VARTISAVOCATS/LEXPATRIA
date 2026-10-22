@@ -220,3 +220,19 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .qr textarea { width: 100%; font-family: inherit; line-height: 1.5; }
 .qr-msg { margin: 8px 0 0; padding: 10px 14px; border-left: 3px solid var(--rule); color: var(--ink-2); white-space: pre-wrap; font-size: 14.5px; }
 .esp-avis pre { white-space: pre-wrap; font-family: inherit; line-height: 1.6; }
+
+/* Lot 3, étape 3 : appel */
+.esp-appel { display: flex; flex-direction: column; gap: 12px; }
+.esp-appel .recap { display: flex; justify-content: space-between; align-items: baseline; font-size: 16px; }
+.esp-appel .recap b { font-family: var(--display); font-size: 24px; }
+.esp-renonce { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; font-size: 14px; color: var(--ink-2); }
+.esp-conv pre { white-space: pre-wrap; font-family: inherit; }
+
+/* Indicateurs */
+.ind-barres { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ind-barres li { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(60px, 1fr) auto; gap: 10px; align-items: center; font-size: 14px; }
+.ind-lib small { color: var(--ink-3); }
+.ind-barre { height: 8px; background: var(--parch-2); border-radius: 4px; overflow: hidden; }
+.ind-barre span { display: block; height: 100%; background: var(--ink); border-radius: 4px; }
+.tbl-defil { overflow-x: auto; }
+.ind-mode { display: block; color: var(--ink-3); font-size: 12px; }

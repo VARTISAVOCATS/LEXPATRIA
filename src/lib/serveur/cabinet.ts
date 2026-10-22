@@ -41,6 +41,7 @@ export async function accepter(d: Base, m: Membre, dos: Dossier): Promise<Result
 export async function changerStatut(d: Base, m: Membre, dos: Dossier, statut: string): Promise<Resultat> {
   if (!STATUTS_AVOCAT.includes(statut as Statut)) return refus("Étape inconnue.");
   if (m.role === "SECRETARIAT" && !["DEPOSE", "ENREGISTRE", "INSTRUCTION", "AUDIENCE", "JUGE"].includes(statut)) return refus("Étape réservée à l'avocat.");
+  if (dos.statut === "APPEL_PROPOSE") return refus("L'appel attend l'accord et le règlement du client.");
   if (dos.statut === "PAYE" && statut !== "PRIS_EN_CHARGE") return refus("Acceptez d'abord le dossier.");
   if (statut === "DEPOSE" && !dos.dateLimiteVerifiee) return refus("Vérifiez et fixez d'abord la date limite du recours.");
   if (statut === "DEPOSE" && !(await attestationValide(d, await dernierActe(d, dos.id))))

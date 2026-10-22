@@ -1,0 +1,1 @@
+ALTER TYPE "public"."statut_dossier" ADD VALUE 'APPEL_PROPOSE' BEFORE 'PAYE';

@@ -582,5 +582,20 @@
   "Attestation de prise en charge, signée le {date}": "Certificado de asunción del expediente, firmado el {date}",
   "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Su certificado de asunción del expediente estará disponible en cuanto su abogado haya verificado las fechas de su expediente.",
   "Avis écrit de votre avocat, remis le {date}": "Dictamen escrito de su abogado, entregado el {date}",
-  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "El dictamen escrito de su abogado estará disponible aquí en un plazo de 48 horas hábiles tras su pago."
+  "L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.": "El dictamen escrito de su abogado estará disponible aquí en un plazo de 48 horas hábiles tras su pago.",
+  "Appel du dossier {ref}": "Apelación del expediente {ref}",
+  "Appel proposé par votre avocat": "Apelación propuesta por su abogado",
+  "Avenant d'appel, en résumé": "Anexo de apelación, en resumen",
+  "Confirmer": "Confirmar",
+  "Confirmez-vous ne pas vouloir faire appel ? Votre avocat en sera informé.": "¿Confirma que no desea apelar? Se informará a su abogado.",
+  "Dossier d'appel {ref}": "Expediente de apelación {ref}",
+  "J'accepte l'avenant d'appel à la convention d'honoraires.": "Acepto el anexo de apelación al convenio de honorarios.",
+  "Je ne souhaite pas faire appel": "No deseo apelar",
+  "Jugement du {date}. Date limite d'appel estimée : {limite}, vérifiée par votre avocat.": "Sentencia del {date}. Plazo de apelación estimado: {limite}, verificado por su abogado.",
+  "L'action a échoué. Réessayez.": "La acción ha fallado. Inténtelo de nuevo.",
+  "L'avis de votre avocat sur l'opportunité de l'appel se trouve dans les échanges de votre premier dossier.": "La opinión de su abogado sobre la conveniencia de apelar se encuentra en los mensajes de su primer expediente.",
+  "Lire l'avenant complet": "Leer el anexo completo",
+  "Votre avocat vous propose de faire appel": "Su abogado le propone apelar",
+  "Votre avocat vous propose de faire appel : dossier {ref}": "Su abogado le propone apelar: expediente {ref}",
+  "Appel devant la cour administrative d'appel": "Apelación ante el tribunal administrativo de apelación"
 }

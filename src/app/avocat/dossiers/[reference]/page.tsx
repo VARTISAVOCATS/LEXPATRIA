@@ -3,10 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { appelDe, premiereInstance } from "@/lib/serveur/appel";
 import { equipe, journalDossier, TYPES_ECHEANCE } from "@/lib/serveur/cabinet";
 import { accesEquipe, detailDossier, marquerLus } from "@/lib/serveur/dossiers";
 import type { FichierStocke } from "@/lib/serveur/stockage";
-import { frDate, frDateHeure, LIBELLES_STATUT, STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
+import { frDate, frDateHeure, LIBELLES_STATUT, peutFaireAppel, STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
 import { FormMessage, FormPiece } from "../../../espace/[reference]/Formulaires";
 import { ActionForm } from "../../Actions";
 import { Cadre } from "../../cadre";
@@ -78,6 +79,9 @@ export default async function FicheDossier({ params, searchParams }: { params: P
         const nonLus = x.messages.filter((y) => y.auteur === "CLIENT" && !y.luLe).length;
         const ref = dos.reference;
         const poste = onglet === "travail" ? await donneesPoste(d, dos, m) : null;
+        const [parent, appel] = await Promise.all([premiereInstance(d, dos), dos.dossierParentId ? Promise.resolve(null) : appelDe(d, dos.id)]);
+        const peutProposerAppel =
+          !parent && !appel && !dos.avisPrealable && peutFaireAppel(dos.procedure) && (statut === "JUGE" || statut === "CLOS") && (m.role === "ASSOCIE" || dos.avocatId === m.id);
 
         return (
           <>
@@ -97,12 +101,29 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                 {x.cli.algerien && <span className="pill warn">Accord franco-algérien</span>}
                 <span>{x.avocat ? `Me ${x.avocat.prenom} ${x.avocat.nom}` : "Non attribué"}</span>
                 {statut === "PAYE" && dos.acceptationAvant && <span className="pill warn">à accepter avant {frDateHeure(dos.acceptationAvant)}</span>}
+                {parent && (
+                  <Link className="pill ai" href={`/avocat/dossiers/${parent.reference}`}>
+                    Appel du dossier {parent.reference}
+                    {dos.cour ? ` · CAA de ${dos.cour}` : ""}
+                  </Link>
+                )}
+                {appel && (
+                  <Link className="pill ai" href={`/avocat/dossiers/${appel.reference}`}>
+                    Dossier d&apos;appel {appel.reference} · {LIBELLES_STATUT[appel.statut as Statut]}
+                  </Link>
+                )}
               </div>
+              {statut === "APPEL_PROPOSE" && (
+                <p className="note">
+                  Appel proposé au client : il accepte l&apos;avenant et règle dans son espace. Le dossier vous revient ensuite à accepter. Date limite d&apos;appel estimée :{" "}
+                  {frDate(dos.dateLimite)}.
+                </p>
+              )}
               <div className="cab-actions">
                 {statut === "PAYE" && estAvocat && (m.role === "ASSOCIE" || dos.avocatId === m.id) && (
                   <ActionForm base={{ reference: ref, action: "accepter" }} libelle="Accepter le dossier" classe="btn cta sm" />
                 )}
-                {statut !== "PAYE" && (
+                {statut !== "PAYE" && statut !== "APPEL_PROPOSE" && (
                   <ActionForm
                     base={{ reference: ref, action: "statut" }}
                     champs={[{ nom: "statut", type: "select", label: "Étape", defaut: STATUTS_AVOCAT.includes(statut) ? statut : "EN_REDACTION", options: STATUTS_AVOCAT.map((s) => [s, LIBELLES_STATUT[s]]) }]}
@@ -119,6 +140,28 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                 )}
               </div>
             </section>
+
+            {peutProposerAppel && (
+              <section className="card">
+                <h2>Proposer l&apos;appel au client</h2>
+                <p className="note">
+                  Un dossier d&apos;appel est créé et relié à ce dossier. Le client reçoit votre message, puis accepte l&apos;avenant d&apos;appel et règle dans son espace. Délai d&apos;appel
+                  estimé : un mois après la notification du jugement en matière d&apos;OQTF, deux mois sinon ; vous le vérifiez ensuite comme pour tout recours.
+                </p>
+                <ActionForm
+                  base={{ reference: ref, action: "proposerAppel" }}
+                  enLigne={false}
+                  champs={[
+                    { nom: "dateJugement", type: "date", label: "Date du jugement" },
+                    { nom: "dateNotification", type: "date", label: "Date de notification du jugement" },
+                    { nom: "message", type: "textarea", label: "Votre avis au client sur l'opportunité de l'appel" },
+                  ]}
+                  libelle="Proposer l'appel"
+                  classe="btn cta sm"
+                  confirmation="Le client recevra votre message et la proposition d'appel."
+                />
+              </section>
+            )}
 
             <nav className="tabs esp-tabs" aria-label="Rubriques du dossier">
               {ONGLETS.map(([k, l]) => (
