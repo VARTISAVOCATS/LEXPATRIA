@@ -1,0 +1,6 @@
+[
+  { "prenom": "Rafik", "nom": "Rabia", "email": "rafik.rabia@vartis.law", "role": "ASSOCIE" },
+  { "prenom": "Ahlem", "nom": "Ben Abderrazak", "email": "XXX", "role": "ASSOCIE" },
+  { "prenom": "Boualem", "nom": "Kachi", "email": "XXX", "role": "AVOCAT" },
+  { "prenom": "Mohamed", "nom": "Khamlichi", "email": "XXX", "role": "AVOCAT" }
+]

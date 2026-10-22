@@ -1,0 +1,12 @@
+# HTTPS automatique pour le domaine de la plateforme ; www redirige vers le domaine principal.
+{$DOMAINE} {
+	encode zstd gzip
+	request_body {
+		max_size 25MB
+	}
+	reverse_proxy app:3000
+}
+
+www.{$DOMAINE} {
+	redir https://{$DOMAINE}{uri} permanent
+}

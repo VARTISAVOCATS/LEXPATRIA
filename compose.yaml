@@ -1,0 +1,71 @@
+# Mise en production sur un serveur OVHcloud (VPS, centre de données en France).
+# Démarrage : docker compose up -d --build   (variables dans le fichier .env, jamais versionné)
+# Base PostgreSQL : base gérée OVHcloud (recommandé, DATABASE_URL dans .env)
+#                   ou base sur le serveur : docker compose --profile base-locale up -d --build
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-}
+        NEXT_PUBLIC_MATOMO_URL: ${NEXT_PUBLIC_MATOMO_URL:-}
+        NEXT_PUBLIC_MATOMO_SITE_ID: ${NEXT_PUBLIC_MATOMO_SITE_ID:-}
+        NEXT_PUBLIC_META_PIXEL_ID: ${NEXT_PUBLIC_META_PIXEL_ID:-}
+        NEXT_PUBLIC_TIKTOK_PIXEL_ID: ${NEXT_PUBLIC_TIKTOK_PIXEL_ID:-}
+        NEXT_PUBLIC_GOOGLE_ADS_ID: ${NEXT_PUBLIC_GOOGLE_ADS_ID:-}
+        NEXT_PUBLIC_TELEPHONE_CABINET: ${NEXT_PUBLIC_TELEPHONE_CABINET:-}
+    env_file: .env
+    restart: unless-stopped
+    volumes:
+      - ./config:/config:ro
+    expose:
+      - "3000"
+
+  # Serveur web : certificat HTTPS automatique (Let's Encrypt) et redirection vers l'application.
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAINE: ${DOMAINE}
+    volumes:
+      - ./deploiement/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_donnees:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+  # Tâches planifiées : relances des dépôts inachevés et purge à 30 jours, toutes les 15 minutes.
+  taches:
+    image: alpine:3.20
+    restart: unless-stopped
+    env_file: .env
+    command: >
+      sh -c "apk add --no-cache curl >/dev/null &&
+             while true; do
+               curl -fsS -X POST -H \"Authorization: Bearer $$SECRET_TACHES\" http://app:3000/api/taches/relances || true;
+               sleep 900;
+             done"
+    depends_on:
+      - app
+
+  # Option : base PostgreSQL sur le serveur lui-même (sauvegardes : deploiement/sauvegarde-base.sh).
+  base:
+    image: postgres:16-alpine
+    profiles: ["base-locale"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lexpatria
+      POSTGRES_USER: lexpatria
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
+    volumes:
+      - base_donnees:/var/lib/postgresql/data
+
+volumes:
+  caddy_donnees:
+  caddy_config:
+  base_donnees:
