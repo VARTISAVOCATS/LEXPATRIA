@@ -4,36 +4,37 @@ Tout est hébergé en France : serveur, base de données et pièces des clients.
 
 ## 1. À commander chez OVHcloud
 
-1. **Un serveur VPS** (2 vCPU, 4 Go de mémoire au minimum), centre de données en France, système Ubuntu 24.04.
-2. **Une base PostgreSQL gérée** (Public Cloud > Databases > PostgreSQL 16), même région. OVH en assure les sauvegardes quotidiennes.
-   À défaut, la base peut tourner sur le serveur lui-même (option « base-locale » ci-dessous, sauvegardes par `deploiement/sauvegarde-base.sh`).
-3. **Un conteneur Object Storage** (S3, région Gravelines « gra » ou Paris), nommé `lexpatria-pieces`, privé, avec un utilisateur S3 dédié.
-4. **Le nom de domaine** : enregistrement DNS `A` du domaine et de `www` vers l'adresse IP du serveur.
+1. **Un serveur VPS** en France (VPS-1 au départ : 2 vCores, 4 Go ; évolutif en un clic), Ubuntu 24.04, avec la sauvegarde automatique Premium. La base PostgreSQL tourne sur le serveur, sauvegardée chaque nuit.
+2. **Un conteneur Object Storage** (Public Cloud, S3, région Gravelines « gra » ou Paris), nommé `lexpatria-pieces`, privé, avec un utilisateur S3 dédié : il reçoit les pièces des clients.
+3. **Le nom de domaine** : enregistrements DNS `A` de `lexpatria.fr` et de `www.lexpatria.fr` vers l'adresse IP du serveur.
 
-## 2. Préparer le serveur (une seule fois)
+## 2. Récupérer le code sur le serveur (une seule fois)
 
-```
-sudo apt update && sudo apt install -y docker.io docker-compose-v2 git
-sudo ufw allow 22,80,443/tcp && sudo ufw enable
-sudo git clone https://github.com/<compte>/lexpatria.git /opt/lexpatria
-cd /opt/lexpatria
-cp .env.example .env && nano .env      # renseigner les clés, directement sur le serveur
-mkdir -p config && cp deploiement/equipe.exemple.json config/equipe.json && nano config/equipe.json
-```
-
-Les clés ne transitent jamais par message ni par e-mail : elles sont saisies dans le fichier `.env` du serveur, qui n'est pas versionné.
-`SECRET_JETONS`, `SECRET_TACHES` et `CLE_CHIFFREMENT` se génèrent avec `openssl rand -hex 32`. `CLE_CHIFFREMENT` chiffre les clés d'API saisies au back office : la conserver précieusement (sa perte impose de ressaisir les clés).
-
-## 3. Démarrer
+Le dépôt GitHub est privé : le serveur y accède par une clé de déploiement en lecture seule.
 
 ```
-docker compose up -d --build                         # base gérée OVH
-docker compose --profile base-locale up -d --build   # ou : base sur le serveur
-docker compose run --rm app node outils/equipe.mjs /config/equipe.json
+ssh ubuntu@<adresse IP du serveur>
+sudo apt-get update && sudo apt-get install -y git
+sudo ssh-keygen -t ed25519 -N "" -f /root/.ssh/lexpatria_deploy -C lexpatria-vps
+sudo cat /root/.ssh/lexpatria_deploy.pub
 ```
 
-Au démarrage, l'application applique les migrations de la base, puis le certificat HTTPS est obtenu automatiquement.
-Contrôle : `https://<domaine>/api/sante` doit répondre `{"ok":true}`.
+Copier la ligne affichée dans GitHub : dépôt LEXPATRIA › Settings › Deploy keys › Add deploy key (titre « VPS OVH », sans cocher « Allow write access »). Puis :
+
+```
+sudo GIT_SSH_COMMAND="ssh -i /root/.ssh/lexpatria_deploy -o StrictHostKeyChecking=accept-new" git clone git@github.com:VARTISAVOCATS/LEXPATRIA.git /opt/lexpatria
+sudo git -C /opt/lexpatria config core.sshCommand "ssh -i /root/.ssh/lexpatria_deploy"
+```
+
+## 3. Installer et démarrer
+
+```
+sudo nano /opt/lexpatria/deploiement/equipe.exemple.json   # facultatif : adresses de l'équipe (XXX = ignoré)
+sudo bash /opt/lexpatria/deploiement/installer.sh
+```
+
+Le script demande le domaine, l'adresse d'expédition et la clé Brevo (nécessaire aux codes de connexion), génère les secrets sur le serveur, démarre la base, l'application, le HTTPS et les tâches planifiées, crée les comptes de l'équipe et planifie la sauvegarde de la base. Les clés ne transitent jamais par message ni par e-mail ; `CLE_CHIFFREMENT` (dans `/opt/lexpatria/.env`) chiffre les clés saisies au back office : la conserver.
+Contrôle : `https://lexpatria.fr/api/sante` doit répondre `{"ok":true}`.
 
 ## 4. Brancher les services
 
@@ -54,8 +55,10 @@ Les clés se saisissent au choix dans le fichier `.env` ou, plus simplement, au 
 ## 5. Mettre à jour
 
 ```
-cd /opt/lexpatria && git pull && docker compose up -d --build
+sudo bash /opt/lexpatria/deploiement/mettre-a-jour.sh
 ```
+
+La base est sauvegardée avant chaque mise à jour ; les migrations s'appliquent au démarrage.
 
 ## 6. Avant d'ouvrir au public
 
