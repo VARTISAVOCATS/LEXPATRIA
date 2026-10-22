@@ -9,6 +9,7 @@ import { adresseEnLignes, tvaApplicable } from "@/lib/pays";
 import { texteConvention, VERSION_CONVENTION, type DonneesConvention } from "@/lib/convention";
 import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { signer } from "@/lib/jeton";
 import { stripe } from "@/lib/stripe";
 import { attribuer } from "./attribution";
 import { valeur } from "./connexions";
@@ -55,6 +56,7 @@ export async function donneesConvention(d: Base, dos: typeof dossiers.$inferSele
         : PROCEDURES[code].libelle,
     recoursPrealable: estRecoursPrealable(code) && !dos.avisPrealable && !parent,
     appelDe: parent?.reference,
+    consultation: dos.procedure === "CONSULTATION",
     lignes,
     troisFois: total >= SEUIL_TROIS_FOIS,
     dateLimite: frDate(dos.dateLimite),
@@ -135,5 +137,22 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
       });
     return;
   }
+  // Consultation en visio : pas d'attribution, le client choisit son créneau (et donc son avocat) dans Bookings.
+  if (dos.procedure === "CONSULTATION") {
+    const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
+    if (cli?.email)
+      await envoyer({
+        canal: "EMAIL",
+        destinataire: cli.email,
+        sujet: "Choisissez votre rendez-vous — LEXPATRIA",
+        texte: `Bonjour,\n\nVotre paiement est confirmé. Choisissez le créneau de votre consultation en visio : ${lienRendezVous(dos.id)}\n\nLEXPATRIA Avocats`,
+      });
+    return;
+  }
   await attribuer(d, dossierId, dos.traitement === "URGENCE");
+}
+
+/** Lien de choix du créneau (consultation en visio), valable 30 jours. */
+export function lienRendezVous(dossierId: string) {
+  return `${process.env.URL_PUBLIQUE ?? "https://lexpatria.fr"}/consultation/rendez-vous?jeton=${encodeURIComponent(signer(dossierId, 24 * 30, "rdv"))}`;
 }

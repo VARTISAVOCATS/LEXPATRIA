@@ -115,6 +115,12 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     ],
     instance: "Avis écrit",
   },
+  CONSULTATION: {
+    obtenir: "Un avocat du cabinet répond à vos questions en visio, au créneau que vous choisissez.",
+    compris: ["Un entretien de 30 minutes en visio avec un avocat du cabinet", "Le lien de connexion envoyé par e-mail, avec un rappel"],
+    nonCompris: "La rédaction d'un acte et le suivi d'une procédure font l'objet d'une proposition distincte.",
+    instance: "Consultation en visio",
+  },
 };
 
 /** Ce qui se passe après le paiement, identique pour toutes les procédures. */

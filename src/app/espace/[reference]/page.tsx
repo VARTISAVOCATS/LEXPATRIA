@@ -6,7 +6,8 @@ import { tServeur } from "@/i18n/serveur";
 import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { avisDuClient } from "@/lib/serveur/agenda";
 import { appelDe, premiereInstance } from "@/lib/serveur/appel";
-import { charger, donneesConvention, offre } from "@/lib/serveur/paiement";
+import { charger, donneesConvention, lienRendezVous, offre } from "@/lib/serveur/paiement";
+import type { RendezVous } from "@/lib/serveur/integrations/bookings";
 import { resumeConvention, texteConvention } from "@/lib/convention";
 import { accesClient, detailDossier, marquerLus } from "@/lib/serveur/dossiers";
 import { clientConnecte } from "@/lib/serveur/session";
@@ -74,7 +75,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
               <span className={`pill ${statut === "PAYE" ? "warn" : rang(statut) >= rang("CLOS") ? "n" : "ok"}`}>{t(LIBELLES_STATUT[statut])}</span>
               {nomAvocat && <span>{t("Votre avocat : Maître {nom}", { nom: nomAvocat })}</span>}
             </div>
-            {statut === "PAYE" && (
+            {statut === "PAYE" && dos.procedure !== "CONSULTATION" && (
               <p className="note">
                 {nomAvocat
                   ? t("Maître {nom} prend connaissance de votre dossier et vous écrit sous 48 heures ouvrées.", { nom: nomAvocat })
@@ -88,6 +89,23 @@ export default async function DossierClient({ params, searchParams }: { params: 
                   : t("Date limite estimée : {date} (votre avocat la vérifie)", { date: frDate(dos.dateLimite) })}
               </p>
             )}
+            {dos.procedure === "CONSULTATION" &&
+              (dos.rendezVous ? (
+                <p className="esp-rdv">
+                  {t("Consultation en visio le {date} (heure de Paris).", {
+                    date: new Date((dos.rendezVous as RendezVous).debut).toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "full", timeStyle: "short" }),
+                  })}{" "}
+                  {(dos.rendezVous as RendezVous).lienVisio && (
+                    <a href={(dos.rendezVous as RendezVous).lienVisio!} target="_blank" rel="noreferrer">
+                      {t("Rejoindre la visio")}
+                    </a>
+                  )}
+                </p>
+              ) : statut === "PAYE" ? (
+                <a className="esp-alerte" href={lienRendezVous(dos.id)}>
+                  {t("Choisissez votre rendez-vous")}
+                </a>
+              ) : null)}
             {parent && (
               <p className="note">
                 <Link href={`/espace/${parent.reference}`}>{t("Appel du dossier {ref}", { ref: parent.reference })}</Link>

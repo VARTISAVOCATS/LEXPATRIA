@@ -125,6 +125,7 @@ export const dossiers = pgTable("dossiers", {
   priseEnCharge: jsonb("prise_en_charge"), // attestation de prise en charge signée par l'avocat : { texte, le, avocatId, empreinte }
   transmisSecretariatLe: timestamp("transmis_secretariat_le", { withTimezone: true }),
   avisTransmisLe: timestamp("avis_transmis_le", { withTimezone: true }), // consultations : avis écrit remis au client
+  rendezVous: jsonb("rendez_vous"), // consultation en visio (Microsoft Bookings) : { id, debut, fin, lienVisio, avocatEmail, simule }
   derniereRelanceLe: timestamp("derniere_relance_le", { withTimezone: true }),
   creeLe: cree(),
   majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),

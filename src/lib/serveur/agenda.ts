@@ -128,7 +128,7 @@ export async function avisDuClient(d: Base, dos: Dossier) {
 
 export interface ElementAgenda {
   cle: string;
-  genre: "ECHEANCE" | "ACCEPTATION" | "AVIS";
+  genre: "ECHEANCE" | "ACCEPTATION" | "AVIS" | "RDV";
   jour: string; // AAAA-MM-JJ (Paris)
   heure?: Date;
   libelle: string;
@@ -153,6 +153,10 @@ export async function agenda(d: Base, m: Membre, maintenant = new Date()) {
     .from(dossiers)
     .where(and(eq(dossiers.statut, "PAYE"), sql`${dossiers.acceptationAvant} is not null`, portee(m)));
   const avis = await consultations(d, m, "a_rendre");
+  const rdvs = await d
+    .select({ ref: dossiers.reference, procedure: dossiers.procedure, rdv: dossiers.rendezVous, avocat: nomAvocat })
+    .from(dossiers)
+    .where(and(sql`${dossiers.rendezVous} is not null`, eq(dossiers.statut, "PRIS_EN_CHARGE"), portee(m)));
 
   const elements = ([
     ...ech.map((x) => ({
@@ -187,6 +191,10 @@ export async function agenda(d: Base, m: Membre, maintenant = new Date()) {
         procedure: x.dos.procedure,
         avocat: x.avocat?.prenom ? `${x.avocat.prenom} ${x.avocat.nom}` : null,
       })),
+    ...rdvs.map((x) => {
+      const debut = new Date((x.rdv as { debut: string }).debut);
+      return { cle: `r-${x.ref}`, genre: "RDV" as const, jour: jourParis(debut), heure: debut, libelle: "Consultation en visio", reference: x.ref, procedure: x.procedure, avocat: x.avocat };
+    }),
   ] as ElementAgenda[]).sort((a, b) => a.jour.localeCompare(b.jour) || (a.heure?.getTime() ?? 0) - (b.heure?.getTime() ?? 0));
 
   const dans7 = plusJours(aujourdhui, 7);

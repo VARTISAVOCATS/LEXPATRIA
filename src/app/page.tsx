@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { contenusPublics } from "@/lib/serveur/parametres";
+import { formatEuros } from "@/lib/procedures";
 import { SITUATIONS } from "@/lib/situations";
 import { tServeur } from "@/i18n/serveur";
 import BoutonsAccueil from "./BoutonsAccueil";
@@ -12,7 +13,7 @@ import PiedSite from "./composants/PiedSite";
 
 export default async function Accueil() {
   const { t } = await tServeur();
-  const { avocats: AVOCATS, faq: FAQ, accueil } = await contenusPublics(await db());
+  const { avocats: AVOCATS, faq: FAQ, accueil, tarifs } = await contenusPublics(await db());
   return (
     <>
       <EnteteSite />
@@ -27,6 +28,9 @@ export default async function Accueil() {
               <div className="h-cta ph-cta">
                 <BoutonsAccueil />
                 <p className="ph-ia">{t("Votre décision est lue par un outil d'intelligence artificielle du cabinet, puis vérifiée par votre avocat.")}</p>
+                <p className="ph-visio">
+                  <Link href="/consultation">{t("Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}", { prix: formatEuros(tarifs.CONSULTATION) })}</Link>
+                </p>
               </div>
             </div>
           </section>

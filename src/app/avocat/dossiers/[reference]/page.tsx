@@ -125,6 +125,20 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                 {x.cli.algerien && <span className="pill warn">Accord franco-algérien</span>}
                 <span>{x.avocat ? `Me ${x.avocat.prenom} ${x.avocat.nom}` : "Non attribué"}</span>
                 {statut === "PAYE" && dos.acceptationAvant && <span className="pill warn">à accepter avant {frDateHeure(dos.acceptationAvant)}</span>}
+                {!!dos.rendezVous && (
+                  <span className="pill ai">
+                    Visio le {frDateHeure(new Date((dos.rendezVous as { debut: string }).debut))}
+                    {(dos.rendezVous as { lienVisio?: string | null }).lienVisio && (
+                      <>
+                        {" · "}
+                        <a href={(dos.rendezVous as { lienVisio: string }).lienVisio} target="_blank" rel="noreferrer">
+                          rejoindre
+                        </a>
+                      </>
+                    )}
+                  </span>
+                )}
+                {dos.procedure === "CONSULTATION" && !dos.rendezVous && statut === "PAYE" && <span className="pill warn">Rendez-vous à choisir par le client</span>}
                 {dos.sharepointUrl && (
                   <a className="pill n" href={dos.sharepointUrl} target="_blank" rel="noreferrer">
                     Dossier SharePoint

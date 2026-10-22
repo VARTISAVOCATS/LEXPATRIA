@@ -71,6 +71,13 @@
       "when": 1792669158808,
       "tag": "0009_modeles_cabinet",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792671016119,
+      "tag": "0010_rendez_vous",
+      "breakpoints": true
     }
   ]
 }

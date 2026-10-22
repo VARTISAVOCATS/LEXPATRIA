@@ -87,13 +87,15 @@ export const CONNECTEURS: Connecteur[] = [
   {
     id: "microsoft365",
     nom: "Microsoft 365 — Outlook et SharePoint",
-    usage: "Agendas Outlook des avocats (absences importées, échéances inscrites) et classement des dossiers dans SharePoint.",
-    ou: "Portail Azure › Inscriptions d'applications : identifiant du locataire, de l'application, secret client. Autorisations d'application à accorder (consentement administrateur) : Calendars.ReadWrite et Sites.ReadWrite.All.",
+    usage: "Agendas Outlook des avocats (absences importées, échéances inscrites), classement des dossiers dans SharePoint et rendez-vous de consultation (Microsoft Bookings).",
+    ou: "Portail Azure › Inscriptions d'applications : identifiant du locataire, de l'application, secret client. Autorisations d'application à accorder (consentement administrateur) : Calendars.ReadWrite, Sites.ReadWrite.All et, pour Bookings, Bookings.Read.All et BookingsAppointment.ReadWrite.All.",
     champs: [
       { nom: "MS_TENANT_ID", libelle: "Identifiant du locataire (tenant)", secret: false, requis: true },
       { nom: "MS_CLIENT_ID", libelle: "Identifiant de l'application", secret: false, requis: true },
       { nom: "MS_CLIENT_SECRET", libelle: "Secret client", secret: true, requis: true },
       { nom: "SHAREPOINT_SITE", libelle: "Site SharePoint (adresse, ex. https://vartis.sharepoint.com/sites/Lexpatria)", secret: false },
+      { nom: "BOOKINGS_ENTREPRISE", libelle: "Microsoft Bookings : adresse de la page de réservation (ex. LexpatriaConsultations@vartis.law)", secret: false },
+      { nom: "BOOKINGS_SERVICE", libelle: "Microsoft Bookings : identifiant du service « Consultation en visio »", secret: false },
     ],
     test: true,
   },

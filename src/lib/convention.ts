@@ -27,6 +27,8 @@ export interface DonneesConvention {
   dateLimite?: string; // JJ/MM/AAAA
   /** Client résidant hors de l'Union européenne : même prix, sans TVA (article 259 B du CGI). */
   horsUE?: boolean;
+  /** Consultation en visio (entretien oral, sans acte ni procédure). */
+  consultation?: boolean;
   /** Avenant d'appel : référence du dossier de première instance. */
   appelDe?: string;
 }
@@ -47,7 +49,9 @@ export function texteConvention(d: DonneesConvention): string {
   const total = d.lignes.reduce((s, l) => s + l.montant, 0);
   const ttc = d.horsUE ? "" : " TTC";
   const lignes = d.lignes.map((l) => `- ${l.libelle} : ${formatEuros(l.montant)}${ttc}`).join("\n");
-  const mission = d.appelDe
+  const mission = d.consultation
+    ? "La mission consiste en un entretien de trente minutes en visioconférence avec un avocat du Cabinet, au créneau choisi par le Client. Elle ne comprend ni la rédaction d'un acte ni le suivi d'une procédure, qui font, le cas échéant, l'objet d'une proposition distincte."
+    : d.appelDe
     ? `La mission couvre l'instance d'appel : rédaction et dépôt de la requête d'appel, tous les mémoires utiles et la plaidoirie devant la cour lorsque l'avocat l'estime opportune. Elle complète la convention acceptée pour le dossier de première instance ${d.appelDe}, dont les autres stipulations demeurent.`
     : d.recoursPrealable
     ? "La mission s'achève à la réponse de l'administration ou à la naissance d'une décision implicite de rejet. En cas de rejet, la requête devant le tribunal administratif fait l'objet d'une proposition distincte."
@@ -71,14 +75,14 @@ ARTICLE 1 — OBJET ET PÉRIMÈTRE
 Le Client confie au Cabinet la mission suivante : ${d.procedureLibelle}.
 ${mission}
 Sont exclus de la mission : ${d.appelDe ? "le pourvoi en cassation" : "l'appel"}, les procédures de référé non prévues ci-dessous, l'exécution de la décision et toute procédure devant le juge judiciaire. ${d.appelDe ? "Les référés font" : "L'appel et les référés font"}, le cas échéant, l'objet d'un avenant soumis à l'accord du Client.
-Le Cabinet est tenu d'une obligation de moyens. Le Client s'engage à fournir des informations exactes et les pièces demandées dans les meilleurs délais. Avant le dépôt, l'avocat attribué examine le dossier, vérifie la date de notification de la décision et le délai de recours${d.appelDe ? " (ici, la date de notification du jugement et le délai d'appel)" : ""}.
+Le Cabinet est tenu d'une obligation de moyens. Le Client s'engage à fournir des informations exactes et les pièces demandées dans les meilleurs délais. ${d.consultation ? "Le Client peut déplacer le rendez-vous au plus tard vingt-quatre heures à l'avance, par le lien reçu par e-mail." : `Avant le dépôt, l'avocat attribué examine le dossier, vérifie la date de notification de la décision et le délai de recours${d.appelDe ? " (ici, la date de notification du jugement et le délai d'appel)" : ""}.`}
 
 ARTICLE 2 — HONORAIRES
 Les honoraires sont fixés forfaitairement comme suit :
 ${lignes}
 Total : ${formatEuros(total)}${d.horsUE ? ` (${MENTION_TVA_HORS_UE})` : " TTC"}.
 Ce forfait est ferme. Il ne comporte aucun honoraire de résultat. Hors Île-de-France, seuls les frais de déplacement de l'avocat pour l'audience font l'objet d'un avenant soumis à l'accord préalable du Client.
-Si l'avocat constate, à l'examen du dossier, que le délai de recours était déjà expiré au jour du paiement, aucune procédure n'est engagée : les honoraires sont remboursés, sous déduction de 69 € correspondant à l'examen du dossier et à l'avis écrit remis au Client. Une fois la procédure engagée, elle est menée jusqu'au dépôt ; aucun remboursement n'intervient après le dépôt.
+${d.consultation ? "Si le Client ne se présente pas au rendez-vous sans l'avoir déplacé, la consultation est due." : "Si l'avocat constate, à l'examen du dossier, que le délai de recours était déjà expiré au jour du paiement, aucune procédure n'est engagée : les honoraires sont remboursés, sous déduction de 69 € correspondant à l'examen du dossier et à l'avis écrit remis au Client. Une fois la procédure engagée, elle est menée jusqu'au dépôt ; aucun remboursement n'intervient après le dépôt."}
 Les sommes que la juridiction pourrait mettre à la charge de l'administration au titre de l'article L. 761-1 du code de justice administrative reviennent au Client. Le Cabinet n'en assure pas le recouvrement mais indique au Client la marche à suivre pour les obtenir.
 
 ARTICLE 3 — FRAIS ET MODALITÉS DE RÈGLEMENT
@@ -106,6 +110,12 @@ La convention est conclue à distance, par voie électronique. La case d'accepta
 /** Résumé en trois lignes affiché au-dessus de la case d'acceptation (cahier des charges, 4.10). */
 export function resumeConvention(d: DonneesConvention): string[] {
   const total = d.lignes.reduce((s, l) => s + l.montant, 0);
+  if (d.consultation)
+    return [
+      `${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour un entretien de 30 minutes en visio avec un avocat du cabinet.`,
+      "Vous choisissez votre créneau juste après le paiement ; le lien de connexion vous est envoyé par e-mail.",
+      "Rendez-vous déplaçable jusqu'à 24 heures à l'avance.",
+    ];
   return [
     `Forfait ferme de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour ${d.appelDe ? "toute l'instance d'appel, plaidoirie comprise" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance, plaidoirie comprise"}.`,
     "Un avocat du cabinet examine le dossier, rédige, atteste et dépose l'acte.",

@@ -11,7 +11,7 @@ import { Cadre } from "../cadre";
 export const metadata = { title: "Agenda — Espace cabinet", robots: { index: false } };
 
 const proc = (p: string) => PROCEDURES[p as CodeProcedure]?.libelle ?? p;
-const GENRE: Record<ElementAgenda["genre"], string> = { ECHEANCE: "Échéance", ACCEPTATION: "Acceptation", AVIS: "Consultation" };
+const GENRE: Record<ElementAgenda["genre"], string> = { ECHEANCE: "Échéance", ACCEPTATION: "Acceptation", AVIS: "Consultation", RDV: "Visio" };
 
 function Groupe({ titre, elements, ton, vide, tous }: { titre: string; elements: ElementAgenda[]; ton: string; vide: string; tous: boolean }) {
   return (

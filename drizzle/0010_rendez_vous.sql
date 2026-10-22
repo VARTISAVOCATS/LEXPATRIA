@@ -1,0 +1,1 @@
+ALTER TABLE "dossiers" ADD COLUMN "rendez_vous" jsonb;

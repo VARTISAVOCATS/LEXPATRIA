@@ -247,3 +247,14 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .mo-var { align-self: flex-start; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; background: var(--parch-2); border: 1px solid var(--rule); border-radius: 6px; padding: 2px 8px; cursor: pointer; color: var(--ink); }
 .mo-var:hover { border-color: var(--ink-3); }
 .mo-import { cursor: pointer; }
+
+/* Consultation en visio : choix du créneau */
+.rdv { display: flex; flex-direction: column; gap: 16px; margin-top: 12px; }
+.rdv-jour { display: flex; flex-direction: column; gap: 8px; }
+.rdv-jour b { text-transform: capitalize; }
+.rdv-heures { display: flex; flex-wrap: wrap; gap: 8px; }
+.rdv-heures button { min-height: 44px; min-width: 76px; border: 1px solid var(--rule); background: var(--white); border-radius: 8px; font-size: 15px; cursor: pointer; color: var(--ink); }
+.rdv-heures button.sel { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.esp-rdv { font-size: 17px; font-weight: 600; }
+.ph-visio { margin-top: 10px; font-size: 14.5px; }
+.ph-visio a { color: var(--ink); }

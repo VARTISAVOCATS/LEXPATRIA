@@ -36,6 +36,7 @@ export const LIBELLES_STATUT: Record<Statut, string> = {
 
 /** Étapes affichées dans le suivi, dans l'ordre. Recours préalable (visa, naturalisation) : pas de tribunal. */
 export function etapesSuivi(procedure: string): Statut[] {
+  if (procedure === "CONSULTATION") return ["PAYE", "PRIS_EN_CHARGE", "CLOS"];
   const prealable = PROCEDURES[procedure as CodeProcedure]?.diligence === "RAPO" || procedure === "BLOCAGE_SIMPLE" || procedure === "DIAGNOSTIC";
   return prealable
     ? ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE", "DEPOSE", "CLOS"]

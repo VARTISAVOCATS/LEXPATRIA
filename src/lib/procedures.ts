@@ -11,7 +11,8 @@ export type CodeProcedure =
   | "BLOCAGE_EMPLOI"
   | "BLOCAGE_SIMPLE"
   | "PROCEDURE_EN_COURS"
-  | "DIAGNOSTIC";
+  | "DIAGNOSTIC"
+  | "CONSULTATION";
 
 export type Diligence =
   | "REQUETE"
@@ -102,7 +103,11 @@ export const PROCEDURES: Record<CodeProcedure, Procedure> = {
     enLigne: true,
   },
   DIAGNOSTIC: { code: "DIAGNOSTIC", libelle: "Diagnostic écrit de votre situation", diligence: "DIAGNOSTIC", enLigne: true },
+  CONSULTATION: { code: "CONSULTATION", libelle: "Consultation en visio avec un avocat", diligence: "CONSULTATION", enLigne: true },
 };
+
+/** Durée d'une consultation en visio (minutes). */
+export const DUREE_CONSULTATION_MIN = 30;
 
 export function prixTTC(d: Diligence, tarifs: Record<Diligence, number> = TARIFS_DEFAUT): number {
   return tarifs[d];
@@ -135,7 +140,7 @@ export const LIBELLES_DILIGENCE: Record<Diligence, string> = {
   MISE_EN_DEMEURE: "Mise en demeure de la préfecture",
   AVIS_PREALABLE: "Avis écrit d'un avocat",
   DIAGNOSTIC: "Diagnostic écrit de votre situation",
-  CONSULTATION: "Consultation",
+  CONSULTATION: "Consultation en visio avec un avocat (30 minutes)",
   MAJORATION_URGENCE: "Prise en charge en urgence (requête sommaire, sous 10 heures ouvrées)",
   APPEL: "Appel devant la cour administrative d'appel",
 };
