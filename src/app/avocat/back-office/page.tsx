@@ -11,6 +11,9 @@ import { frDateHeure } from "@/lib/statuts";
 import { ActionForm } from "../Actions";
 import { Cadre } from "../cadre";
 import { FormConnexion } from "./Connexions";
+import Modeles from "./Modeles";
+import { etatModeles } from "@/lib/serveur/modeles-cabinet";
+import { VARIABLES } from "@/lib/modeles";
 import { Assistant, EditeurAccueil, EditeurAvocats, EditeurDelais, EditeurFaq, EditeurRemuneration, EditeurTarifs } from "./Editeurs";
 
 export const metadata = { title: "Back office — Espace cabinet", robots: { index: false } };
@@ -18,6 +21,7 @@ export const metadata = { title: "Back office — Espace cabinet", robots: { ind
 const RUBRIQUES = [
   ["assistant", "Assistant"],
   ["contenus", "Contenus et tarifs"],
+  ["modeles", "Modèles d'actes"],
   ["equipe", "Équipe"],
   ["connexions", "Connexions (API)"],
   ["historique", "Historique"],
@@ -159,6 +163,23 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                 </p>
               </>
             )}
+
+            {rubrique === "modeles" &&
+              (await (async () => {
+                const etat = await etatModeles(d);
+                return (
+                  <Modeles
+                    variables={VARIABLES.map(({ nom, libelle }) => ({ nom, libelle }))}
+                    modeles={etat.map((m) => ({
+                      code: m.code,
+                      libelle: m.libelle,
+                      cabinet: m.cabinet,
+                      texte: m.actuel?.texte ?? "",
+                      versions: m.versions.map((v) => ({ id: v.id, version: v.version, le: frDateHeure(v.creeLe), fichier: v.fichier, vide: !v.texte.trim() })),
+                    }))}
+                  />
+                );
+              })())}
 
             {rubrique === "equipe" && (
               <section className="card">

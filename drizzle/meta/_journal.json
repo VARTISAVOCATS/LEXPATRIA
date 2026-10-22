@@ -64,6 +64,13 @@
       "when": 1792667677520,
       "tag": "0008_adresse_client",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792669158808,
+      "tag": "0009_modeles_cabinet",
+      "breakpoints": true
     }
   ]
 }

@@ -121,6 +121,8 @@ export interface DonneesActe {
   reference: string;
   /** Adresse postale du client sur une ligne. */
   adresse?: string | null;
+  dateNaissance?: string | null;
+  nationalite?: string | null;
   /** Dossier d'appel : jugement attaqué (date du jugement = dateDecision, notification = dateNotification). */
   appel?: { tribunal: string; numero?: string | null; referencePremiere: string } | null;
 }
@@ -246,7 +248,7 @@ function enTete(d: DonneesActe, titre: string, sousTitre: string) {
 ${titre}
 ${sousTitre}
 
-POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${v(d.adresse)}
+POUR : ${identite(d)}, né(e) le ${fr(d.dateNaissance)} à ${MANQUANT}, de nationalité ${v(d.nationalite)}, demeurant ${v(d.adresse)}
 
 Ayant pour avocat : ${avocatConstitue(d)}
 
@@ -529,7 +531,7 @@ ${signature(d)}`;
 REQUÊTE D'APPEL
 (articles R. 811-1 et suivants du code de justice administrative)
 
-POUR : ${identite(d)}, né(e) le ${MANQUANT} à ${MANQUANT}, de nationalité ${MANQUANT}, demeurant ${v(d.adresse)}
+POUR : ${identite(d)}, né(e) le ${fr(d.dateNaissance)} à ${MANQUANT}, de nationalité ${v(d.nationalite)}, demeurant ${v(d.adresse)}
 
 Ayant pour avocat : ${avocatConstitue(d)}
 
@@ -586,6 +588,81 @@ Points d'attention
 ${signature(d)}`;
   }
 }
+
+// ---------- Modèles du cabinet (déposés au back office) ----------
+// Un modèle du cabinet remplace le modèle intégré pour son type d'acte. Il contient des variables entre doubles accolades,
+// remplacées par les données du dossier ; une donnée absente ou une variable inconnue devient XXX.
+
+export interface VariableModele {
+  nom: string;
+  libelle: string;
+  valeur: (d: DonneesActe) => string;
+}
+
+export const VARIABLES: VariableModele[] = [
+  { nom: "client", libelle: "Civilité, prénom et NOM du client", valeur: identite },
+  { nom: "civilite", libelle: "Madame ou Monsieur", valeur: (d) => (d.civilite === "MADAME" ? "Madame" : d.civilite === "MONSIEUR" ? "Monsieur" : MANQUANT) },
+  { nom: "prenom", libelle: "Prénom du client", valeur: (d) => v(d.prenom) },
+  { nom: "nom", libelle: "NOM du client", valeur: (d) => v(d.nom?.toUpperCase()) },
+  { nom: "date_naissance", libelle: "Date de naissance", valeur: (d) => fr(d.dateNaissance) },
+  { nom: "nationalite", libelle: "Nationalité", valeur: (d) => v(d.nationalite) },
+  { nom: "adresse", libelle: "Adresse postale du client", valeur: (d) => v(d.adresse) },
+  { nom: "prefecture", libelle: "Préfecture (telle que saisie)", valeur: (d) => v(d.prefecture) },
+  { nom: "prefet", libelle: "« préfet de … » (dans une phrase)", valeur: (d) => prefet(d.prefecture) },
+  { nom: "Prefet", libelle: "« Préfet de … » (en début de ligne)", valeur: (d) => prefet(d.prefecture, true) },
+  { nom: "tribunal", libelle: "Ville du tribunal administratif compétent", valeur: (d) => tribunalCompetent(d.prefecture) },
+  { nom: "TRIBUNAL", libelle: "Ville du tribunal, en capitales", valeur: (d) => tribunalCompetent(d.prefecture).toUpperCase() },
+  { nom: "cour", libelle: "Ville de la cour administrative d'appel", valeur: (d) => courAppel(d.appel?.tribunal ?? tribunalCompetent(d.prefecture)) },
+  { nom: "date_decision", libelle: "Date de la décision (ou du jugement en appel)", valeur: (d) => fr(d.dateDecision) },
+  { nom: "date_notification", libelle: "Date de notification", valeur: (d) => fr(d.dateNotification) },
+  { nom: "date_limite", libelle: "Date limite du recours", valeur: (d) => fr(d.dateLimite) },
+  { nom: "numero_jugement", libelle: "N° du jugement attaqué (appel)", valeur: (d) => v(d.appel?.numero) },
+  { nom: "objet_decision", libelle: "Ce qu'a décidé le préfet (phrase)", valeur: (d) => objetDecision(d) },
+  { nom: "faits", libelle: "Exposé des faits rédigé à partir du questionnaire", valeur: faits },
+  { nom: "question", libelle: "Question posée par le client (avis)", valeur: (d) => v(d.question) },
+  { nom: "reference", libelle: "Référence du dossier", valeur: (d) => d.reference },
+  { nom: "avocat", libelle: "Maître Prénom Nom", valeur: (d) => (d.avocat ? `Maître ${d.avocat.prenom} ${d.avocat.nom}` : `Maître ${MANQUANT}`) },
+  { nom: "avocat_constitue", libelle: "Avocat constitué avec la SELARL et l'adresse du cabinet", valeur: avocatConstitue },
+  { nom: "signature", libelle: "« Fait à Paris, le … » et signature", valeur: signature },
+  { nom: "bordereau", libelle: "Bordereau des pièces numérotées", valeur: bordereau },
+];
+
+/** Remplit un modèle du cabinet : {{variable}} → donnée du dossier, sinon XXX. */
+export function remplirModele(texte: string, d: DonneesActe): string {
+  const parNom = new Map(VARIABLES.map((x) => [x.nom, x]));
+  return texte.replace(/\{\{\s*([A-Za-z_]+)\s*\}\}/g, (_, nom: string) => {
+    const x = parNom.get(nom);
+    if (!x) return MANQUANT;
+    const r = x.valeur(d);
+    return r && r.trim() ? r : MANQUANT;
+  });
+}
+
+/** Variables inconnues d'un modèle (signalées à l'enregistrement). */
+export function variablesInconnues(texte: string): string[] {
+  const connues = new Set(VARIABLES.map((x) => x.nom));
+  return [...new Set([...texte.matchAll(/\{\{\s*([^}]*?)\s*\}\}/g)].map((m) => m[1]).filter((n) => !connues.has(n)))];
+}
+
+/** Données fictives pour l'aperçu d'un modèle au back office. */
+export const DONNEES_EXEMPLE: DonneesActe = {
+  civilite: "MADAME",
+  prenom: "Nadia",
+  nom: "Exemple",
+  procedure: "REFUS_TITRE",
+  prefecture: "Préfecture du Val-de-Marne",
+  dateDecision: "2026-09-15",
+  dateNotification: "2026-09-20",
+  dateLimite: "2026-11-20",
+  reponses: { entree: "2016-03-01", famille: "marie", enfants: "2", scolarises: "oui", activite: "cdi", anciennete: "3 ans" },
+  question: "Puis-je demander un changement de statut ?",
+  avocat: { prenom: "Prénom", nom: "Nom" },
+  pieces: ["Décision attaquée", "Passeport", "Contrat de travail"],
+  reference: "D0000",
+  adresse: "12 rue de la Paix, 94000 Créteil",
+  dateNaissance: null,
+  nationalite: null,
+};
 
 export function compterManquants(texte: string): number {
   return (texte.match(/XXX/g) ?? []).length;

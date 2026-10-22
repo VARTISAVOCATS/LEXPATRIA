@@ -337,3 +337,15 @@ export const synchronisations = pgTable("synchronisations", {
   ok: boolean("ok").notNull(),
   message: text("message").notNull(),
 });
+
+/** Modèles d'actes du cabinet (back office) : chaque enregistrement est une version ; la plus récente s'applique.
+ *  Un texte vide rend la main au modèle intégré à la plateforme. */
+export const modelesCabinet = pgTable("modeles_cabinet", {
+  id: id(),
+  code: text("code").notNull(), // CodeModele
+  version: integer("version").notNull(),
+  texte: text("texte").notNull(),
+  fichier: text("fichier"), // nom du fichier Word importé, le cas échéant
+  auteurId: text("auteur_id").notNull(),
+  creeLe: cree(),
+});

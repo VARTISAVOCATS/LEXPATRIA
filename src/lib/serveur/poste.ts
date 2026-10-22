@@ -17,6 +17,7 @@ import {
   modelesPour,
   motsModifies,
   procedureLibelle,
+  remplirModele,
   tribunalCompetent,
   type CodeModele,
   type DonneesActe,
@@ -25,6 +26,7 @@ import { adresseEnLignes } from "@/lib/pays";
 import { rang } from "@/lib/statuts";
 import { minimiser } from "@/lib/triage";
 import { valeur } from "./connexions";
+import { modeleActif } from "./modeles-cabinet";
 import type { Dossier } from "./dossiers";
 import { envoyer } from "./notifications";
 import type { Membre } from "./session";
@@ -58,6 +60,8 @@ export async function donneesActe(d: Base, dos: Dossier): Promise<DonneesActe> {
     pieces: lesPieces.filter((p) => !p.manquante).map((p) => p.libelle),
     reference: dos.reference,
     adresse: cli ? adresseEnLignes(cli).join(", ") || null : null,
+    dateNaissance: cli?.dateNaissance ?? null,
+    nationalite: cli?.nationalite ?? null,
     appel: await infoAppel(d, dos),
   };
 }
@@ -208,14 +212,17 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   if (!peutTravailler(m, dos)) return refus("Dossier attribué à un autre avocat.");
   if (!modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId).includes(modele)) return refus("Modèle non prévu pour cette procédure.");
   const x = await donneesActe(d, dos);
-  let projet = genererModele(modele, x);
+  // Modèle du cabinet (back office) s'il existe, sinon modèle intégré.
+  const duCabinet = await modeleActif(d, modele);
+  let projet = duCabinet ? remplirModele(duCabinet, x) : genererModele(modele, x);
   const cle = await valeur("ANTHROPIC_API_KEY");
   if (cle) {
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-4-5",
       max_tokens: 6000,
       system:
-        "Tu prépares un projet d'acte pour un avocat au barreau de Paris (droit des étrangers). Tu reçois un modèle et les éléments du dossier. Complète le modèle en développant les moyens à partir des seuls éléments fournis. Règles : n'invente aucun fait, aucune date, aucune référence de jurisprudence ; laisse « XXX » partout où l'information manque ; conserve la structure, les intitulés et la signature ; ton juridique sobre. Renvoie uniquement le texte de l'acte.",
+        "Tu prépares un projet d'acte pour un avocat au barreau de Paris (droit des étrangers). Tu reçois un modèle et les éléments du dossier. Complète le modèle en développant les moyens à partir des seuls éléments fournis. Règles : n'invente aucun fait, aucune date, aucune référence de jurisprudence ; laisse « XXX » partout où l'information manque ; conserve la structure, les intitulés et la signature ; ton juridique sobre. Renvoie uniquement le texte de l'acte." +
+        (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction mot pour mot et ne remplace que les « XXX » que les éléments du dossier permettent de compléter." : ""),
       messages: [
         {
           role: "user",
@@ -230,7 +237,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const version = precedent && precedent.type === modele ? precedent.version + 1 : 1;
   await d.insert(actes).values({ dossierId: dos.id, type: modele, version, contenu: projet, texteIA: projet, auteurId: m.id });
   if (rang(dos.statut) < rang("EN_REDACTION")) await d.update(dossiers).set({ statut: "EN_REDACTION", majLe: new Date() }).where(eq(dossiers.id, dos.id));
-  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PROJET_GENERE", details: { modele, version, source: cle ? "IA" : "MODELE" } });
+  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PROJET_GENERE", details: { modele, version, source: cle ? "IA" : "MODELE", modeleCabinet: !!duCabinet } });
   return { ok: true };
 }
 
