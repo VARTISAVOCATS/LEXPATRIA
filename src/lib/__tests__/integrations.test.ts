@@ -13,7 +13,7 @@ import { synchroniserAbsences } from "@/lib/serveur/integrations/outlook";
 import { facturer, prixHT } from "@/lib/serveur/integrations/pennylane";
 import { enregistrerNumero, paquetTelerecours } from "@/lib/serveur/integrations/telerecours";
 import { compatible, texteVersPdf } from "@/lib/serveur/pdf";
-import { adresseComplete, adresseEnLignes } from "@/lib/pays";
+import { adresseComplete, adresseEnLignes, tvaApplicable } from "@/lib/pays";
 import { texteConvention } from "@/lib/convention";
 
 const membre = async (email: string) => (await (await db()).select().from(schema.utilisateurs).where(eq(schema.utilisateurs.email, email)))[0];
@@ -47,6 +47,7 @@ describe("adresse postale", () => {
     expect(adresseComplete({ adresse: "Cité 500 logements, bât. B", codePostal: "", ville: "Oran", pays: "DZ" })).toBe(true);
     expect(adresseComplete({ adresse: "", ville: "Oran", pays: "DZ" })).toBe(false);
     expect(adresseEnLignes({ adresse: "Cité 500 logements", codePostal: "31000", ville: "Oran", pays: "DZ" })).toEqual(["Cité 500 logements", "31000 Oran", "ALGÉRIE"]);
+    expect([tvaApplicable("FR"), tvaApplicable("RE"), tvaApplicable("GP"), tvaApplicable("BE"), tvaApplicable("DZ"), tvaApplicable("MA")]).toEqual([true, true, true, true, false, false]);
     const base = { reference: "D1", procedureLibelle: "Requête", recoursPrealable: false, lignes: [{ diligence: "REQUETE" as const, libelle: "Requête", montant: 99_000 }], troisFois: true };
     expect(texteConvention(base)).toMatch(/Total : 990\s€ TTC\./);
     expect(texteConvention({ ...base, horsUE: true })).toMatch(/Total : 990\s€ \(TVA non applicable, article 259 B du code général des impôts\)\./);

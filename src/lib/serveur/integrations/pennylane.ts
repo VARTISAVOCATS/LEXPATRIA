@@ -1,6 +1,6 @@
 // Pennylane (API v2) : une facture par paiement reçu, au nom du client (mention « réglée par un tiers » le cas échéant).
 // Les prix de la plateforme sont TTC ; la facture porte le prix HT et la TVA à 20 %.
-// L'adresse postale du client est exigée avant le paiement. Client résidant dans l'Union européenne : prix TTC, facture
+// L'adresse postale du client est exigée avant le paiement. Client résidant dans l'Union européenne ou en outre-mer : prix TTC, facture
 // au prix HT avec TVA à 20 %. Hors Union : même prix, sans TVA (article 259 B du CGI), mention portée sur la facture.
 
 import { and, eq, isNull } from "drizzle-orm";
