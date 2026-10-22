@@ -186,3 +186,30 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .cx-champs { display: grid !important; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 10px 16px; }
 .cx-champs .bo-pied { grid-column: 1 / -1; }
 .lien-mini { background: none; border: 0; padding: 0; font: inherit; font-size: 12px; color: var(--bad); text-decoration: underline; cursor: pointer; align-self: flex-start; }
+
+/* ---------- Poste de travail de l'avocat ---------- */
+.pt-grille { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 360px); gap: 16px; align-items: start; }
+@media (max-width: 960px) { .pt-grille { grid-template-columns: minmax(0, 1fr); } }
+.pt-principal, .pt-cote { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.pt-cote { position: sticky; top: 12px; }
+@media (max-width: 960px) { .pt-cote { position: static; } }
+.pt-vigilance { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pt-vigilance label { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.pt-vigilance input { margin-top: 3px; flex: none; }
+.pt-modele { font-size: 13.5px !important; padding: 6px 8px !important; max-width: 100%; }
+.pt-barre { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.pt-espace { flex: 1; }
+.pt-apercu, .pt-editeur { font-family: "Times New Roman", Georgia, serif; font-size: 15px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--white); border: 1px solid var(--rule); border-radius: 6px; padding: 16px 20px; margin: 0; max-height: 75vh; overflow-y: auto; }
+.pt-editeur { width: 100%; min-height: 60vh; resize: vertical; }
+.pt-xxx { background: #ffeb3b; color: #000; font-weight: 700; padding: 0 2px; border-radius: 2px; }
+.pt-versions summary { cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+.pt-versions ul { font-size: 13px; margin: 6px 0 0; }
+.pt-controle { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+.pt-controle li.ok span { color: var(--ok); font-weight: 700; }
+.pt-controle li.ko span { color: var(--bad); font-weight: 700; }
+.pt-controle li.ko { color: var(--ink-2); }
+.pt-attest { display: flex; gap: 10px; align-items: flex-start; font-size: 13.5px; line-height: 1.5; cursor: pointer; }
+.pt-attest input { margin-top: 3px; flex: none; }
+.pt-reponse { border-top: 1px solid var(--rule); padding-top: 10px; font-size: 14px; }
+.pt-reponse p { white-space: pre-wrap; margin: 4px 0 0; }
+.esp .note.warn { display: inline-block; }

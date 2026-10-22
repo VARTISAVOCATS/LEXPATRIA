@@ -578,5 +578,7 @@
   "Échanges": "Mensajes",
   "Échanges avec votre avocat": "Mensajes con su abogado",
   "Échoué": "Fallido",
-  "Étape actuelle": "Etapa actual"
+  "Étape actuelle": "Etapa actual",
+  "Attestation de prise en charge, signée le {date}": "Certificado de asunción del expediente, firmado el {date}",
+  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Su certificado de asunción del expediente estará disponible en cuanto su abogado haya verificado las fechas de su expediente."
 }

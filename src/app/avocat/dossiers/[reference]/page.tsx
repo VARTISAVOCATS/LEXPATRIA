@@ -10,10 +10,13 @@ import { frDate, frDateHeure, LIBELLES_STATUT, STATUTS_AVOCAT, type Statut } fro
 import { FormMessage, FormPiece } from "../../../espace/[reference]/Formulaires";
 import { ActionForm } from "../../Actions";
 import { Cadre } from "../../cadre";
+import { donneesPoste } from "./donnees-poste";
+import PosteTravail from "./PosteTravail";
 
 export const metadata = { title: "Dossier — Espace cabinet", robots: { index: false } };
 
 const ONGLETS = [
+  ["travail", "Poste de travail"],
   ["dossier", "Dossier"],
   ["echanges", "Échanges"],
   ["pieces", "Pièces"],
@@ -56,7 +59,7 @@ function Valeur({ l, v }: { l: string; v?: string | null }) {
 export default async function FicheDossier({ params, searchParams }: { params: Promise<{ reference: string }>; searchParams: Promise<{ onglet?: string }> }) {
   const { reference } = await params;
   const { onglet: o } = await searchParams;
-  const onglet = ONGLETS.find(([k]) => k === o)?.[0] ?? "dossier";
+  const onglet = ONGLETS.find(([k]) => k === o)?.[0] ?? "travail";
   return (
     <Cadre actif="dossiers">
       {async (m) => {
@@ -74,6 +77,7 @@ export default async function FicheDossier({ params, searchParams }: { params: P
         const faits = (dos.faitsExtraits ?? []) as unknown[];
         const nonLus = x.messages.filter((y) => y.auteur === "CLIENT" && !y.luLe).length;
         const ref = dos.reference;
+        const poste = onglet === "travail" ? await donneesPoste(d, dos, m) : null;
 
         return (
           <>
@@ -124,6 +128,8 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                 </Link>
               ))}
             </nav>
+
+            {onglet === "travail" && poste && <PosteTravail {...poste} />}
 
             {onglet === "dossier" && (
               <div className="cab-deux">

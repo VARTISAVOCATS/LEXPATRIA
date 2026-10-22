@@ -578,5 +578,7 @@
   "Échanges": "Messages",
   "Échanges avec votre avocat": "Messages with your lawyer",
   "Échoué": "Failed",
-  "Étape actuelle": "Current stage"
+  "Étape actuelle": "Current stage",
+  "Attestation de prise en charge, signée le {date}": "Certificate of representation, signed on {date}",
+  "Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.": "Your certificate of representation will be available once your lawyer has checked the dates in your case."
 }

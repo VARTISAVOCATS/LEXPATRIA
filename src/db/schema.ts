@@ -114,6 +114,9 @@ export const dossiers = pgTable("dossiers", {
   source: text("source"), // campagne : visa-dz, meta, tiktok…
   etapeAtteinte: text("etape_atteinte"), // dernier écran atteint avant paiement (relance au point d'arrêt)
   relancesEnvoyees: integer("relances_envoyees").notNull().default(0),
+  analyse: jsonb("analyse"), // analyse de l'IA pour l'avocat (jamais transmise au client) : résumé, questions, vigilance…
+  priseEnCharge: jsonb("prise_en_charge"), // attestation de prise en charge signée par l'avocat : { texte, le, avocatId, empreinte }
+  transmisSecretariatLe: timestamp("transmis_secretariat_le", { withTimezone: true }),
   derniereRelanceLe: timestamp("derniere_relance_le", { withTimezone: true }),
   creeLe: cree(),
   majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),
@@ -161,9 +164,11 @@ export const conventions = pgTable("conventions_acceptees", {
 export const actes = pgTable("actes", {
   id: id(),
   dossierId: text("dossier_id").notNull().references(() => dossiers.id),
-  type: text("type").notNull(), // REQUETE | REQUETE_SOMMAIRE | MEMOIRE | REFERE_SUSPENSION | RAPO | …
+  type: text("type").notNull(), // code du modèle : REQUETE_OQTF | REQUETE_REFUS_TITRE | REFERE_SUSPENSION | RAPO_VISA | …
   version: integer("version").notNull().default(1),
   contenu: text("contenu").notNull(),
+  texteIA: text("texte_ia"), // projet tel que proposé par l'IA (base du compte des mots modifiés)
+  auteurId: text("auteur_id"),
   motsModifies: integer("mots_modifies").notNull().default(0),
   tempsRevueS: integer("temps_revue_s").notNull().default(0),
   depose: boolean("depose").notNull().default(false),

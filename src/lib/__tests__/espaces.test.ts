@@ -100,7 +100,8 @@ describe("droits et contrôles de l'espace cabinet", () => {
     expect((await fixerDateLimite(d, kachi, dos, "2026-11-14")).ok).toBe(true);
     [dos] = await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id));
     expect(dos.dateLimiteVerifiee).toBe(true);
-    expect((await changerStatut(d, kachi, dos, "DEPOSE")).ok).toBe(true);
+    // Date vérifiée mais acte non attesté : toujours pas de dépôt.
+    expect(await changerStatut(d, kachi, dos, "DEPOSE")).toEqual({ ok: false, erreur: "Aucun dépôt sans attestation de l'avocat sur la dernière version de l'acte." });
   });
 });
 

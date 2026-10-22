@@ -7,6 +7,7 @@ import { journaliser } from "@/lib/journal";
 import { STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
 import { ajouterMessage, voitTout, type Dossier } from "./dossiers";
 import { envoyer } from "./notifications";
+import { attestationValide, dernierActe } from "./poste";
 import type { Membre } from "./session";
 
 const ORIGINE = () => process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
@@ -42,6 +43,8 @@ export async function changerStatut(d: Base, m: Membre, dos: Dossier, statut: st
   if (m.role === "SECRETARIAT" && !["DEPOSE", "ENREGISTRE", "INSTRUCTION", "AUDIENCE", "JUGE"].includes(statut)) return refus("Étape réservée à l'avocat.");
   if (dos.statut === "PAYE" && statut !== "PRIS_EN_CHARGE") return refus("Acceptez d'abord le dossier.");
   if (statut === "DEPOSE" && !dos.dateLimiteVerifiee) return refus("Vérifiez et fixez d'abord la date limite du recours.");
+  if (statut === "DEPOSE" && !(await attestationValide(d, await dernierActe(d, dos.id))))
+    return refus("Aucun dépôt sans attestation de l'avocat sur la dernière version de l'acte.");
   if (statut === "PRIS_EN_CHARGE" && dos.statut === "PAYE") return accepter(d, m, dos);
   await d.update(dossiers).set({ statut: statut as Statut, majLe: new Date() }).where(eq(dossiers.id, dos.id));
   await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "STATUT_MODIFIE", details: { de: dos.statut, vers: statut } });

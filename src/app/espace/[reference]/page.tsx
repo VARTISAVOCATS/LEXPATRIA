@@ -181,6 +181,14 @@ export default async function DossierClient({ params, searchParams }: { params: 
           {onglet === "documents" && (
             <section className="card">
               <h2>{t("Vos documents")}</h2>
+              {dos.priseEnCharge ? (
+                <details className="esp-conv" open>
+                  <summary>{t("Attestation de prise en charge, signée le {date}", { date: frDateHeure(new Date((dos.priseEnCharge as { le: string }).le)) })}</summary>
+                  <pre>{(dos.priseEnCharge as { texte: string }).texte}</pre>
+                </details>
+              ) : (
+                <p className="note">{t("Votre attestation de prise en charge sera disponible dès que votre avocat aura vérifié les dates de votre dossier.")}</p>
+              )}
               {x.attestations.length > 0 ? (
                 <p className="box">
                   {t("Votre avocat a vérifié et signé l'acte déposé pour vous le {date}.", { date: frDateHeure(x.attestations[0].le) })}

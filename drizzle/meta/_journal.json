@@ -29,6 +29,13 @@
       "when": 1792592019162,
       "tag": "0003_connexions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792660168637,
+      "tag": "0004_poste_travail",
+      "breakpoints": true
     }
   ]
 }
