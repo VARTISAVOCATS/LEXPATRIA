@@ -3,6 +3,7 @@
 // Les articles seront modifiables au back office (lot 5) ; les versions acceptées restent consultables à l'identique.
 // Les informations manquantes sont marquées XXX : la vue d'ensemble du back office les signale avant la mise en ligne.
 
+import { MENTION_TVA_HORS_UE } from "./pays";
 import { formatEuros, type Diligence } from "./procedures";
 
 export const VERSION_CONVENTION = "2026-10-22.1";
@@ -24,6 +25,8 @@ export interface DonneesConvention {
   lignes: LigneHonoraires[];
   troisFois: boolean;
   dateLimite?: string; // JJ/MM/AAAA
+  /** Client résidant hors de l'Union européenne : même prix, sans TVA (article 259 B du CGI). */
+  horsUE?: boolean;
   /** Avenant d'appel : référence du dossier de première instance. */
   appelDe?: string;
 }
@@ -42,7 +45,8 @@ export function texteConvention(d: DonneesConvention): string {
       ? `${d.civilite === "MADAME" ? "Madame" : d.civilite === "MONSIEUR" ? "Monsieur" : ""} ${d.prenom ?? ""} ${d.nom ?? ""}`.replace(/\s+/g, " ").trim()
       : "Le client identifié lors du dépôt";
   const total = d.lignes.reduce((s, l) => s + l.montant, 0);
-  const lignes = d.lignes.map((l) => `- ${l.libelle} : ${formatEuros(l.montant)} TTC`).join("\n");
+  const ttc = d.horsUE ? "" : " TTC";
+  const lignes = d.lignes.map((l) => `- ${l.libelle} : ${formatEuros(l.montant)}${ttc}`).join("\n");
   const mission = d.appelDe
     ? `La mission couvre l'instance d'appel : rédaction et dépôt de la requête d'appel, tous les mémoires utiles et la plaidoirie devant la cour lorsque l'avocat l'estime opportune. Elle complète la convention acceptée pour le dossier de première instance ${d.appelDe}, dont les autres stipulations demeurent.`
     : d.recoursPrealable
@@ -72,7 +76,7 @@ Le Cabinet est tenu d'une obligation de moyens. Le Client s'engage à fournir de
 ARTICLE 2 — HONORAIRES
 Les honoraires sont fixés forfaitairement comme suit :
 ${lignes}
-Total : ${formatEuros(total)} TTC.
+Total : ${formatEuros(total)}${d.horsUE ? ` (${MENTION_TVA_HORS_UE})` : " TTC"}.
 Ce forfait est ferme. Il ne comporte aucun honoraire de résultat. Hors Île-de-France, seuls les frais de déplacement de l'avocat pour l'audience font l'objet d'un avenant soumis à l'accord préalable du Client.
 Si l'avocat constate, à l'examen du dossier, que le délai de recours était déjà expiré au jour du paiement, aucune procédure n'est engagée : les honoraires sont remboursés, sous déduction de 69 € correspondant à l'examen du dossier et à l'avis écrit remis au Client. Une fois la procédure engagée, elle est menée jusqu'au dépôt ; aucun remboursement n'intervient après le dépôt.
 Les sommes que la juridiction pourrait mettre à la charge de l'administration au titre de l'article L. 761-1 du code de justice administrative reviennent au Client. Le Cabinet n'en assure pas le recouvrement mais indique au Client la marche à suivre pour les obtenir.
@@ -103,7 +107,7 @@ La convention est conclue à distance, par voie électronique. La case d'accepta
 export function resumeConvention(d: DonneesConvention): string[] {
   const total = d.lignes.reduce((s, l) => s + l.montant, 0);
   return [
-    `Forfait ferme de ${formatEuros(total)} TTC pour ${d.appelDe ? "toute l'instance d'appel, plaidoirie comprise" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance, plaidoirie comprise"}.`,
+    `Forfait ferme de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour ${d.appelDe ? "toute l'instance d'appel, plaidoirie comprise" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance, plaidoirie comprise"}.`,
     "Un avocat du cabinet examine le dossier, rédige, atteste et dépose l'acte.",
     "Délai déjà expiré au jour du paiement : remboursement, 69 € conservés pour l'avis écrit.",
   ];

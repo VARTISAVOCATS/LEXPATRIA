@@ -5,6 +5,7 @@ import { tServeur } from "@/i18n/serveur";
 
 import { db } from "@/db";
 import { verifier } from "@/lib/jeton";
+import { tvaApplicable } from "@/lib/pays";
 import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { charger, offre } from "@/lib/serveur/paiement";
 import ReglementProche from "./ReglementProche";
@@ -49,7 +50,9 @@ export default async function Regler({ params }: { params: Promise<{ jeton: stri
                   <p>{t("Dossier {ref}", { ref: c.dos.reference })}</p>
                   <p>{t(PROCEDURES[o.code as CodeProcedure].libelle)}</p>
                   <p>
-                    <strong>{formatEuros(o.total)} {t("TTC")}</strong>
+                    <strong>
+                      {formatEuros(o.total)} {tvaApplicable(c.cli.pays) ? t("TTC") : t("(TVA non applicable)")}
+                    </strong>
                   </p>
                 </div>
                 <p className="petite">

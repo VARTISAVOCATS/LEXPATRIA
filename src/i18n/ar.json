@@ -603,5 +603,7 @@
   "Code postal": "الرمز البريدي",
   "Ville": "المدينة",
   "Pays": "البلد",
-  "Code postal : 5 chiffres.": "الرمز البريدي: 5 أرقام."
+  "Code postal : 5 chiffres.": "الرمز البريدي: 5 أرقام.",
+  "Honoraires (TVA non applicable)": "الأتعاب (ضريبة القيمة المضافة غير مطبقة)",
+  "(TVA non applicable)": "(ضريبة القيمة المضافة غير مطبقة)"
 }

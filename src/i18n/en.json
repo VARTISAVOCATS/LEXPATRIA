@@ -603,5 +603,7 @@
   "Code postal": "Postcode",
   "Ville": "City",
   "Pays": "Country",
-  "Code postal : 5 chiffres.": "Postcode: 5 digits."
+  "Code postal : 5 chiffres.": "Postcode: 5 digits.",
+  "Honoraires (TVA non applicable)": "Fees (VAT not applicable)",
+  "(TVA non applicable)": "(VAT not applicable)"
 }

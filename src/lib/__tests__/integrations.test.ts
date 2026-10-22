@@ -14,6 +14,7 @@ import { facturer, prixHT } from "@/lib/serveur/integrations/pennylane";
 import { enregistrerNumero, paquetTelerecours } from "@/lib/serveur/integrations/telerecours";
 import { compatible, texteVersPdf } from "@/lib/serveur/pdf";
 import { adresseComplete, adresseEnLignes } from "@/lib/pays";
+import { texteConvention } from "@/lib/convention";
 
 const membre = async (email: string) => (await (await db()).select().from(schema.utilisateurs).where(eq(schema.utilisateurs.email, email)))[0];
 const relire = async (id: string) => (await (await db()).select().from(schema.dossiers).where(eq(schema.dossiers.id, id)))[0];
@@ -46,6 +47,9 @@ describe("adresse postale", () => {
     expect(adresseComplete({ adresse: "Cité 500 logements, bât. B", codePostal: "", ville: "Oran", pays: "DZ" })).toBe(true);
     expect(adresseComplete({ adresse: "", ville: "Oran", pays: "DZ" })).toBe(false);
     expect(adresseEnLignes({ adresse: "Cité 500 logements", codePostal: "31000", ville: "Oran", pays: "DZ" })).toEqual(["Cité 500 logements", "31000 Oran", "ALGÉRIE"]);
+    const base = { reference: "D1", procedureLibelle: "Requête", recoursPrealable: false, lignes: [{ diligence: "REQUETE" as const, libelle: "Requête", montant: 99_000 }], troisFois: true };
+    expect(texteConvention(base)).toMatch(/Total : 990\s€ TTC\./);
+    expect(texteConvention({ ...base, horsUE: true })).toMatch(/Total : 990\s€ \(TVA non applicable, article 259 B du code général des impôts\)\./);
   });
 });
 
@@ -121,15 +125,18 @@ describe("Pennylane", () => {
     await facturer(d, p.id); // pas deux fois
     expect(appels.length).toBe(2);
 
-    // Client résidant en France, adresse complète : facture finalisée ; hors Union européenne : brouillon (TVA à vérifier).
-    for (const [pays, codePostal, brouillon] of [["FR", "75011", false], ["DZ", "16000", true]] as const) {
+    // Adresse complète : facture finalisée. France : TVA 20 % sur le prix HT ; Algérie : même prix, sans TVA (article 259 B du CGI).
+    for (const [pays, codePostal, prix, vat] of [["FR", "75011", "825.00", "FR_200"], ["DZ", "16000", "990.00", "extracom"]] as const) {
       const { dos: autre } = await dossierAvecActe("REQUETE_REFUS_TITRE", "DEPOSE");
       await d.update(schema.clients).set({ adresse: "12 rue de la Paix", codePostal, ville: "Ville", pays, pennylaneId: null }).where(eq(schema.clients.id, autre.clientId));
       const [q] = await d.insert(schema.paiements).values({ dossierId: autre.id, montant: 99_000, lignes: [{ diligence: "REQUETE", libelle: "Requête", montant: 99_000 }], statut: "PAYE" }).returning();
       await facturer(d, q.id);
       const client = appels.at(-2)!.corps as { billing_address: { country: string; postal_code: string } };
       expect(client.billing_address).toMatchObject({ country: pays, postal_code: codePostal });
-      expect((appels.at(-1)!.corps as { draft: boolean }).draft).toBe(brouillon);
+      const f = appels.at(-1)!.corps as { draft: boolean; invoice_lines: { raw_currency_unit_price: string; vat_rate: string; label: string }[] };
+      expect(f.draft).toBe(false);
+      expect(f.invoice_lines[0]).toMatchObject({ raw_currency_unit_price: prix, vat_rate: vat });
+      expect(f.invoice_lines[0].label.includes("259 B")).toBe(pays === "DZ");
     }
   });
 });

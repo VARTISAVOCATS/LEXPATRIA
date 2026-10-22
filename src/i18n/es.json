@@ -603,5 +603,7 @@
   "Code postal": "Código postal",
   "Ville": "Ciudad",
   "Pays": "País",
-  "Code postal : 5 chiffres.": "Código postal: 5 cifras."
+  "Code postal : 5 chiffres.": "Código postal: 5 cifras.",
+  "Honoraires (TVA non applicable)": "Honorarios (IVA no aplicable)",
+  "(TVA non applicable)": "(IVA no aplicable)"
 }

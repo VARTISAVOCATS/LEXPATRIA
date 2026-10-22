@@ -4,7 +4,8 @@
 
 import { and, eq, gte, inArray, isNotNull, sql } from "drizzle-orm";
 import type { Base } from "@/db";
-import { actes, attestations, dossiers, journal, paiements, utilisateurs } from "@/db/schema";
+import { actes, attestations, clients, dossiers, journal, paiements, utilisateurs } from "@/db/schema";
+import { tvaApplicable } from "@/lib/pays";
 import { echeanceAvis, jourParis } from "./agenda";
 import { lireParametre } from "./parametres";
 
@@ -121,7 +122,13 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
         .where(and(inArray(paiements.dossierId, idsAttestes), inArray(paiements.statut, ["PAYE", "PARTIEL"])))
         .groupBy(paiements.dossierId)
     : [];
-  const montantDossier = new Map(regles.map((r) => [r.dossierId, Number(r.montant)]));
+  // Base HT : TVA de 20 % retirée pour un client de l'Union européenne ; hors Union, le prix réglé est hors taxe.
+  const paysDossier = new Map(
+    idsAttestes.length
+      ? (await d.select({ id: dossiers.id, pays: clients.pays }).from(dossiers).innerJoin(clients, eq(clients.id, dossiers.clientId)).where(inArray(dossiers.id, idsAttestes))).map((x) => [x.id, x.pays])
+      : [],
+  );
+  const montantDossier = new Map(regles.map((r) => [r.dossierId, tvaApplicable(paysDossier.get(r.dossierId)) ? HT(Number(r.montant)) : Number(r.montant)]));
 
   const parAvocat: LigneAvocat[] = equipe.map((u) => {
     const recus = dossiersPayes.filter((x) => x.avocatId === u.id);
@@ -129,7 +136,7 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
     const mesAtts = atts.filter((x) => x.a.avocatId === u.id);
     // Un dossier compte une fois dans la base, même si plusieurs versions ou actes ont été attestés.
     const dossiersAttestes = [...new Set(mesAtts.map((x) => x.acte.dossierId))];
-    const baseHT = dossiersAttestes.reduce((s, id) => s + HT(montantDossier.get(id) ?? 0), 0);
+    const baseHT = dossiersAttestes.reduce((s, id) => s + (montantDossier.get(id) ?? 0), 0);
     const variableHT =
       u.remuneration === "COLLABORATEUR_FIXE_VARIABLE" && u.seuilVariableHT != null && u.tauxVariable != null
         ? Math.max(0, Math.round((baseHT - u.seuilVariableHT) * u.tauxVariable))

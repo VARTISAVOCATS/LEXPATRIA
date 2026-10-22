@@ -32,3 +32,9 @@ export function adresseEnLignes(a: AdressePostale, langue = "fr"): string[] {
   if (!adresseComplete(a)) return [];
   return [a.adresse!.trim(), `${(a.codePostal ?? "").trim()} ${a.ville!.trim()}`.trim(), ...(a.pays === "FR" ? [] : [nomPays(a.pays!, langue).toUpperCase()])];
 }
+
+/** TVA française applicable : client résidant dans l'Union européenne. Hors Union, prestation non soumise (article 259 B du CGI), même prix. */
+export function tvaApplicable(pays?: string | null): boolean {
+  return UNION_EUROPEENNE.has(pays || "FR");
+}
+export const MENTION_TVA_HORS_UE = "TVA non applicable, article 259 B du code général des impôts";

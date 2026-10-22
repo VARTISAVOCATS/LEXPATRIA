@@ -6,7 +6,7 @@ import PaiementIntegre from "@/app/depot/PaiementIntegre";
 import { useLangue, useT } from "@/i18n/client";
 import { formatEuros } from "@/lib/procedures";
 
-export function AppelPropose({ reference, total, troisFois, resume, texte }: { reference: string; total: number; troisFois: boolean; resume: string[]; texte: string }) {
+export function AppelPropose({ reference, total, troisFois, resume, texte, horsUE }: { reference: string; total: number; troisFois: boolean; resume: string[]; texte: string; horsUE?: boolean }) {
   const t = useT();
   const langue = useLangue();
   const router = useRouter();
@@ -24,7 +24,7 @@ export function AppelPropose({ reference, total, troisFois, resume, texte }: { r
   return (
     <div className="esp-appel">
       <div className="recap">
-        <span>{t("Honoraires TTC")}</span> <b>{formatEuros(total)}</b>
+        <span>{horsUE ? t("Honoraires (TVA non applicable)") : t("Honoraires TTC")}</span> <b>{formatEuros(total)}</b>
       </div>
       <div className="p1-conv">
         <b>{t("Avenant d'appel, en résumé")}</b>

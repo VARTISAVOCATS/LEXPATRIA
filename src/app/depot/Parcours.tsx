@@ -9,7 +9,7 @@ import { jour, versJour } from "@/lib/calendrier";
 import { apresPaiement, CONTENUS, SUGGESTIONS } from "@/lib/contenus";
 import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
-import { adresseComplete, adresseEnLignes, nomPays, PAYS } from "@/lib/pays";
+import { adresseComplete, adresseEnLignes, nomPays, PAYS, tvaApplicable } from "@/lib/pays";
 import { useContenus } from "../composants/Contenus";
 import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, troisFois, type CodeProcedure } from "@/lib/procedures";
 import type { ResultatTriage } from "@/lib/triage";
@@ -470,6 +470,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         prenom: coord.prenom,
         nom: coord.nom,
         adresse: adresseEnLignes(coord).join(", ") || undefined,
+        horsUE: !tvaApplicable(coord.pays),
         reference: reference ?? "—",
         procedureLibelle: libelleOffre,
         recoursPrealable: estRecoursPrealable(procedure) && !avisPrealable,
@@ -1228,7 +1229,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         </div>
                       )}
                       <div>
-                        <span>{t("Honoraires TTC")}</span>
+                        <span>{tvaApplicable(coord.pays) ? t("Honoraires TTC") : t("Honoraires (TVA non applicable)")}</span>
                         <b>{formatEuros(total)}</b>
                       </div>
                     </div>

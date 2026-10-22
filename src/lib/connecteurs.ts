@@ -100,7 +100,7 @@ export const CONNECTEURS: Connecteur[] = [
   {
     id: "pennylane",
     nom: "Pennylane — comptabilité",
-    usage: "Une facture par paiement reçu, au nom et à l'adresse du client (prix HT et TVA à 20 %) ; en brouillon pour un client résidant hors de l'Union européenne, TVA à vérifier.",
+    usage: "Une facture par paiement reçu, au nom et à l'adresse du client : TVA à 20 % dans l'Union européenne ; hors Union, même prix sans TVA (article 259 B du CGI).",
     ou: "Pennylane › Paramètres › Connectivité › Développeurs : jeton d'API v2 avec les droits clients et factures clients.",
     champs: [{ nom: "PENNYLANE_API_KEY", libelle: "Jeton d'API", secret: true, requis: true }],
     test: true,

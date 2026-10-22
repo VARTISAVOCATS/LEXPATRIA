@@ -49,11 +49,11 @@ export default async function DossierClient({ params, searchParams }: { params: 
   const avis = await avisDuClient(d, dos);
   const consultation = dos.avisPrealable || dos.procedure === "DIAGNOSTIC";
   const [parent, appel] = await Promise.all([premiereInstance(d, dos), dos.dossierParentId ? Promise.resolve(null) : appelDe(d, dos.id)]);
-  let proposition: { total: number; troisFois: boolean; resume: string[]; texte: string } | null = null;
+  let proposition: { total: number; troisFois: boolean; resume: string[]; texte: string; horsUE: boolean } | null = null;
   if (dos.statut === "APPEL_PROPOSE") {
     const c = (await charger(d, dos.id))!;
     const dc = await donneesConvention(d, dos, c.cli);
-    proposition = { total: (await offre(d, dos)).total, troisFois: dc.troisFois, resume: resumeConvention(dc), texte: texteConvention(dc) };
+    proposition = { total: (await offre(d, dos)).total, troisFois: dc.troisFois, resume: resumeConvention(dc), texte: texteConvention(dc), horsUE: !!dc.horsUE };
   }
   const { t } = await tServeur();
   const statut = dos.statut as Statut;

@@ -1,13 +1,13 @@
 // Pennylane (API v2) : une facture par paiement reçu, au nom du client (mention « réglée par un tiers » le cas échéant).
 // Les prix de la plateforme sont TTC ; la facture porte le prix HT et la TVA à 20 %.
-// L'adresse postale du client est exigée avant le paiement. La facture est finalisée directement pour un client résidant
-// dans l'Union européenne ; hors Union, elle est créée en brouillon : le régime de TVA est à vérifier avant finalisation.
+// L'adresse postale du client est exigée avant le paiement. Client résidant dans l'Union européenne : prix TTC, facture
+// au prix HT avec TVA à 20 %. Hors Union : même prix, sans TVA (article 259 B du CGI), mention portée sur la facture.
 
 import { and, eq, isNull } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, dossiers, paiements } from "@/db/schema";
 import { journaliser } from "@/lib/journal";
-import { adresseComplete, UNION_EUROPEENNE } from "@/lib/pays";
+import { adresseComplete, MENTION_TVA_HORS_UE, tvaApplicable } from "@/lib/pays";
 import { valeur } from "../connexions";
 import { appelJson, messageErreur, tracer } from "./commun";
 
@@ -49,20 +49,21 @@ export async function facturer(d: Base, paiementId: string) {
   try {
     const customerId = await client(d, dos.clientId);
     const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
-    const brouillon = !adresseComplete(cli) || !UNION_EUROPEENNE.has(cli.pays ?? "");
+    const brouillon = !adresseComplete(cli); // ne devrait pas arriver : l'adresse est exigée avant le paiement
+    const tva = tvaApplicable(cli.pays);
     const jour = p.creeLe.toISOString().slice(0, 10);
     const lignes = (p.lignes as { libelle: string; montant: number }[]).map((l) => ({
-      label: `${l.libelle} — dossier ${dos.reference} — réglé en ligne le ${jour.split("-").reverse().join("/")}${p.parTiers ? " (réglé par un tiers)" : ""}`,
+      label: `${l.libelle} — dossier ${dos.reference} — réglé en ligne le ${jour.split("-").reverse().join("/")}${p.parTiers ? " (réglé par un tiers)" : ""}${tva ? "" : ` — ${MENTION_TVA_HORS_UE}`}`,
       quantity: 1,
       unit: "forfait",
-      raw_currency_unit_price: prixHT(l.montant),
-      vat_rate: "FR_200",
+      raw_currency_unit_price: tva ? prixHT(l.montant) : euros(l.montant),
+      vat_rate: tva ? "FR_200" : "extracom",
     }));
     const f = await api<{ id: number }>("/customer_invoices", {
       customer_id: customerId,
       date: jour,
       deadline: jour,
-      draft: brouillon, // hors Union européenne : TVA à vérifier avant finalisation
+      draft: brouillon,
       external_reference: `LEXPATRIA-${dos.reference}-${p.id}`,
       invoice_lines: lignes,
     });

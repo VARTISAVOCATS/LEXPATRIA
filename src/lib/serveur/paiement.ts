@@ -5,7 +5,7 @@ import { and, eq } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, conventions, dossiers, paiements, utilisateurs } from "@/db/schema";
 import { ajouterHeuresOuvrees, instantParis } from "@/lib/calendrier";
-import { adresseEnLignes } from "@/lib/pays";
+import { adresseEnLignes, tvaApplicable } from "@/lib/pays";
 import { texteConvention, VERSION_CONVENTION, type DonneesConvention } from "@/lib/convention";
 import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
@@ -46,6 +46,7 @@ export async function donneesConvention(d: Base, dos: typeof dossiers.$inferSele
     prenom: cli.prenom ?? undefined,
     nom: cli.nom ?? undefined,
     adresse: adresseEnLignes(cli).join(", ") || undefined,
+    horsUE: !tvaApplicable(cli.pays),
     reference: dos.reference,
     procedureLibelle: parent
       ? `Appel devant la cour administrative d'appel du jugement rendu dans le dossier ${parent.reference} (${PROCEDURES[code].libelle})`
