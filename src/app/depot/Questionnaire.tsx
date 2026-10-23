@@ -247,6 +247,7 @@ export function DepotPieces({
   suite,
   titre = "Vos documents",
   filtre,
+  ordre,
   libelleSuite = "Continuer",
 }: {
   jeton: string;
@@ -256,10 +257,17 @@ export function DepotPieces({
   titre?: string;
   /** Sous-ensemble de la liste (après paiement : d'abord l'essentiel, puis les autres pièces). */
   filtre?: (type: string) => boolean;
+  /** Ordre d'affichage souhaité (types absents : à la suite, dans l'ordre de la liste). */
+  ordre?: string[];
   libelleSuite?: string;
 }) {
   const t = useT();
-  const liste = useMemo(() => piecesDemandees(contexte, reponses).filter((p) => !filtre || filtre(p.type)), [contexte, reponses, filtre]);
+  const liste = useMemo(() => {
+    const l = piecesDemandees(contexte, reponses).filter((p) => !filtre || filtre(p.type));
+    if (!ordre) return l;
+    const rang = (t: string) => (ordre.includes(t) ? ordre.indexOf(t) : ordre.length);
+    return [...l].sort((a, b) => rang(a.type) - rang(b.type));
+  }, [contexte, reponses, filtre, ordre]);
   const [etat, setEtat] = useState<Record<string, EtatPiece>>({});
   const [erreur, setErreur] = useState<string | null>(null);
   const champ = useRef<HTMLInputElement>(null);

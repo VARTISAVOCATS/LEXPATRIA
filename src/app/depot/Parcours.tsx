@@ -90,7 +90,13 @@ async function enBase64(f: File): Promise<{ mime: string; base64: string }> {
 
 export default function Parcours({ modePhoto, source, reprise }: { modePhoto: boolean; source?: string; reprise?: string }) {
   const t = useT();
-  const { tarifs } = useContenus();
+  const { tarifs, avocats } = useContenus();
+  // Avocats montrés au paiement : ceux du back office (photos comprises), pour inspirer confiance sans nommer l'avocat attribué.
+  const EQUIPE = avocats.map((a) => ({
+    nom: a.nom,
+    photo: a.photo,
+    initiales: a.nom.replace(/^Me\s+/, "").split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase(),
+  }));
   localeCourante = useLangue();
   const [etape, setEtape] = useState<Etape>(modePhoto ? "ANALYSE" : "RECIT");
   const [erreur, setErreur] = useState<string | null>(null);
@@ -492,7 +498,10 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         dateLimite: delai?.dateLimite ? dateLongue(delai.dateLimite) : undefined,
       }
     : null;
-  const suggestions = SUGGESTIONS.map((s) => t(s)).filter((s) => !recit.trim() || s.toLowerCase().includes(recit.trim().toLowerCase()));
+  const suggestions = SUGGESTIONS.map((s) => t(s)).filter((s) => {
+    const saisi = recit.trim().toLowerCase();
+    return !saisi || (s.toLowerCase().includes(saisi) && s.toLowerCase() !== saisi);
+  });
 
   const pastille =
     delai?.dateLimite && delai.joursRestants !== undefined && !["EXPIRE", "REFUSE"].includes(delai.traitement) && etape !== "RECIT"
@@ -957,7 +966,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         )}
                         <div className="tr-choice">
                           <button className="tc main" onClick={() => setEtape("RECOURS")}>
-                            <b>{t(procedure === "DIAGNOSTIC" ? "Continuer" : "Engager la procédure")} →</b>
+                            <b>{t(procedure === "DIAGNOSTIC" ? "Continuer" : procedure === "PROCEDURE_EN_COURS" ? "Confier ma procédure au cabinet" : "Engager la procédure")} →</b>
                           </button>
                         </div>
                       </>
@@ -1372,12 +1381,6 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   );
 }
 
-const EQUIPE = [
-  { nom: "Me Rafik Rabia", photo: "/avocats/rafik-rabia.jpg", initiales: "RR" },
-  { nom: "Me Ahlem Ben Abderrazak", photo: "/avocats/ahlem-ben-abderrazak.jpg", initiales: "AB" },
-  { nom: "Me Boualem Kachi", photo: null, initiales: "BK" },
-  { nom: "Me Mohamed Khamlichi", photo: "/avocats/mohamed-khamlichi.jpg", initiales: "MK" },
-];
 
 function IconeImport() {
   return (

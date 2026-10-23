@@ -11,7 +11,8 @@ import { piecesDemandees, type Contexte, type Reponses } from "@/lib/questionnai
 import { ConfirmationFaits, DepotPieces, QuestionnaireEcrans } from "../Questionnaire";
 
 // Ce qui permet à l'avocat de commencer, selon la procédure ; le reste vient après le questionnaire.
-const ESSENTIEL = ["DECISION", "ENVELOPPE", "IDENTITE", "BLOCAGE", "DEMANDE_DEPOSEE", "ECRITURES", "COURRIERS_TRIBUNAL"];
+// Ordre d'utilité : la pièce qui fonde le recours d'abord, l'identité en dernier.
+const ESSENTIEL = ["DECISION", "ENVELOPPE", "BLOCAGE", "DEMANDE_DEPOSEE", "ECRITURES", "COURRIERS_TRIBUNAL", "IDENTITE"];
 const estEssentiel = (type: string) => ESSENTIEL.includes(type);
 const estAutre = (type: string) => !ESSENTIEL.includes(type);
 
@@ -81,6 +82,7 @@ export default function Collecte({
           contexte={contexte}
           reponses={reponses}
           filtre={estEssentiel}
+          ordre={ESSENTIEL}
           titre="Pour que votre avocat avance dès maintenant"
           suite={() => apres("ESSENTIEL")}
         />

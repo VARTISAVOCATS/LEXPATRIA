@@ -570,7 +570,8 @@ details.alt .f { margin-top: 8px; }
   .quick button { flex: 0 0 auto; }
 }
 .comp-wrap { position: relative; }
-.sugbox { position: absolute; left: 0px; right: 0px; top: calc(100% + 6px); background: var(--white); border: 1px solid var(--rule); border-radius: 14px; box-shadow: rgba(43, 43, 43, 0.14) 0px 14px 34px; z-index: 30; padding: 6px; max-height: 340px; overflow-y: auto; }
+/* Dans le flux : la liste ne recouvre jamais le bouton « Continuer » (un toucher sur le bouton choisissait une suggestion). */
+.sugbox { position: static; margin-top: 6px; background: var(--white); border: 1px solid var(--rule); border-radius: 14px; box-shadow: rgba(43, 43, 43, 0.14) 0px 14px 34px; z-index: 30; padding: 6px; max-height: 340px; overflow-y: auto; }
 .sg { padding: 9px 12px; border-radius: 9px; cursor: pointer; font-size: 14.5px; display: flex; align-items: center; gap: 10px; }
 .sg::before { content: ""; width: 14px; height: 14px; flex: 0 0 auto; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238A8173' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-3.5-3.5'/%3E%3C/svg%3E") center center / 14px no-repeat; }
 .sg:hover, .sg.on { background: var(--parch); }
