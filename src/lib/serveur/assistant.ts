@@ -93,7 +93,7 @@ async function interroger(d: Base, demande: string) {
   if (!cle) return simuler(d, demande);
   const client = new Anthropic({ apiKey: cle });
   const rep = await client.messages.create({
-    model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-4-5",
+    model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
     max_tokens: 4000,
     system: CONSIGNE,
     messages: [

@@ -65,9 +65,10 @@ Tu lis le récit d'une personne (dans n'importe quelle langue) et, le cas éché
 - BLOCAGE_EMPLOI : impossible d'obtenir un rendez-vous ou récépissé expiré, ET emploi menacé.
 - BLOCAGE_SIMPLE : impossible d'obtenir un rendez-vous ou récépissé expiré, sans emploi menacé.
 - PROCEDURE_EN_COURS : un recours a déjà été déposé devant le tribunal.
-- DIAGNOSTIC : la situation n'est pas assez claire pour choisir.
+- DIAGNOSTIC : uniquement si l'on ne peut pas savoir quel type de décision ou de difficulté la personne rencontre.
 - HORS_PERIMETRE : asile (ASILE), admission exceptionnelle au séjour (AES), juge judiciaire (JUDICIAIRE), autre (AUTRE).
 Règles :
+- Dès que le type de décision ou de difficulté est identifiable (ex. « j'ai reçu une OQTF », « refus de visa », « la préfecture ne répond pas »), choisis la procédure correspondante, même si la date, la situation ou les autres détails manquent : ils seront demandés ensuite à la personne. Ne choisis jamais DIAGNOSTIC pour un simple manque de détails.
 - Si la personne est en prison, en détention ou en centre de rétention (CRA), mets detentionOuRetention à true.
 - N'invente aucun fait, aucune date. Une date absente vaut null. Les dates sont au format AAAA-MM-JJ.
 - "faits" : au plus 8 faits du récit qui comptent (ancienneté du séjour, vie familiale, enfants, emploi), formulés brièvement en français, sans les embellir.
@@ -101,7 +102,7 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   });
 
   const rep = await client.messages.create({
-    model: modele ?? process.env.ANTHROPIC_MODEL_TRIAGE ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5",
+    model: modele ?? process.env.ANTHROPIC_MODEL_TRIAGE ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
     max_tokens: 1500,
     system: CONSIGNE,
     messages: [
@@ -110,6 +111,11 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   });
   const json = extraireJson(rep.content);
   const res = ResultatTriage.parse(json);
+  // Filet : si le récit nomme clairement la décision (mots-clés français), on ne laisse pas l'orientation en diagnostic.
+  if (res.procedure === "DIAGNOSTIC" && entree.recit) {
+    const motsCles = trierSimule(entree.recit).procedure;
+    if (motsCles !== "DIAGNOSTIC") res.procedure = motsCles;
+  }
 
   // Filet déontologique sur le seul texte destiné au public.
   if (controlerTexte(res.ceQueLeRecoursPeutObtenir).length > 0) {

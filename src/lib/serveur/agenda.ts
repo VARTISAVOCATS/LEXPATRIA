@@ -286,7 +286,7 @@ export async function proposerReponse(d: Base, m: Membre, dos: Dossier): Promise
       .map((x) => `${x.auteur === "CLIENT" ? "CLIENT" : "CABINET"} : ${minimiser(x.contenu)}`)
       .join("\n");
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
-      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-4-5",
+      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 900,
       system:
         "Tu prépares, pour un avocat au barreau de Paris (droit des étrangers), un projet de réponse au message de son client. Ton digne, clair et bienveillant, phrases simples. N'invente aucun fait, aucune date, aucun engagement de résultat ; n'emploie jamais « garanti », « gratuit » ou « 100 % ». Là où une information manque ou relève de l'appréciation de l'avocat, écris « XXX ». Commence par « Bonjour, » et termine par « Bien à vous, » suivi de la signature fournie. Renvoie uniquement le texte du message.",

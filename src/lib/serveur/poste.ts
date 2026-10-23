@@ -161,7 +161,7 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
       pieces: x.pieces,
     };
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
-      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-4-5",
+      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 2000,
       system:
         "Tu assistes un avocat au barreau de Paris en droit des étrangers. À partir des éléments du dossier, produis une analyse pour l'avocat seul : résumé factuel, questions juridiques soulevées, points d'appui, stratégie suggérée, points de vigilance. N'invente aucun fait ; signale ce qui manque. Réponds UNIQUEMENT en JSON : {\"resume\":\"\",\"questions\":[],\"appuis\":[],\"strategie\":\"\",\"vigilance\":[]}",
@@ -217,7 +217,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const cle = await valeur("ANTHROPIC_API_KEY");
   if (cle) {
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
-      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-4-5",
+      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 6000,
       system:
         "Tu prépares un projet d'acte pour un avocat au barreau de Paris (droit des étrangers). Tu reçois un modèle et les éléments du dossier. Complète le modèle en développant les moyens à partir des seuls éléments fournis. Règles : n'invente aucun fait, aucune date, aucune référence de jurisprudence ; laisse « XXX » partout où l'information manque ; conserve la structure, les intitulés et la signature ; ton juridique sobre. Renvoie uniquement le texte de l'acte." +
@@ -365,7 +365,7 @@ export async function questionAssistant(d: Base, m: Membre, dos: Dossier, questi
   if (cle) {
     const x = await donneesActe(d, dos);
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
-      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-4-5",
+      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 1500,
       system:
         "Tu es l'assistant d'un avocat au barreau de Paris (droit des étrangers). Tu connais le dossier fourni. Réponds en français, de façon précise et sobre. N'invente ni fait ni jurisprudence ; dis clairement quand une vérification dans les textes ou les pièces est nécessaire. Ta réponse s'adresse à l'avocat seul.",
