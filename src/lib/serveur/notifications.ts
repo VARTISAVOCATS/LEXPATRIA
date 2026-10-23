@@ -26,5 +26,7 @@ export async function envoyer(e: Envoi): Promise<{ ok: boolean; simule: boolean 
           headers: { "api-key": cle, "content-type": "application/json" },
           body: JSON.stringify({ sender: "LEXPATRIA", recipient: e.destinataire.replace(/[^\d+]/g, ""), content: e.texte, type: "transactional" }),
         });
+  // Échec consigné dans les journaux du serveur (statut et message de Brevo, sans la clé ni le contenu du message).
+  if (!r.ok) console.error(`Envoi ${e.canal} refusé par Brevo : ${r.status} ${(await r.text().catch(() => "")).slice(0, 300)}`);
   return { ok: r.ok, simule: false };
 }

@@ -36,9 +36,16 @@ export async function POST(req: Request) {
 
   // Sans clé Anthropic (développement) : orientation simulée par mots-clés.
   const cleIA = await valeur("ANTHROPIC_API_KEY");
-  const t = cleIA
-    ? await trier(corps.data, new Anthropic({ apiKey: cleIA }), (await valeur("ANTHROPIC_MODEL_TRIAGE")) ?? (await valeur("ANTHROPIC_MODEL")))
-    : trierSimule(corps.data.recit ?? "");
+  let t;
+  try {
+    t = cleIA
+      ? await trier(corps.data, new Anthropic({ apiKey: cleIA }), (await valeur("ANTHROPIC_MODEL_TRIAGE")) ?? (await valeur("ANTHROPIC_MODEL")))
+      : trierSimule(corps.data.recit ?? "");
+  } catch (e) {
+    // Cause consignée dans les journaux du serveur (jamais le récit du client) ; message sobre à l'écran.
+    console.error("Orientation IA impossible :", e instanceof Error ? e.message.slice(0, 500) : e);
+    return NextResponse.json({ erreur: "L'analyse est momentanément indisponible. Réessayez dans quelques instants." }, { status: 503 });
+  }
   const aujourdhui = versJour(new Date());
 
   if (t.detentionOuRetention || t.situationOQTF === "DETENTION" || t.situationOQTF === "RETENTION") {

@@ -5,6 +5,7 @@
 // Une demande qui exige de modifier le code (nouvel écran, nouvelle procédure) est classée « évolution »
 // et relève de l'agent de développement (niveau 2 : dépôt GitHub, version d'essai, mise en ligne validée).
 
+import { extraireJson } from "@/lib/ia";
 import Anthropic from "@anthropic-ai/sdk";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -97,11 +98,9 @@ async function interroger(d: Base, demande: string) {
     system: CONSIGNE,
     messages: [
       { role: "user", content: `Contexte (JSON) :\n${JSON.stringify(await contexte(d))}\n\nDemande de l'associé :\n${demande}` },
-      { role: "assistant", content: "{" },
     ],
   });
-  const texte = "{" + rep.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  return Reponse.parse(JSON.parse(texte.slice(0, texte.lastIndexOf("}") + 1)));
+  return Reponse.parse(extraireJson(rep.content));
 }
 
 export async function proposer(d: Base, auteurId: string, demande: string) {

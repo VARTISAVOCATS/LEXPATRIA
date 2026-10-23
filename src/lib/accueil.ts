@@ -3,7 +3,7 @@
 export const AVOCATS = [
   { nom: "Me Rafik Rabia", titre: "Avocat au barreau de Paris · Docteur en droit privé", photo: "/avocats/rafik-rabia.jpg" },
   { nom: "Me Ahlem Ben Abderrazak", titre: "Avocate au barreau de Paris · Docteure en droit", photo: "/avocats/ahlem-ben-abderrazak.jpg" },
-  { nom: "Me Boualem Kachi", titre: "Avocat au barreau de Paris · Docteur en droit", photo: null },
+  { nom: "Me Boualem Kachi", titre: "Avocat au barreau de Paris · Docteur en droit", photo: "/avocats/boualem-kachi.jpg" },
   { nom: "Me Mohamed Khamlichi", titre: "Avocat au barreau de Paris · Docteur en droit", photo: "/avocats/mohamed-khamlichi.jpg" },
 ];
 

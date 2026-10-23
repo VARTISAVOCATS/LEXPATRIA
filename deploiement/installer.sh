@@ -46,6 +46,7 @@ fi
 echo "== 3/6 Équipe"
 mkdir -p config
 [ -f config/equipe.json ] || cp deploiement/equipe.exemple.json config/equipe.json
+chmod 755 config && chmod 644 config/equipe.json  # lisible par le conteneur (utilisateur non root)
 echo "   Comptes lus dans config/equipe.json (les lignes dont l'e-mail vaut XXX sont ignorées)."
 
 echo "== 4/6 Construction et démarrage (quelques minutes)"
@@ -58,7 +59,7 @@ docker compose run --rm app node outils/equipe.mjs /config/equipe.json
 echo "== 5/6 Sauvegarde quotidienne de la base (2 h 30, conservation 30 jours)"
 chmod +x deploiement/sauvegarde-base.sh deploiement/mettre-a-jour.sh
 LIGNE="30 2 * * * $(pwd)/deploiement/sauvegarde-base.sh >> /var/log/lexpatria-sauvegarde.log 2>&1"
-( crontab -l 2>/dev/null | grep -v sauvegarde-base.sh; echo "$LIGNE" ) | crontab -
+( { crontab -l 2>/dev/null || true; } | { grep -v sauvegarde-base.sh || true; }; echo "$LIGNE" ) | crontab -
 
 echo "== 6/6 Contrôle"
 DOMAINE=$(grep '^DOMAINE=' .env | cut -d= -f2)

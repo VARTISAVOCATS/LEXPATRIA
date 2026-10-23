@@ -5,6 +5,7 @@
 // sont masqués AVANT l'envoi au modèle. Les photos de décisions sont transmises telles quelles,
 // leur lecture étant nécessaire à l'analyse.
 
+import { extraireJson } from "@/lib/ia";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { controlerTexte } from "./deontologie";
@@ -105,11 +106,9 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     system: CONSIGNE,
     messages: [
       { role: "user", content: contenu },
-      { role: "assistant", content: "{" },
     ],
   });
-  const texte = "{" + rep.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-  const json = JSON.parse(texte.slice(0, texte.lastIndexOf("}") + 1));
+  const json = extraireJson(rep.content);
   const res = ResultatTriage.parse(json);
 
   // Filet déontologique sur le seul texte destiné au public.

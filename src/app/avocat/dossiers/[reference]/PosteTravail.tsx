@@ -80,11 +80,15 @@ export default function PosteTravail(p: ProprietesPoste) {
   const [coche, setCoche] = useState(false);
   // Cases « tranché » : affichage immédiat, confirmé par le serveur.
   const [tranches, setTranches] = useState<Record<string, boolean>>({});
-  useEffect(() => setTranches({}), [p.analyse]);
+  useEffect(() => {
+    setTranches({});
+  }, [p.analyse]);
   const estTranche = (v: Point) => tranches[v.id] ?? v.tranche;
   const derniereActivite = useRef(Date.now());
 
-  useEffect(() => setTexte(p.acte?.contenu ?? ""), [p.acte?.id, p.acte?.contenu]);
+  useEffect(() => {
+    setTexte(p.acte?.contenu ?? "");
+  }, [p.acte?.id, p.acte?.contenu]);
 
   // Temps de revue active : compté seulement si la page est visible et qu'il y a eu une interaction depuis moins d'une minute.
   useEffect(() => {

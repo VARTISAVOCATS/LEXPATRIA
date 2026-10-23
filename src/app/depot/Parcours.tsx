@@ -145,7 +145,10 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => window.scrollTo(0, 0), [etape]);
+  // Accolades obligatoires : les navigateurs récents renvoient une promesse depuis scrollTo, que React prendrait pour une fonction de nettoyage.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [etape]);
 
   // ---- Reprise d'un pré-dossier au point d'arrêt (lien de relance, paiement annulé) ----
   useEffect(() => {
@@ -316,7 +319,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ recit: texte || undefined, images, pdfs }),
       });
-      const j = await r.json();
+      const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.erreur ?? t("Analyse impossible"));
       const tri: ResultatTriage = j.triage;
       setTriage(tri);

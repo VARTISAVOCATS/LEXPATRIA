@@ -3,6 +3,7 @@
 // Règles fixes : l'analyse de l'IA n'est jamais transmise au client ; aucun dépôt sans attestation
 // de l'avocat liée à la version exacte de l'acte ; toute modification ultérieure exige une nouvelle attestation.
 
+import { extraireJson } from "@/lib/ia";
 import Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -166,11 +167,9 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
         "Tu assistes un avocat au barreau de Paris en droit des étrangers. À partir des éléments du dossier, produis une analyse pour l'avocat seul : résumé factuel, questions juridiques soulevées, points d'appui, stratégie suggérée, points de vigilance. N'invente aucun fait ; signale ce qui manque. Réponds UNIQUEMENT en JSON : {\"resume\":\"\",\"questions\":[],\"appuis\":[],\"strategie\":\"\",\"vigilance\":[]}",
       messages: [
         { role: "user", content: JSON.stringify(contexte) },
-        { role: "assistant", content: "{" },
       ],
     });
-    const texte = "{" + rep.content.map((b) => (b.type === "text" ? b.text : "")).join("");
-    base = AnalyseIA.parse(JSON.parse(texte.slice(0, texte.lastIndexOf("}") + 1)));
+    base = AnalyseIA.parse(extraireJson(rep.content));
     source = "IA";
   } else {
     base = analyseSimulee(dos, x);
