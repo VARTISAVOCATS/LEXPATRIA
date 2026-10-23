@@ -3,6 +3,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { publies } from "@/lib/serveur/blog";
 import { EnteteSite } from "../composants/Entete";
+import { Bandeau } from "../composants/Vitrine";
 import PiedSite from "../composants/PiedSite";
 import AppelAction from "./AppelAction";
 import { dateFr } from "./Contenu";
@@ -18,21 +19,24 @@ export default async function Actualites() {
   return (
     <>
       <EnteteSite />
-      <main>
-        <div className="wrap art" style={{ maxWidth: 820 }}>
-          <div className="eyebrow">Actualités</div>
-          <h1>Comprendre vos droits</h1>
-          <p className="serif art-chapo">Des réponses claires aux questions que posent une OQTF, un refus de titre ou de visa, une préfecture qui ne répond pas.</p>
+      <main className="acc">
+        <Bandeau
+          surtitre="Actualités"
+          titre="Comprendre vos droits"
+          chapo="Des réponses claires aux questions que posent une OQTF, un refus de titre ou de visa, une préfecture qui ne répond pas."
+        />
+        <div className="wrap art">
           {liste.length === 0 ? (
-            <p className="note">Les premiers articles arrivent bientôt.</p>
+            <p className="acc-lead pg-vide">Les premiers articles arrivent bientôt.</p>
           ) : (
-            <ul className="art-liste">
+            <ul className="art-liste pg-articles">
               {liste.map((a) => (
                 <li key={a.id}>
                   <Link href={`/actualites/${a.slug}`}>
+                    {a.publieLe && <time dateTime={a.publieLe.toISOString()}>{dateFr(a.publieLe)}</time>}
                     <h2>{a.titre}</h2>
                     {a.chapo && <p>{a.chapo}</p>}
-                    {a.publieLe && <time dateTime={a.publieLe.toISOString()}>{dateFr(a.publieLe)}</time>}
+                    <span className="pg-lire">Lire l&apos;article →</span>
                   </Link>
                 </li>
               ))}

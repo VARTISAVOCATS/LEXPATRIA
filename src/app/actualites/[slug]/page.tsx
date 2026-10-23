@@ -53,15 +53,19 @@ export default async function ArticlePage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <EnteteSite />
-      <main>
-        <article className="wrap art" style={{ maxWidth: 760 }}>
-          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(donnees).replace(/</g, "\\u003c") }} />
-          <nav className="art-fil" aria-label="Fil d'Ariane">
-            <Link href="/actualites">Actualités</Link>
-          </nav>
-          <h1>{a.titre}</h1>
-          {a.publieLe && <time className="art-date" dateTime={a.publieLe.toISOString()}>{dateFr(a.publieLe)}</time>}
-          {a.chapo && <p className="serif art-chapo">{a.chapo}</p>}
+      <main className="acc">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(donnees).replace(/</g, "\\u003c") }} />
+        <header className="acc-hero pg-hero">
+          <div className="wrap pg-hero-s pg-art-h">
+            <nav className="art-fil" aria-label="Fil d'Ariane">
+              <Link href="/actualites">Actualités</Link>
+            </nav>
+            <h1>{a.titre}</h1>
+            {a.publieLe && <time className="art-date" dateTime={a.publieLe.toISOString()}>{dateFr(a.publieLe)}</time>}
+            {a.chapo && <p className="acc-sub">{a.chapo}</p>}
+          </div>
+        </header>
+        <article className="wrap art pg-art">
           <Contenu texte={a.contenu} />
           <p className="art-mention">Information générale. Elle ne remplace pas l&apos;examen de votre situation par un avocat.</p>
           <AppelAction />

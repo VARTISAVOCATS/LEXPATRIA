@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MISE_A_JOUR, parSlug, RELUE_LE, SITUATIONS, type Bloc } from "@/lib/situations";
+import { db } from "@/db";
+import { tServeur } from "@/i18n/serveur";
+import { contenusPublics } from "@/lib/serveur/parametres";
 import { EnteteSite } from "../composants/Entete";
 import PiedSite from "../composants/PiedSite";
+import { BandeFin, Visages } from "../composants/Vitrine";
 
-export const dynamicParams = false;
-export function generateStaticParams() {
-  return SITUATIONS.map((s) => ({ situation: s.slug }));
-}
+// Rendu à la demande : les visages des avocats viennent du back office.
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ situation: string }> }) {
   const p = parSlug((await params).situation);
@@ -46,43 +48,57 @@ function Blocs({ blocs }: { blocs: Bloc[] }) {
 export default async function Situation({ params }: { params: Promise<{ situation: string }> }) {
   const p = parSlug((await params).situation);
   if (!p) notFound();
+  const { t } = await tServeur();
+  const { avocats } = await contenusPublics(await db());
   return (
     <>
       <EnteteSite />
-      <main>
-        <div className="wrap situ" style={{ maxWidth: 780 }}>
-          <nav className="si-nav" aria-label="Vos démarches">
-            {SITUATIONS.map((s) => (
-              <Link key={s.slug} href={`/${s.slug}`} className={s.slug === p.slug ? "on" : ""}>
-                {s.nav}
-              </Link>
-            ))}
-          </nav>
-          <div className="eyebrow">Vos démarches</div>
-          <h1>{p.titre}</h1>
-          <p className="serif si-chapo">{p.chapo}</p>
-          {p.sections.map((s) => (
-            <section key={s.titre} className="si-s">
-              <h2>{s.titre}</h2>
-              <Blocs blocs={s.blocs} />
-            </section>
-          ))}
-          <div className="si-cta">
-            <p>
-              Chaque situation est particulière. Vous pouvez nous exposer la vôtre : la procédure applicable et votre date limite vous sont
-              indiquées, puis un avocat du cabinet étudie votre dossier.
-            </p>
-            <Link className="btn cta" href="/depot">
-              Exposer ma situation
-            </Link>
+      <main className="acc">
+        <section className="acc-hero pg-hero">
+          <div className="wrap pg-hero-s">
+            <nav className="si-nav pg-pills" aria-label="Vos démarches">
+              {SITUATIONS.map((s) => (
+                <Link key={s.slug} href={`/${s.slug}`} className={s.slug === p.slug ? "on" : ""}>
+                  {s.nav}
+                </Link>
+              ))}
+            </nav>
+            <p className="acc-eye">Vos démarches</p>
+            <h1>{p.titre}</h1>
+            <p className="acc-sub">{p.chapo}</p>
           </div>
-          <p className="si-src">
-            <b>Textes de référence :</b> {p.textes}
-          </p>
-          <p className="si-src">
-            Information générale, mise à jour le {dateFr(MISE_A_JOUR)}
-            {RELUE_LE ? ` et relue par un avocat du cabinet le ${dateFr(RELUE_LE)}` : ""}. Elle ne remplace pas l&apos;examen de votre situation.
-          </p>
+        </section>
+
+        <div className="wrap pg-lecture">
+          <div className="situ">
+            {p.sections.map((s) => (
+              <section key={s.titre} className="si-s">
+                <h2>{s.titre}</h2>
+                <Blocs blocs={s.blocs} />
+              </section>
+            ))}
+            <p className="si-src">
+              <b>Textes de référence :</b> {p.textes}
+            </p>
+            <p className="si-src">
+              Information générale, mise à jour le {dateFr(MISE_A_JOUR)}
+              {RELUE_LE ? ` et relue par un avocat du cabinet le ${dateFr(RELUE_LE)}` : ""}. Elle ne remplace pas l&apos;examen de votre situation.
+            </p>
+          </div>
+          <aside className="pg-cote">
+            <div className="pg-carte">
+              <Visages avocats={avocats} petit />
+              <h3>Chaque situation est particulière</h3>
+              <p>Exposez-nous la vôtre : la procédure applicable et votre date limite vous sont indiquées, puis un avocat du cabinet étudie votre dossier.</p>
+              <Link className="btn cta" href="/depot">
+                Exposer ma situation
+              </Link>
+            </div>
+          </aside>
+        </div>
+
+        <div className="wrap">
+          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Un avocat du cabinet prend le relais.")} />
           <PiedSite />
         </div>
       </main>

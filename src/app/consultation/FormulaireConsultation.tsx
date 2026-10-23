@@ -1,6 +1,7 @@
 "use client";
 // Consultation en visio (30 minutes) : coordonnées et question, convention, paiement, puis choix du créneau.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import ChampsAdresse from "@/app/depot/Adresse";
 import PaiementIntegre from "@/app/depot/PaiementIntegre";
 import { useContenus } from "@/app/composants/Contenus";
 import { useLangue, useT } from "@/i18n/client";
@@ -19,9 +20,16 @@ export default function FormulaireConsultation({ source }: { source?: string }) 
   const [caseExecution, setCaseExecution] = useState(false);
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
+  // Les noms de pays viennent des données du navigateur, qui diffèrent de celles du serveur :
+  // la liste complète n'est construite qu'une fois la page chargée, pour éviter un écart d'affichage.
+  const [monte, setMonte] = useState(false);
+  useEffect(() => setMonte(true), []);
   const listePays = useMemo(
-    () => PAYS.map((p) => [p, nomPays(p, langue)] as const).sort((a, b) => (a[0] === "FR" ? -1 : b[0] === "FR" ? 1 : a[1].localeCompare(b[1], langue))),
-    [langue],
+    () =>
+      monte
+        ? PAYS.map((p) => [p, nomPays(p, langue)] as const).sort((a, b) => (a[0] === "FR" ? -1 : b[0] === "FR" ? 1 : a[1].localeCompare(b[1], langue)))
+        : ([["FR", "France"]] as const),
+    [langue, monte],
   );
   const ok =
     c.civilite && c.prenom.trim() && c.nom.trim() && /\S+@\S+\.\S+/.test(c.email) && c.telephone.replace(/\D/g, "").length >= 8 && adresseComplete(c) && question.trim().length >= 10;
@@ -148,32 +156,7 @@ export default function FormulaireConsultation({ source }: { source?: string }) 
           <label htmlFor="c_tel">{t("Téléphone")} *</label>
           <input id="c_tel" type="tel" autoComplete="tel" value={c.telephone} onChange={(e) => setC({ ...c, telephone: e.target.value })} />
         </div>
-        <div className="f full">
-          <label htmlFor="c_adresse">{t("Adresse postale")} *</label>
-          <input id="c_adresse" autoComplete="street-address" value={c.adresse} onChange={(e) => setC({ ...c, adresse: e.target.value })} />
-          <span className="help">{t("Elle figure sur votre facture, votre convention d'honoraires et vos actes.")}</span>
-        </div>
-        <div className="f">
-          <label htmlFor="c_cp">
-            {t("Code postal")}
-            {c.pays === "FR" ? " *" : ""}
-          </label>
-          <input id="c_cp" autoComplete="postal-code" value={c.codePostal} onChange={(e) => setC({ ...c, codePostal: e.target.value })} />
-        </div>
-        <div className="f">
-          <label htmlFor="c_ville">{t("Ville")} *</label>
-          <input id="c_ville" autoComplete="address-level2" value={c.ville} onChange={(e) => setC({ ...c, ville: e.target.value })} />
-        </div>
-        <div className="f full">
-          <label htmlFor="c_pays">{t("Pays")} *</label>
-          <select id="c_pays" autoComplete="country" value={c.pays} onChange={(e) => setC({ ...c, pays: e.target.value })}>
-            {listePays.map(([code, nom]) => (
-              <option key={code} value={code}>
-                {nom}
-              </option>
-            ))}
-          </select>
-        </div>
+        <ChampsAdresse valeur={c} changer={(v) => setC((x) => ({ ...x, ...v }))} listePays={listePays} />
       </div>
       {erreur && <p className="erreur">{erreur}</p>}
       <div className="actions">

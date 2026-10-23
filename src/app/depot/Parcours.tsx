@@ -640,6 +640,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                   <label className="comp-q" htmlFor="tri_in">
                     {t("Qu'est-ce qui vous arrive ?")}
                   </label>
+                  {etape === "RECIT" && (
+                    <p className="dep-intro">{t("Prenez le temps de nous le dire, avec vos mots. Nous vous indiquons la procédure adaptée et votre délai.")}</p>
+                  )}
                   {etape !== "RECIT" && (recit || fichiers.length > 0) && (
                     <div className="thread">
                       {recit && (
@@ -726,6 +729,31 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                           ))}
                         </div>
                       )}
+                    </div>
+                  )}
+                  {etape === "RECIT" && (
+                    <div className="dep-conf">
+                      <div className="acc-visages dep-v" aria-hidden>
+                        {EQUIPE.map((a) => (
+                          <span key={a.nom} className="acc-v">
+                            {a.photo ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={a.photo} alt="" />
+                            ) : (
+                              a.initiales
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                      <div>
+                        <b>{t("Votre dossier est confié à un avocat du cabinet.")}</b>
+                        <p>{t("Des avocats au barreau de Paris, docteurs en droit, prennent en charge chaque dossier sous 48 heures ouvrées.")}</p>
+                        <ul>
+                          <li>{t("Secret professionnel")}</li>
+                          <li>{t("Honoraires présentés avant paiement")}</li>
+                          <li>{t("Paiement en une ou trois fois")}</li>
+                        </ul>
+                      </div>
                     </div>
                   )}
                   <input

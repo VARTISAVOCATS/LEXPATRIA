@@ -39,9 +39,9 @@ const schemaRemuneration = z.object({
 });
 
 export const ACCUEIL_DEFAUT = {
-  titre: "Une décision de la préfecture ou du consulat à contester ?",
+  titre: "Vous avez reçu une OQTF ou un refus de la préfecture ?",
   sousTitre:
-    "OQTF, refus de titre de séjour, refus de visa, naturalisation, préfecture qui ne répond pas : des avocats au barreau de Paris forment votre recours.",
+    "Des avocats au barreau de Paris étudient votre situation et forment votre recours, devant l'administration ou le tribunal.",
 };
 
 export const PARAMETRES = {

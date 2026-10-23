@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { contenusPublics } from "@/lib/serveur/parametres";
+import { publies } from "@/lib/serveur/blog";
 import { formatEuros } from "@/lib/procedures";
 import { SITUATIONS } from "@/lib/situations";
 import { tServeur } from "@/i18n/serveur";
@@ -8,91 +9,165 @@ import BoutonsAccueil from "./BoutonsAccueil";
 import { EnteteSite } from "./composants/Entete";
 import PiedSite from "./composants/PiedSite";
 
-// Accueil (cahier des charges, 4.1), dans l'interface validée : dire où l'on est et qui sont les avocats,
-// puis inviter à exposer sa situation ou à transmettre sa décision.
+// Accueil (cahier des charges, 4.1 et 4.13) : rassurer avant tout. Dire où l'on est, montrer les visages des avocats,
+// reconnaître l'inquiétude, expliquer simplement la suite, puis inviter à agir.
+
+const initiales = (nom: string) =>
+  nom
+    .replace(/^Me\s+/, "")
+    .split(/\s+/)
+    .map((x) => x[0])
+    .join("")
+    .slice(0, 2);
 
 export default async function Accueil() {
   const { t } = await tServeur();
-  const { avocats: AVOCATS, faq: FAQ, accueil, tarifs } = await contenusPublics(await db());
+  const d = await db();
+  const { avocats: AVOCATS, faq: FAQ, accueil, tarifs } = await contenusPublics(d);
+  const articles = (await publies(d).catch(() => [])).slice(0, 3);
+
+  const Visage = ({ nom, photo }: { nom: string; photo: string | null }) =>
+    photo ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={photo} alt="" />
+    ) : (
+      <span>{initiales(nom)}</span>
+    );
+
   return (
     <>
       <EnteteSite />
-      <main>
-        <div className="wrap">
-          <section className="hero h41">
-            <div>
+      <main className="acc">
+        <section className="acc-hero">
+          <div className="wrap acc-hero-g">
+            <div className="acc-hero-t">
+              <p className="acc-eye">{t("Avocats au barreau de Paris · Droit des étrangers")}</p>
               <h1>{t(accueil.titre)}</h1>
-              <p className="sub">
-                {t(accueil.sousTitre)}
-              </p>
+              <p className="acc-sub">{t(accueil.sousTitre)}</p>
               <div className="h-cta ph-cta">
                 <BoutonsAccueil />
-                <p className="ph-ia">{t("Votre décision est lue par un outil d'intelligence artificielle du cabinet, puis vérifiée par votre avocat.")}</p>
-                <p className="ph-visio">
-                  <Link href="/consultation">{t("Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}", { prix: formatEuros(tarifs.CONSULTATION) })}</Link>
-                </p>
               </div>
+              <ul className="acc-eng">
+                <li>{t("Prise en charge sous 48 heures ouvrées")}</li>
+                <li>{t("Honoraires présentés avant paiement, réglables en trois fois")}</li>
+                <li>{t("Secret professionnel, dans toutes les langues")}</li>
+              </ul>
+            </div>
+            <aside className="acc-mot">
+              <div className="acc-visages" aria-hidden>
+                {AVOCATS.map((a) => (
+                  <span key={a.nom} className="acc-v">
+                    <Visage nom={a.nom} photo={a.photo} />
+                  </span>
+                ))}
+              </div>
+              <blockquote>
+                {t(
+                  "Recevoir une décision de la préfecture est une épreuve. Vous n'avez pas à l'affronter seul. Nous lisons votre décision, nous vous disons ce qu'elle permet, et nous agissons dans les délais.",
+                )}
+              </blockquote>
+              <p className="acc-sign">{t("Les avocats du cabinet")}</p>
+            </aside>
+          </div>
+        </section>
+
+        <div className="wrap">
+          <section className="acc-sec">
+            <p className="acc-eye">{t("Vos avocats")}</p>
+            <h2>{t("Des avocats, pas une plateforme anonyme")}</h2>
+            <p className="acc-lead">
+              {t(
+                "Chaque dossier est confié à un avocat du cabinet, qui l'étudie, rédige l'acte et le dépose. Vous savez qui vous défend et vous pouvez lui écrire à tout moment depuis votre espace.",
+              )}
+            </p>
+            <div className="acc-avocats">
+              {AVOCATS.map((a) => (
+                <figure key={a.nom} className="acc-av">
+                  <div className="acc-av-ph">
+                    <Visage nom={a.nom} photo={a.photo} />
+                  </div>
+                  <figcaption>
+                    <b>{a.nom}</b>
+                    {t(a.titre)
+                      .split(" · ")
+                      .map((l) => (
+                        <span key={l}>{l}</span>
+                      ))}
+                  </figcaption>
+                </figure>
+              ))}
             </div>
           </section>
 
-          <section className="sec h-law">
-            <h2>{t("Vos avocats")}</h2>
-            {AVOCATS.map((a) => (
-              <div className="hl" key={a.nom}>
-                <span className="av" aria-hidden style={a.photo ? { overflow: "hidden", padding: 0 } : undefined}>
-                  {a.photo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={a.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%", display: "block" }} />
-                  ) : (
-                    a.nom.replace("Me ", "").split(" ").map((x) => x[0]).join("")
-                  )}
-                </span>
-                <div>
-                  <b>{a.nom}</b>
-                  <p>{t(a.titre)}</p>
-                </div>
-              </div>
-            ))}
-            <div>
-              <div className="lv attente" role="group" aria-label={t("Le mot de l'avocat")}>
-                <div className="lv-m">
-                  <span className="lv-t">{t("Le mot de l'avocat")}</span>
-                  <span className="lv-w">{t("Un avocat du cabinet · 45 s")}</span>
-                </div>
-              </div>
-              <p className="lv-n">{t("Vidéo en préparation : elle sera tournée par un avocat du cabinet et sous-titrée en français, arabe, anglais et espagnol.")}</p>
-            </div>
-          </section>
-
-          <section className="sec h-steps">
-            <h2>{t("Comment se déroule votre recours")}</h2>
-            <ol>
-              <li>{t("Vous exposez votre situation ou photographiez votre décision.")}</li>
-              <li>{t("La procédure adaptée, votre délai et le prix vous sont indiqués.")}</li>
-              <li>{t("Votre avocat forme le recours, devant l'administration ou le tribunal selon votre cas, et vous tient informé à chaque étape.")}</li>
+          <section className="acc-sec">
+            <p className="acc-eye">{t("Comment cela se passe")}</p>
+            <h2>{t("Trois étapes, sans vous déplacer")}</h2>
+            <ol className="acc-etapes">
+              <li>
+                <b>{t("Vous exposez votre situation")}</b>
+                <span>{t("Par écrit, à voix haute ou en photographiant votre décision, dans votre langue.")}</span>
+              </li>
+              <li>
+                <b>{t("Vous connaissez la procédure et votre délai")}</b>
+                <span>{t("Les honoraires vous sont présentés avant tout paiement.")}</span>
+              </li>
+              <li>
+                <b>{t("Votre avocat forme le recours")}</b>
+                <span>{t("Il vous écrit sous 48 heures ouvrées. Vous suivez chaque étape dans votre espace.")}</span>
+              </li>
             </ol>
           </section>
 
-          <section className="sec h-situ">
-            <h2>{t("Vos démarches")}</h2>
-            <p>{t("Les délais et la procédure, expliqués situation par situation.")}</p>
-            <nav className="si-list" aria-label={t("Vos démarches")}>
+          <section className="acc-sec">
+            <p className="acc-eye">{t("Vos démarches")}</p>
+            <h2>{t("Votre situation, expliquée simplement")}</h2>
+            <div className="acc-situ">
               {SITUATIONS.map((s) => (
-                <Link key={s.slug} className="link" href={`/${s.slug}`}>
-                  {t(s.nav)}
+                <Link key={s.slug} href={`/${s.slug}`} className="acc-situ-c">
+                  <b>{t(s.nav)}</b>
+                  <span>{t(s.description)}</span>
                 </Link>
               ))}
-            </nav>
+            </div>
+            <p className="acc-visio">
+              <Link className="link" href="/consultation">
+                {t("Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}", { prix: formatEuros(tarifs.CONSULTATION) })}
+              </Link>
+            </p>
           </section>
 
-          <section className="sec h-faq">
-            <h2>{t("Questions fréquentes")}</h2>
+          {articles.length > 0 && (
+            <section className="acc-sec">
+              <p className="acc-eye">{t("Actualités")}</p>
+              <h2>{t("Comprendre vos droits")}</h2>
+              <div className="acc-situ">
+                {articles.map((a) => (
+                  <Link key={a.id} href={`/actualites/${a.slug}`} className="acc-situ-c">
+                    <b>{a.titre}</b>
+                    <span>{a.chapo}</span>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="acc-sec h-faq">
+            <p className="acc-eye">{t("Questions fréquentes")}</p>
+            <h2>{t("Ce que l'on nous demande souvent")}</h2>
             {FAQ.map((f) => (
               <details key={f.q}>
                 <summary>{t(f.q)}</summary>
                 <p>{t(f.r)}</p>
               </details>
             ))}
+          </section>
+
+          <section className="acc-fin">
+            <h2>{t("Vous n'êtes pas seul face à cette décision")}</h2>
+            <p>{t("Exposez votre situation en quelques minutes. Un avocat du cabinet prend le relais.")}</p>
+            <div className="h-cta ph-cta">
+              <BoutonsAccueil />
+            </div>
           </section>
 
           <PiedSite />
