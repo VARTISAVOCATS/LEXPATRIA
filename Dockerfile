@@ -34,6 +34,8 @@ COPY --from=build --chown=lex:lex /app/drizzle ./drizzle
 # Scripts de migration et d'équipe, avec leurs seuls pilotes (dossier séparé de l'application).
 COPY --from=outils --chown=lex:lex /outils ./outils
 COPY --from=build --chown=lex:lex /app/scripts/migrer.mjs /app/scripts/equipe.mjs ./outils/
+# Pièces stockées sur le serveur tant que le stockage objet n'est pas configuré (volume persistant, voir compose.yaml).
+RUN mkdir -p /app/.stockage && chown lex:lex /app/.stockage
 USER lex
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s CMD wget -qO- http://127.0.0.1:3000/api/sante || exit 1

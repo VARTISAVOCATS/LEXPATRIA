@@ -628,5 +628,10 @@
   "Un entretien de 30 minutes avec un avocat au barreau de Paris, au créneau de votre choix. Vous choisissez votre rendez-vous juste après le paiement.": "لقاء مدته 30 دقيقة مع محامٍ مسجل في هيئة المحامين بباريس، في الموعد الذي تختاره. تختار موعدك مباشرة بعد الدفع.",
   "Un entretien de 30 minutes en visio avec un avocat du cabinet": "لقاء عبر الفيديو مدته 30 دقيقة مع محامٍ من المكتب",
   "Votre rendez-vous est fixé": "تم تأكيد موعدك",
-  "Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}": "هل تفضّل التحدث مع محامٍ؟ استشارة عبر الفيديو مدتها 30 دقيقة، {prix}"
+  "Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}": "هل تفضّل التحدث مع محامٍ؟ استشارة عبر الفيديو مدتها 30 دقيقة، {prix}",
+  "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.": "حتى يتمكن محاميك من البدء فوراً، أضف في مساحتك القرار المطعون فيه (جميع الصفحات) والظرف أو ما يثبت التبليغ، ثم باقي مستنداتك.",
+  "Paiement confirmé — dossier {ref}": "تم تأكيد الدفع — الملف {ref}",
+  "Bonjour,": "مرحباً،",
+  "Votre paiement est confirmé.": "تم تأكيد دفعتك.",
+  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "مساحتك: {lien} (الدخول برمز يصلك على هذا العنوان)."
 }

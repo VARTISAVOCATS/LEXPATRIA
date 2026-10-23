@@ -628,5 +628,10 @@
   "Un entretien de 30 minutes avec un avocat au barreau de Paris, au créneau de votre choix. Vous choisissez votre rendez-vous juste après le paiement.": "A 30-minute meeting with a lawyer at the Paris Bar, at the time of your choice. You choose your appointment right after payment.",
   "Un entretien de 30 minutes en visio avec un avocat du cabinet": "A 30-minute video meeting with a lawyer from the firm",
   "Votre rendez-vous est fixé": "Your appointment is confirmed",
-  "Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}": "Prefer to talk to a lawyer? 30-minute video consultation, {prix}"
+  "Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}": "Prefer to talk to a lawyer? 30-minute video consultation, {prix}",
+  "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.": "So that your lawyer can start right away, add to your space the contested decision (all pages) and the envelope or proof of notification, then your other documents.",
+  "Paiement confirmé — dossier {ref}": "Payment confirmed — case {ref}",
+  "Bonjour,": "Hello,",
+  "Votre paiement est confirmé.": "Your payment is confirmed.",
+  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "Your space: {lien} (sign in with a code sent to this address)."
 }

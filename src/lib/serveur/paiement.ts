@@ -1,6 +1,7 @@
 // Logique serveur du paiement : offre, acceptation de la convention, intention de paiement Stripe,
 // confirmation (idempotente) et attribution du dossier.
 
+import { estLangue, traduire } from "@/i18n";
 import { and, eq } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, conventions, dossiers, paiements, utilisateurs } from "@/db/schema";
@@ -150,6 +151,34 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
     return;
   }
   await attribuer(d, dossierId, dos.traitement === "URGENCE");
+  await confirmerAuClient(d, dossierId);
+}
+
+/** E-mail de confirmation au client après paiement : avocat attribué, lien vers l'espace, pièces à transmettre. */
+async function confirmerAuClient(d: Base, dossierId: string) {
+  const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
+  if (!dos) return;
+  const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
+  if (!cli?.email) return;
+  const [av] = dos.avocatId ? await d.select().from(utilisateurs).where(eq(utilisateurs.id, dos.avocatId)) : [];
+  const langue = estLangue(cli.langue) ? cli.langue : "fr";
+  const delai = traduire(langue, dos.traitement === "URGENCE" ? "10 heures ouvrées" : "48 heures ouvrées");
+  const suite = av
+    ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
+    : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai });
+  const pieces =
+    dos.avisPrealable || dos.procedure === "DIAGNOSTIC"
+      ? ""
+      : "\n\n" + traduire(langue, "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.");
+  const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
+  await envoyer({
+    canal: "EMAIL",
+    destinataire: cli.email,
+    sujet: traduire(langue, "Paiement confirmé — dossier {ref}", { ref: dos.reference }),
+    texte:
+      `${traduire(langue, "Bonjour,")}\n\n${traduire(langue, "Votre paiement est confirmé.")} ${suite}${pieces}\n\n` +
+      `${traduire(langue, "Votre espace : {lien} (connexion par un code reçu à cette adresse).", { lien: `${origine}/espace` })}\n\nLEXPATRIA Avocats`,
+  });
 }
 
 /** Lien de choix du créneau (consultation en visio), valable 30 jours. */

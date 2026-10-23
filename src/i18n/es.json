@@ -628,5 +628,10 @@
   "Un entretien de 30 minutes avec un avocat au barreau de Paris, au créneau de votre choix. Vous choisissez votre rendez-vous juste après le paiement.": "Una entrevista de 30 minutos con un abogado del Colegio de Abogados de París, en el horario que elija. Elige su cita justo después del pago.",
   "Un entretien de 30 minutes en visio avec un avocat du cabinet": "Una entrevista de 30 minutos por videollamada con un abogado del despacho",
   "Votre rendez-vous est fixé": "Su cita está confirmada",
-  "Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}": "¿Prefiere hablar con un abogado? Consulta por videollamada de 30 minutos, {prix}"
+  "Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}": "¿Prefiere hablar con un abogado? Consulta por videollamada de 30 minutos, {prix}",
+  "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.": "Para que su abogado avance desde ahora, añada en su espacio la decisión impugnada (todas las páginas) y el sobre o la prueba de notificación, y después sus demás documentos.",
+  "Paiement confirmé — dossier {ref}": "Pago confirmado — expediente {ref}",
+  "Bonjour,": "Buenos días:",
+  "Votre paiement est confirmé.": "Su pago está confirmado.",
+  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "Su espacio: {lien} (acceso con un código recibido en esta dirección)."
 }
