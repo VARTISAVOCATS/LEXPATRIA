@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
 import { verifier } from "@/lib/jeton";
+import { COLLECTE_OUVERTE, type Statut } from "@/lib/statuts";
 import { journaliser } from "@/lib/journal";
 import { enregistrer, TAILLE_MAX, typeAccepte, type FichierStocke } from "@/lib/serveur/stockage";
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
 
   const d = await db();
   const [dos] = await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, id));
-  if (!dos || dos.statut !== "PRE_DOSSIER") return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
+  if (!dos || !COLLECTE_OUVERTE.includes(dos.statut as Statut)) return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
 
   const nouveaux: FichierStocke[] = [];
   for (const f of form.getAll("fichiers")) {

@@ -70,6 +70,8 @@ export const STATUTS_AVOCAT: Statut[] = ["PRIS_EN_CHARGE", "EN_REDACTION", "DEPO
 
 export const ONGLETS_A_PRENDRE = ["PAYE"] as const;
 export const STATUTS_TERMINES = ["CLOS", "CLOS_REMBOURSE"] as const;
+/** Statuts où le client peut encore compléter questionnaire et pièces par le jeton du dépôt (avant et après paiement). */
+export const COLLECTE_OUVERTE: Statut[] = ["PRE_DOSSIER", "PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE", "DEPOSE", "ENREGISTRE", "INSTRUCTION", "AUDIENCE"];
 
 export function frDate(iso?: string | null): string {
   if (!iso) return "";

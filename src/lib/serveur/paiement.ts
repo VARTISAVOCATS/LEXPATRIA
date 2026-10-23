@@ -166,11 +166,16 @@ async function confirmerAuClient(d: Base, dossierId: string) {
   const suite = av
     ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
     : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai });
+  const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
+  // Lien direct vers la suite du dépôt (pièces et questionnaire), valable 14 jours ; il ne montre aucune donnée du dossier.
+  const lienSuite = `${origine}/depot/merci?ref=${encodeURIComponent(dos.reference)}&suite=${encodeURIComponent(signer(dos.id, 24 * 14))}`;
   const pieces =
     dos.avisPrealable || dos.procedure === "DIAGNOSTIC"
       ? ""
-      : "\n\n" + traduire(langue, "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.");
-  const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
+      : "\n\n" +
+        traduire(langue, "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.") +
+        "\n" +
+        traduire(langue, "Transmettre mes documents : {lien}", { lien: lienSuite });
   await envoyer({
     canal: "EMAIL",
     destinataire: cli.email,

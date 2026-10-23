@@ -633,5 +633,13 @@
   "Paiement confirmé — dossier {ref}": "Payment confirmed — case {ref}",
   "Bonjour,": "Hello,",
   "Votre paiement est confirmé.": "Your payment is confirmed.",
-  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "Your space: {lien} (sign in with a code sent to this address)."
+  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "Your space: {lien} (sign in with a code sent to this address).",
+  "Transmettre mes documents : {lien}": "Send my documents: {lien}",
+  "Le lien pour transmettre vos documents vous a été envoyé par e-mail. Vous pouvez aussi les ajouter depuis votre espace.": "The link to send your documents has been emailed to you. You can also add them from your space.",
+  "Votre dossier est prêt à {p} %": "Your case is {p}% ready",
+  "Vos autres documents": "Your other documents",
+  "Terminer": "Finish",
+  "Merci : votre avocat dispose de votre dossier.": "Thank you: your lawyer has your case file.",
+  "Vous pourrez ajouter un document à tout moment depuis votre espace.": "You can add a document at any time from your space.",
+  "Accéder à mon espace": "Go to my space"
 }

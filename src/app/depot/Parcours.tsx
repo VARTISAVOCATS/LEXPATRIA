@@ -145,6 +145,16 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Jeton du dépôt gardé pour l'onglet : après le retour du paiement, la page « Paiement validé » enchaîne la collecte.
+  useEffect(() => {
+    if (!jeton || !reference) return;
+    try {
+      sessionStorage.setItem(`lexpatria-jeton:${reference}`, jeton);
+    } catch {
+      /* stockage indisponible : le lien de l'e-mail de confirmation prend le relais */
+    }
+  }, [jeton, reference]);
+
   // Accolades obligatoires : les navigateurs récents renvoient une promesse depuis scrollTo, que React prendrait pour une fonction de nettoyage.
   useEffect(() => {
     window.scrollTo(0, 0);

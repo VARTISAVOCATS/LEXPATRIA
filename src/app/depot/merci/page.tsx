@@ -8,6 +8,10 @@ import { tServeur } from "@/i18n/serveur";
 import { db, schema } from "@/db";
 import { marquerPaye } from "@/lib/serveur/paiement";
 import { stripe } from "@/lib/stripe";
+import { verifier } from "@/lib/jeton";
+import type { CodeProcedure } from "@/lib/procedures";
+import type { Reponses } from "@/lib/questionnaire";
+import Collecte from "./Collecte";
 
 export const metadata = { title: "Paiement validé — LEXPATRIA Avocats" };
 export const dynamic = "force-dynamic";
@@ -27,6 +31,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
     }
   }
   const [frais] = dos ? await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id)) : [];
+  const [client] = frais ? await d.select().from(schema.clients).where(eq(schema.clients.id, frais.clientId)) : [];
   const [avocat] = frais?.avocatId ? await d.select().from(schema.utilisateurs).where(eq(schema.utilisateurs.id, frais.avocatId)) : [];
   const paye = frais && frais.statut !== "PRE_DOSSIER" && frais.statut !== "ATTENTE_PROCHE";
   const urgent = frais?.traitement === "URGENCE";
@@ -60,15 +65,13 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
               <p>{t("Votre avocat dispose de votre questionnaire et de vos documents. Vous recevez son avis écrit sous 48 heures ouvrées, dans votre espace.")}</p>
             ) : (
               <>
-            <h2>{t("Pour que votre avocat avance dès maintenant")}</h2>
-            <ol className="apres">
-              <li>{t("Photographiez la décision contestée (toutes les pages), si ce n'est pas déjà fait.")}</li>
-              <li>{t("Photographiez l'enveloppe ou la preuve de notification : elle fixe votre délai.")}</li>
-              <li>{t("Ajoutez vos autres documents à votre rythme ; si vous n'en avez pas un, indiquez-le simplement.")}</li>
-            </ol>
-            <Link href="/espace" className="btn btn-action large">
-              {t("Ajouter mes documents")}
-            </Link>
+            <Collecte
+              reference={frais.reference}
+              jetonServeur={p.suite && verifier(p.suite) === frais.id ? p.suite : null}
+              contexte={{ procedure: frais.procedure as CodeProcedure, algerien: client?.algerien ?? null, avisOuDiagnostic: false }}
+              reponsesInitiales={((frais.qualification ?? {}) as { reponses?: Reponses }).reponses ?? {}}
+              faits={((frais.triage ?? {}) as { faits?: string[] }).faits ?? []}
+            />
               </>
             )}
             {!frais.avisPrealable && frais.procedure !== "DIAGNOSTIC" && (

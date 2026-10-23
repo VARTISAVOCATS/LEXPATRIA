@@ -246,15 +246,20 @@ export function DepotPieces({
   reponses,
   suite,
   titre = "Vos documents",
+  filtre,
+  libelleSuite = "Continuer",
 }: {
   jeton: string;
   contexte: Contexte;
   reponses: Reponses;
   suite: () => void;
   titre?: string;
+  /** Sous-ensemble de la liste (après paiement : d'abord l'essentiel, puis les autres pièces). */
+  filtre?: (type: string) => boolean;
+  libelleSuite?: string;
 }) {
   const t = useT();
-  const liste = useMemo(() => piecesDemandees(contexte, reponses), [contexte, reponses]);
+  const liste = useMemo(() => piecesDemandees(contexte, reponses).filter((p) => !filtre || filtre(p.type)), [contexte, reponses, filtre]);
   const [etat, setEtat] = useState<Record<string, EtatPiece>>({});
   const [erreur, setErreur] = useState<string | null>(null);
   const champ = useRef<HTMLInputElement>(null);
@@ -342,7 +347,7 @@ export function DepotPieces({
       />
       <div className="bas">
         <button className="btn btn-action large" onClick={suite}>
-          {t("Continuer")}
+          {t(libelleSuite)}
         </button>
       </div>
     </>

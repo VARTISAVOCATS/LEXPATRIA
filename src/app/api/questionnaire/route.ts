@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db, schema } from "@/db";
 import { verifier } from "@/lib/jeton";
+import { COLLECTE_OUVERTE, type Statut } from "@/lib/statuts";
 
 export const runtime = "nodejs";
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
 
   const d = await db();
   const [dos] = await d.select({ statut: schema.dossiers.statut }).from(schema.dossiers).where(eq(schema.dossiers.id, id));
-  if (!dos || dos.statut !== "PRE_DOSSIER") return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
+  if (!dos || !COLLECTE_OUVERTE.includes(dos.statut as Statut)) return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
 
   await d
     .update(schema.dossiers)

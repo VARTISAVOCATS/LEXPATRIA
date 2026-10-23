@@ -1603,3 +1603,8 @@ main label.chk input { width: 22px; height: 22px; flex: 0 0 22px; margin-top: 1p
 .logo .t::before { content: ""; position: absolute; left: calc(50% - 3px); bottom: 0px; width: 6px; height: 6px; background: rgb(180, 35, 24); transform: rotate(45deg); }
 .logo .s { display: none !important; }
 .logo > span:last-child::after { content: "AVOCATS"; display: block; margin-top: 4px; font-family: Inter, system-ui, sans-serif; font-weight: 500; font-size: 12.5px; letter-spacing: 0.42em; padding-left: 0.42em; color: rgb(20, 33, 61); line-height: 1; }
+/* Collecte après paiement : jauge « Votre dossier est prêt à X % » */
+.collecte { display: grid; gap: 18px; margin-top: 18px; }
+.collecte .jauge { display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); }
+.collecte .jauge .pbar { height: 6px; }
+.collecte .jauge .pbar i { background: rgb(31, 138, 76); }

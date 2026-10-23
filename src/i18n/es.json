@@ -633,5 +633,13 @@
   "Paiement confirmé — dossier {ref}": "Pago confirmado — expediente {ref}",
   "Bonjour,": "Buenos días:",
   "Votre paiement est confirmé.": "Su pago está confirmado.",
-  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "Su espacio: {lien} (acceso con un código recibido en esta dirección)."
+  "Votre espace : {lien} (connexion par un code reçu à cette adresse).": "Su espacio: {lien} (acceso con un código recibido en esta dirección).",
+  "Transmettre mes documents : {lien}": "Enviar mis documentos: {lien}",
+  "Le lien pour transmettre vos documents vous a été envoyé par e-mail. Vous pouvez aussi les ajouter depuis votre espace.": "Le hemos enviado por correo electrónico el enlace para transmitir sus documentos. También puede añadirlos desde su espacio.",
+  "Votre dossier est prêt à {p} %": "Su expediente está listo al {p} %",
+  "Vos autres documents": "Sus demás documentos",
+  "Terminer": "Terminar",
+  "Merci : votre avocat dispose de votre dossier.": "Gracias: su abogado dispone de su expediente.",
+  "Vous pourrez ajouter un document à tout moment depuis votre espace.": "Podrá añadir un documento en cualquier momento desde su espacio.",
+  "Accéder à mon espace": "Acceder a mi espacio"
 }
