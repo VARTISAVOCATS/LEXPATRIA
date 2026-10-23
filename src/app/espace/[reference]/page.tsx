@@ -12,7 +12,7 @@ import { resumeConvention, texteConvention } from "@/lib/convention";
 import { accesClient, detailDossier, marquerLus } from "@/lib/serveur/dossiers";
 import { clientConnecte } from "@/lib/serveur/session";
 import type { FichierStocke } from "@/lib/serveur/stockage";
-import { etapesSuivi, frDate, frDateHeure, LIBELLES_STATUT, rang, type Statut } from "@/lib/statuts";
+import { etapesClient, frDate, frDateHeure, libelleClient, rang, statutClient, type Statut } from "@/lib/statuts";
 import { EnteteEspace } from "../../composants/Entete";
 import { AppelPropose } from "./AppelPropose";
 import { FormMessage, FormPiece } from "./Formulaires";
@@ -72,7 +72,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
             <span className="esp-ref">{t("Dossier {ref} · déposé le {date}", { ref: dos.reference, date: frDateHeure(dos.creeLe).split(" ")[0] })}</span>
             <h1>{dos.dossierParentId ? t("Appel devant la cour administrative d'appel") : t(PROCEDURES[dos.procedure as CodeProcedure]?.libelle ?? dos.procedure)}</h1>
             <div className="esp-etat">
-              <span className={`pill ${statut === "PAYE" ? "warn" : rang(statut) >= rang("CLOS") ? "n" : "ok"}`}>{t(LIBELLES_STATUT[statut])}</span>
+              <span className={`pill ${statut === "PAYE" ? "warn" : rang(statut) >= rang("CLOS") ? "n" : "ok"}`}>{t(libelleClient(statut, dos.procedure, dos.avisPrealable))}</span>
               {nomAvocat && <span>{t("Votre avocat : Maître {nom}", { nom: nomAvocat })}</span>}
             </div>
             {statut === "PAYE" && dos.procedure !== "CONSULTATION" && (
@@ -86,7 +86,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
               <p className="esp-dl">
                 {dos.dateLimiteVerifiee
                   ? t("Date limite du recours : {date} (vérifiée par votre avocat)", { date: frDate(dos.dateLimite) })
-                  : t("Date limite estimée : {date} (votre avocat la vérifie)", { date: frDate(dos.dateLimite) })}
+                  : t("Date limite estimée : {date}.", { date: frDate(dos.dateLimite) })}
               </p>
             )}
             {dos.procedure === "CONSULTATION" &&
@@ -118,7 +118,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
             )}
             {manquantes > 0 && (
               <Link className="esp-alerte" href={`/espace/${dos.reference}?onglet=pieces`}>
-                {t("{n} pièce(s) à transmettre à votre avocat", { n: manquantes })}
+                {t("{n} pièce(s) à transmettre", { n: manquantes })}
               </Link>
             )}
           </section>
@@ -147,13 +147,14 @@ export default async function DossierClient({ params, searchParams }: { params: 
             <section className="card">
               <h2>{t("Suivi de votre recours")}</h2>
               <ol className="esp-etapes">
-                {etapesSuivi(dos.procedure).map((s) => {
-                  const fait = rang(statut) > rang(s) || (s === "CLOS" && rang(statut) >= rang("CLOS"));
-                  const encours = s === statut;
+                {etapesClient(dos.procedure, dos.avisPrealable).map((s) => {
+                  const vu = statutClient(statut);
+                  const fait = rang(vu) > rang(s) || (s === "CLOS" && rang(vu) >= rang("CLOS"));
+                  const encours = s === vu;
                   return (
                     <li key={s} className={fait ? "fait" : encours ? "encours" : ""}>
                       <span className="pt" aria-hidden />
-                      <span>{t(LIBELLES_STATUT[s])}</span>
+                      <span>{t(libelleClient(s, dos.procedure, dos.avisPrealable))}</span>
                       {encours && <span className="pill ai">{t("Étape actuelle")}</span>}
                     </li>
                   );

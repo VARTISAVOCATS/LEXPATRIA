@@ -350,3 +350,18 @@ export const modelesCabinet = pgTable("modeles_cabinet", {
   auteurId: text("auteur_id").notNull(),
   creeLe: cree(),
 });
+
+/** Blog « Actualités » : articles rédigés ou relus par les associés, publiés pour attirer du trafic (référencement). */
+export const articles = pgTable("articles", {
+  id: id(),
+  slug: text("slug").notNull().unique(),
+  titre: text("titre").notNull(),
+  chapo: text("chapo").notNull().default(""), // résumé affiché en liste et en description
+  contenu: text("contenu").notNull().default(""), // texte simple : ## intertitres, - listes, **gras**
+  procedure: text("procedure"), // procédure liée (appel à l'action en fin d'article)
+  publie: boolean("publie").notNull().default(false),
+  publieLe: timestamp("publie_le", { withTimezone: true }),
+  auteurId: text("auteur_id").notNull(),
+  creeLe: cree(),
+  majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -34,6 +34,7 @@ export function EnteteSite() {
           <nav className={`nav ${menu ? "open" : ""}`}>
             <Link href="/honoraires">{t("Honoraires")}</Link>
             <Link href="/cabinet">{t("Le cabinet")}</Link>
+            <Link href="/actualites">{t("Actualités")}</Link>
             <Link href="/espace">{t("Mon espace")}</Link>
             <ChoixLangue />
           </nav>
@@ -61,7 +62,6 @@ export function EnteteParcours({ langue = false }: { langue?: boolean }) {
           </div>
         </div>
       </header>
-      <div className="lx-etat">{t("Cabinet d'avocats — pas un service de l'État")}</div>
       {aide && (
         <div className="overlay" role="dialog" aria-modal onClick={() => setAide(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>

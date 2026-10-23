@@ -4,7 +4,7 @@ import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, dossiers, echeances, indisponibilites, journal, messages, pieces, utilisateurs } from "@/db/schema";
 import { journaliser } from "@/lib/journal";
-import { STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
+import { libelleClient, STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
 import { ajouterMessage, voitTout, type Dossier } from "./dossiers";
 import { envoyer } from "./notifications";
 import { attestationValide, dernierActe } from "./poste";
@@ -34,7 +34,7 @@ export async function accepter(d: Base, m: Membre, dos: Dossier): Promise<Result
   await d.update(dossiers).set({ statut: "PRIS_EN_CHARGE", avocatId: dos.avocatId ?? m.id, accepteLe: maintenant, majLe: maintenant }).where(eq(dossiers.id, dos.id));
   await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "DOSSIER_ACCEPTE" });
   const [av] = await d.select().from(utilisateurs).where(eq(utilisateurs.id, dos.avocatId ?? m.id));
-  await prevenirClient(d, dos, "Votre dossier est pris en charge — LEXPATRIA", `Maître ${av.prenom} ${av.nom} a pris en charge votre dossier ${dos.reference}.`);
+  await prevenirClient(d, dos, "Votre dossier est pris en charge — LEXPATRIA", `Maître ${av.prenom} ${av.nom} a pris en charge votre dossier ${dos.reference}.${libelleClient("PRIS_EN_CHARGE", dos.procedure, dos.avisPrealable).includes("attestation") ? " Votre attestation est disponible dans votre espace." : ""}`);
   return { ok: true };
 }
 
@@ -50,7 +50,7 @@ export async function changerStatut(d: Base, m: Membre, dos: Dossier, statut: st
   await d.update(dossiers).set({ statut: statut as Statut, majLe: new Date() }).where(eq(dossiers.id, dos.id));
   await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "STATUT_MODIFIE", details: { de: dos.statut, vers: statut } });
   if (["DEPOSE", "ENREGISTRE", "AUDIENCE", "JUGE", "CLOS"].includes(statut))
-    await prevenirClient(d, dos, "Votre dossier avance — LEXPATRIA", `Votre dossier ${dos.reference} a franchi une nouvelle étape.`);
+    await prevenirClient(d, dos, "Votre dossier avance — LEXPATRIA", `Dossier ${dos.reference} : ${libelleClient(statut as Statut, dos.procedure, dos.avisPrealable).toLowerCase()}.`);
   return { ok: true };
 }
 

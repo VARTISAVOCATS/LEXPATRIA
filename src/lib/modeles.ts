@@ -3,6 +3,7 @@
 // Toute information manquante est marquée XXX (surlignée en jaune à l'affichage et dans le fichier Word) :
 // aucun dépôt n'est possible tant qu'il en reste une.
 
+import { CERTIFICATS, CONSULATS, TITRES, VISAS_ENTREE } from "./listes";
 import { PROCEDURES, type CodeProcedure } from "./procedures";
 
 export const MANQUANT = "XXX";
@@ -141,6 +142,19 @@ export function prefet(prefecture?: string | null, majuscule = false): string {
 
 const fr = (iso?: string | null) => (iso && /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10).split("-").reverse().join("/") : MANQUANT);
 const v = (x?: string | null) => (x && x.trim() ? x.trim() : MANQUANT);
+// Réponses choisies dans une liste : code → libellé lisible dans l'acte.
+const libelleListe = (liste: [string, string][], code?: string) => liste.find(([c]) => c === code)?.[1];
+const visaEntree = (code?: string) => {
+  if (!code || code === "nsp") return "";
+  if (code === "sans") return " sans visa";
+  const l = libelleListe(VISAS_ENTREE, code);
+  return l ? `, muni(e) d'un ${l.charAt(0).toLowerCase()}${l.slice(1)}` : ` (${code})`;
+};
+const consulat = (code?: string) => {
+  const l = libelleListe(CONSULATS, code);
+  if (!l || code === "autre") return code && !l ? code : MANQUANT;
+  return `les autorités consulaires françaises à ${l.split(" — ")[1] ?? l}`;
+};
 
 const FAMILLE: Record<string, string> = {
   celibataire: "célibataire",
@@ -175,8 +189,8 @@ function signature(d: DonneesActe) {
 function faits(d: DonneesActe) {
   const r = d.reponses;
   const lignes: string[] = [];
-  lignes.push(`${identite(d)} est entré(e) en France le ${fr(r.entree)}${r.modeEntree ? ` (${r.modeEntree})` : ""}.`);
-  if (r.titreAnt === "oui") lignes.push(`Il/elle a été titulaire d'un titre de séjour (${v(r.dernierTitre)}), expiré le ${fr(r.finTitre)}.`);
+  lignes.push(`${identite(d)} est entré(e) en France le ${fr(r.entree)}${visaEntree(r.modeEntree)}.`);
+  if (r.titreAnt === "oui") lignes.push(`Il/elle a été titulaire d'un titre de séjour (${v(libelleListe([...TITRES, ...CERTIFICATS], r.dernierTitre) ?? r.dernierTitre)}), expiré le ${fr(r.finTitre)}.`);
   if (r.famille) lignes.push(`Sur le plan familial, il/elle est ${FAMILLE[r.famille] ?? r.famille}${r.conjoint ? ` ; son conjoint ${r.conjoint}` : ""}.`);
   if (r.enfants && r.enfants !== "0") lignes.push(`Il/elle a ${r.enfants} enfant(s)${r.scolarises === "oui" ? ", scolarisé(s) en France" : ""}.`);
   if (r.activite) lignes.push(`Il/elle ${ACTIVITE[r.activite] ?? r.activite}${r.anciennete ? ` depuis ${r.anciennete}` : ""}.`);
@@ -440,13 +454,13 @@ BP 83609
 Lettre recommandée avec demande d'avis de réception
 Paris, le ${MANQUANT}
 
-Objet : recours administratif préalable obligatoire contre le refus de visa ${v(d.reponses.consulat ? `opposé par ${d.reponses.consulat}` : "")} du ${fr(d.dateDecision)}
+Objet : recours administratif préalable obligatoire contre le refus de visa ${d.reponses.consulat ? `opposé par ${consulat(d.reponses.consulat)}` : MANQUANT} du ${fr(d.dateDecision)}
 Demandeur : ${identite(d)}
 Réf. : ${d.reference}
 
 Madame, Monsieur les membres de la commission,
 
-En ma qualité de conseil de ${identite(d)}, j'ai l'honneur de former un recours contre la décision du ${fr(d.dateDecision)} par laquelle ${v(d.reponses.consulat)} a refusé de lui délivrer un visa ${v(d.reponses.motif)}.
+En ma qualité de conseil de ${identite(d)}, j'ai l'honneur de former un recours contre la décision du ${fr(d.dateDecision)} par laquelle ${consulat(d.reponses.consulat)} ont refusé de lui délivrer un visa ${v(d.reponses.motif)}.
 
 I. Les faits
 ${MANQUANT}

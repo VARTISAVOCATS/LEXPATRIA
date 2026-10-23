@@ -23,6 +23,10 @@ export default function PiedSite() {
       </span>
       <span>SELARL VARTIS Avocats · 222 boulevard Saint-Germain, 75007 Paris</span>
       <span>
+        <Link className="link" href="/actualites">
+          {t("Actualités")}
+        </Link>
+        {" · "}
         <Link className="link" href="/honoraires">
           {t("Convention d'honoraires et conditions")}
         </Link>

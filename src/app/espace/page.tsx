@@ -6,7 +6,7 @@ import { tServeur } from "@/i18n/serveur";
 import { PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { dossiersDuClient } from "@/lib/serveur/dossiers";
 import { clientConnecte } from "@/lib/serveur/session";
-import { frDate, LIBELLES_STATUT, type Statut } from "@/lib/statuts";
+import { frDate, libelleClient, type Statut } from "@/lib/statuts";
 import Connexion from "../composants/Connexion";
 import { EnteteEspace } from "../composants/Entete";
 
@@ -37,7 +37,7 @@ export default async function Espace() {
                   <Link key={dos.id} href={`/espace/${dos.reference}`} className="card esp-carte">
                     <span className="esp-ref">{t("Dossier {ref}", { ref: dos.reference })}</span>
                     <b>{t(PROCEDURES[dos.procedure as CodeProcedure]?.libelle ?? dos.procedure)}</b>
-                    <span className="pill n">{t(LIBELLES_STATUT[dos.statut as Statut])}</span>
+                    <span className="pill n">{t(libelleClient(dos.statut as Statut, dos.procedure, dos.avisPrealable))}</span>
                     {avocatNom && <span>{t("Votre avocat : Maître {nom}", { nom: `${avocatPrenom} ${avocatNom}` })}</span>}
                     {dos.dateLimite && <span className="esp-dl">{t("Date limite : {date}", { date: frDate(dos.dateLimite) })}</span>}
                   </Link>

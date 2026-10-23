@@ -59,10 +59,10 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
                 ? t("Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${avocat.prenom} ${avocat.nom}`, delai: t(delaiPriseEnCharge) })
                 : t("Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai: t(delaiPriseEnCharge) })}
             </h1>
-            <p className="aide">{t("Dossier {ref}. Vous recevez un e-mail de confirmation avec votre lien de connexion.", { ref: frais.reference })}</p>
+            <p className="aide">{t("Dossier {ref}. Un e-mail de confirmation vous est envoyé.", { ref: frais.reference })}</p>
 
             {frais.avisPrealable || frais.procedure === "DIAGNOSTIC" ? (
-              <p>{t("Votre avocat dispose de votre questionnaire et de vos documents. Vous recevez son avis écrit sous 48 heures ouvrées, dans votre espace.")}</p>
+              <p>{t("Vous recevrez l'avis écrit dans votre espace sous 48 heures ouvrées.")}</p>
             ) : (
               <>
             <Collecte
@@ -76,7 +76,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
             )}
             {!frais.avisPrealable && frais.procedure !== "DIAGNOSTIC" && (
             <p className="petite">
-              {t("Votre attestation de prise en charge, à présenter en cas de contrôle, sera disponible dans votre espace dès que votre avocat aura accepté le dossier.")}
+              {t("Dès la prise en charge, une attestation à présenter en cas de contrôle sera disponible dans votre espace.")}
             </p>
             )}
           </>

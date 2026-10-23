@@ -26,7 +26,7 @@ export function ConfirmationFaits({ jeton, faits, suite }: { jeton: string; fait
     <>
       <p className="surtitre">{t("Votre récit")}</p>
       <h1>{t("Voici ce que nous avons compris")}</h1>
-      <p className="aide">{t("Vérifiez chaque point : une erreur de fait peut changer l'issue d'un dossier. Corrigez tout ce qui n'est pas exact.")}</p>
+      <p className="aide">{t("Vérifiez chaque point. Une erreur de fait peut changer l'issue d'un dossier.")}</p>
       <ul className="faits-a-confirmer">
         {etat.map((e, i) => (
           <li key={i}>
@@ -212,6 +212,17 @@ function Champ({ q, v, set, dictee }: { q: Question; v: string; set: (s: string)
       </div>
     );
   }
+  if (q.type === "liste")
+    return (
+      <select className="champ" aria-label={t(q.libelle)} value={v} onChange={(e) => set(e.target.value)}>
+        <option value="">{t("Choisissez dans la liste")}</option>
+        {q.options!.map(([val, l]) => (
+          <option key={val} value={val}>
+            {q.brut ? l : t(l)}
+          </option>
+        ))}
+      </select>
+    );
   if (q.type === "texte_long")
     return (
       <div className="champ-recit">
@@ -304,7 +315,7 @@ export function DepotPieces({
       <h1>{t(titre)}</h1>
       <p className="aide">
         {t(
-          "Liste établie pour votre situation. Prenez une photo ou ajoutez un fichier ; plusieurs documents sont possibles pour une même pièce. Si vous n'avez pas un document, indiquez-le : votre avocat en tiendra compte.",
+          "Photographiez chaque document ou ajoutez un fichier, plusieurs si nécessaire. S'il vous en manque un, indiquez-le.",
         )}
       </p>
       {erreur && <p className="erreur">{erreur}</p>}

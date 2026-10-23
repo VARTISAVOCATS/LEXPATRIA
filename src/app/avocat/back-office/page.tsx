@@ -1,7 +1,9 @@
 // Lot 4 : back office (associés). Assistant de modification, contenus du site, équipe, historique.
 import Link from "next/link";
 import { db } from "@/db";
-import { LIBELLES_DILIGENCE } from "@/lib/procedures";
+import { LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { tous } from "@/lib/serveur/blog";
+import Blog from "./Blog";
 import { CLES_PARAMETRES, PARAMETRES, type CleParametre } from "@/lib/parametres";
 import { dernieresPropositions, type ChangementPropose } from "@/lib/serveur/assistant";
 import { equipe } from "@/lib/serveur/cabinet";
@@ -22,6 +24,7 @@ const RUBRIQUES = [
   ["assistant", "Assistant"],
   ["contenus", "Contenus et tarifs"],
   ["modeles", "Modèles d'actes"],
+  ["blog", "Blog"],
   ["equipe", "Équipe"],
   ["connexions", "Connexions (API)"],
   ["historique", "Historique"],
@@ -176,6 +179,26 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                       cabinet: m.cabinet,
                       texte: m.actuel?.texte ?? "",
                       versions: m.versions.map((v) => ({ id: v.id, version: v.version, le: frDateHeure(v.creeLe), fichier: v.fichier, vide: !v.texte.trim() })),
+                    }))}
+                  />
+                );
+              })())}
+
+            {rubrique === "blog" &&
+              (await (async () => {
+                const liste = await tous(d);
+                return (
+                  <Blog
+                    procedures={(Object.keys(PROCEDURES) as CodeProcedure[]).map((c) => [c, PROCEDURES[c].libelle])}
+                    articles={liste.map((a) => ({
+                      id: a.id,
+                      slug: a.slug,
+                      titre: a.titre,
+                      chapo: a.chapo,
+                      contenu: a.contenu,
+                      procedure: a.procedure,
+                      publie: a.publie,
+                      le: frDateHeure(a.majLe),
                     }))}
                   />
                 );

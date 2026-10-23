@@ -42,8 +42,8 @@ for (const proc of Object.keys(PROCEDURES) as CodeProcedure[])
     for (const r of reponsesTypes) {
       const c = { procedure: proc, algerien, avisOuDiagnostic: true };
       questions(c, r).forEach((q) => {
-        ajouter([q.libelle, q.aide, q.options?.map((o) => o[1])]);
-        if (q.avec) ajouter([q.avec.libelle, q.avec.aide, q.avec.options?.map((o) => o[1])]);
+        ajouter([q.libelle, q.aide, q.brut ? [] : q.options?.map((o) => o[1])]);
+        if (q.avec) ajouter([q.avec.libelle, q.avec.aide, q.avec.brut ? [] : q.avec.options?.map((o) => o[1])]);
       });
       piecesDemandees(c, r).forEach((p) => ajouter([p.libelle, p.pourquoi]));
     }
@@ -59,7 +59,7 @@ for (const f of ["src/lib/accueil.ts", "src/app/depot/Parcours.tsx"]) {
   "Recours préalable contre un ajournement de naturalisation",
   "Demande restée sans réponse",
   "Avis écrit d'un avocat",
-  "Un avocat du cabinet étudie votre dossier et vos documents",
+  "L'étude de votre dossier par un avocat du cabinet",
   "69 € non déduits si la procédure est engagée ensuite",
   "L'avis d'un avocat",
   "Votre diagnostic",

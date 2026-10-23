@@ -2,6 +2,7 @@
 // Utilisé avant le paiement pour l'avis préalable et le diagnostic, après le paiement pour les procédures.
 // Une question par écran ; deux au plus, seulement si elles sont de même nature (champ `avec`).
 
+import { CERTIFICATS, CONSULATS, NOMBRES_ENFANTS, PREFECTURES, TITRES, VISAS_ENTREE } from "./listes";
 import type { CodeProcedure } from "./procedures";
 
 export type Reponses = Record<string, string | undefined>;
@@ -9,8 +10,10 @@ export type Reponses = Record<string, string | undefined>;
 export interface Question {
   id: string;
   libelle: string;
-  type: "date" | "texte" | "texte_long" | "oui_non" | "choix" | "nombre";
+  type: "date" | "texte" | "texte_long" | "oui_non" | "choix" | "liste" | "nombre";
   options?: [string, string][];
+  /** Libellés de liste non traduits (noms propres : préfectures, consulats). */
+  brut?: boolean;
   aide?: string;
   /** Question de même nature affichée sur le même écran. */
   avec?: Question;
@@ -50,13 +53,8 @@ export function questions(c: Contexte, r: Reponses): Question[] {
       avec: {
         id: "modeEntree",
         libelle: "Avec quel visa ?",
-        type: "choix",
-        options: [
-          ["long", "Visa long séjour"],
-          ["court", "Visa court séjour"],
-          ["sans", "Sans visa"],
-          ["nsp", "Je ne sais pas"],
-        ],
+        type: "liste",
+        options: VISAS_ENTREE,
       },
     });
     Q.push({ id: "titreAnt", libelle: "Avez-vous déjà eu un titre de séjour en France ?", type: "oui_non" });
@@ -64,8 +62,8 @@ export function questions(c: Contexte, r: Reponses): Question[] {
       Q.push({
         id: "dernierTitre",
         libelle: c.algerien ? "Votre dernier certificat de résidence" : "Votre dernier titre de séjour",
-        type: "texte",
-        aide: "Sa nature, par exemple « vie privée et familiale ».",
+        type: "liste",
+        options: c.algerien ? CERTIFICATS : TITRES,
         avec: { id: "finTitre", libelle: "Sa date d'expiration", type: "date" },
       });
   }
@@ -131,7 +129,7 @@ export function questions(c: Contexte, r: Reponses): Question[] {
         ["autre", "Autre"],
       ],
     });
-    Q.push({ id: "consulat", libelle: "Quel consulat a refusé le visa ?", type: "texte", aide: "Par exemple : Alger, Casablanca, Tunis." });
+    Q.push({ id: "consulat", libelle: "Quel consulat a refusé le visa ?", type: "liste", options: CONSULATS, brut: true });
     Q.push({ id: "rapoForme", libelle: "Avez-vous déjà formé vous-même un recours contre ce refus ?", type: "oui_non" });
     Q.push({ id: "urgenceVisa", libelle: "Une séparation familiale ou une urgence particulière est-elle en jeu ?", type: "oui_non" });
   }
@@ -141,7 +139,7 @@ export function questions(c: Contexte, r: Reponses): Question[] {
   }
 
   if (blocage || p === "REFUS_IMPLICITE") {
-    Q.push({ id: "prefecture", libelle: "Quelle préfecture est concernée ?", type: "texte", aide: "Par exemple : Seine-Saint-Denis (Bobigny)." });
+    Q.push({ id: "prefecture", libelle: "Quelle préfecture est concernée ?", type: "liste", options: PREFECTURES.map(([, l]) => [l, l]), brut: true, aide: "Celle de votre département de résidence." });
     if (blocage) Q.push({ id: "depuis", libelle: "Depuis quand essayez-vous d'obtenir un rendez-vous ou un récépissé ?", type: "date", aide: "Une date approximative suffit." });
   }
 
@@ -166,7 +164,8 @@ export function questions(c: Contexte, r: Reponses): Question[] {
     Q.push({
       id: "enfants",
       libelle: "Combien d'enfants avez-vous ?",
-      type: "nombre",
+      type: "choix",
+      options: NOMBRES_ENFANTS,
       avec: { id: "enfantsFrance", libelle: "Vivent-ils en France ?", type: "oui_non" },
     });
     if (Number(r.enfants) > 0) Q.push({ id: "scolarises", libelle: "Sont-ils scolarisés en France ?", type: "oui_non" });

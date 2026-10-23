@@ -55,7 +55,7 @@ export default function Collecte({
   if (!jeton)
     return (
       <>
-        <p>{t("Le lien pour transmettre vos documents vous a été envoyé par e-mail. Vous pouvez aussi les ajouter depuis votre espace.")}</p>
+        <p>{t("Transmettez vos documents depuis le lien reçu par e-mail ou depuis votre espace.")}</p>
         <Link href="/espace" className="btn btn-action large">
           {t("Ajouter mes documents")}
         </Link>
@@ -83,7 +83,7 @@ export default function Collecte({
           reponses={reponses}
           filtre={estEssentiel}
           ordre={ESSENTIEL}
-          titre="Pour que votre avocat avance dès maintenant"
+          titre="Pour commencer sans attendre"
           suite={() => apres("ESSENTIEL")}
         />
       )}
@@ -119,7 +119,7 @@ export default function Collecte({
               ✓
             </span>
             <div>
-              <b>{t("Merci : votre avocat dispose de votre dossier.")}</b>
+              <b>{t("Merci, votre dossier est transmis.")}</b>
               <span>{t("Vous pourrez ajouter un document à tout moment depuis votre espace.")}</span>
             </div>
           </div>

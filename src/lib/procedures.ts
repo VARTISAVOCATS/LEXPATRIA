@@ -130,7 +130,7 @@ export function formatEuros(centimes: number): string {
 }
 
 export const LIBELLES_DILIGENCE: Record<Diligence, string> = {
-  REQUETE: "Requête devant le tribunal administratif (mémoires et plaidoirie compris)",
+  REQUETE: "Requête devant le tribunal administratif",
   REFERE_SUSPENSION_AVEC_REQUETE: "Référé-suspension, engagé avec la requête",
   REFERE_SUSPENSION_SEUL: "Référé-suspension",
   REFERE_LIBERTE: "Référé-liberté ou référé mesures utiles, au choix de l'avocat",

@@ -18,6 +18,7 @@ import { fichiersEnAttente } from "./fichiers";
 import PaiementIntegre from "./PaiementIntegre";
 import { EnteteParcours } from "../composants/Entete";
 import { useDictee } from "./dictee";
+import ChampsAdresse from "./Adresse";
 import { ConfirmationFaits, DepotPieces, QuestionnaireEcrans } from "./Questionnaire";
 
 type Etape =
@@ -569,7 +570,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       )}
       <div className="box trust">
         <h4>{t("Votre avocat")}</h4>
-        <div>{t("Votre dossier est attribué à un avocat du cabinet, qui le prend en charge sous 48 heures ouvrées.")}</div>
+        <div>{t("Un avocat du cabinet le prend en charge sous 48 heures ouvrées.")}</div>
         <div className="tr-l">
           <span className="av sm">RR</span>
           <span>{t("Cabinet dirigé par Me Rafik Rabia")}</span>
@@ -634,7 +635,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
               <div>
                 <div className="composer">
                   <p className="lx-ia">
-                    {t("Vous échangez avec un outil d'intelligence artificielle du cabinet. Il oriente votre demande ; un avocat étudie ensuite votre dossier.")}
+                    {t("Un outil d'intelligence artificielle du cabinet oriente votre demande. Un avocat étudie ensuite votre dossier.")}
                   </p>
                   <label className="comp-q" htmlFor="tri_in">
                     {t("Qu'est-ce qui vous arrive ?")}
@@ -711,7 +712,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         <span className="ph-ld">{t("Importer ma décision")}</span>
                       </button>
                       <span className="dec-h">
-                        {t("Vous avez reçu une décision ? Photographiez-la ou importez-la : nous l'analysons pour vous. Plusieurs pages possibles.")}
+                        {t("Vous avez reçu une décision ? Photographiez-la ou importez-la, même en plusieurs pages.")}
                       </span>
                       {fichiers.length > 0 && (
                         <div className="vign">
@@ -765,7 +766,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                 <div className="tr-head">
                   <span className="pill ai">{t("Assistant IA")}</span>
                 </div>
-                <p className="serif tr-msg">{t("Voici la procédure envisagée pour votre situation ; votre avocat la vérifie dès la prise en charge.")}</p>
+                <p className="serif tr-msg">{t("Voici la procédure envisagée. Elle est confirmée à la prise en charge.")}</p>
                 <div className="tr-proc">
                   <b>{t(titreProcedure)}</b>
                 </div>
@@ -921,7 +922,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     {delai.refusImpliciteNonNe ? (
                       <div className="mini-q">
                         <p className="note">
-                          {t("La préfecture a encore jusqu'au {date} pour répondre. Faute de réponse à cette date, son silence vaudra refus et pourra être contesté.", {
+                          {t("La préfecture peut répondre jusqu'au {date}. Passé cette date, son silence vaudra refus et pourra être contesté.", {
                             date: dateLongue(delai.refusImpliciteNonNe.dateNaissance),
                           })}
                         </p>
@@ -935,7 +936,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     ) : delai.traitement === "EXPIRE" ? (
                       <div className="mini-q">
                         <p className="note warn">
-                          {t("D'après la date indiquée, le délai pour agir paraît dépassé. Il arrive souvent que la date retenue ne soit pas la bonne ; un avocat vérifie si un recours reste possible.")}
+                          {t("D'après cette date, le délai paraît dépassé. La date retenue est souvent inexacte : un avocat peut vérifier si un recours reste possible.")}
                         </p>
                         <div className="tr-choice">
                           <button className="tc main" onClick={() => { setAvisPrealable(true); setEtape("RECOURS"); }}>
@@ -949,18 +950,18 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     ) : (
                       <>
                         {blocDelai(false)}
-                        {avecDelai && <p className="fr-sub">{t("Estimation à partir de la date indiquée ; elle sera confirmée à la lecture de votre décision.")}</p>}
+                        {avecDelai && <p className="fr-sub">{t("Estimation à confirmer à la lecture de la décision.")}</p>}
                         {situation === "INCONNUE" && (
-                          <p className="note">{t("Faute de connaître votre situation, nous retenons par prudence le délai le plus court (7 jours). Votre avocat vérifie le délai exact.")}</p>
+                          <p className="note">{t("Sans précision sur votre situation, nous retenons par prudence le délai le plus court : 7 jours. Le délai exact sera vérifié.")}</p>
                         )}
                         {delai.dateInconnue && procedure !== "PROCEDURE_EN_COURS" && (
-                          <p className="note">{t("Sans la date de réception, votre avocat vérifie la date limite en priorité dès la prise en charge.")}</p>
+                          <p className="note">{t("Sans date de réception, la date limite est vérifiée en priorité.")}</p>
                         )}
                         {urgence && (
                           <div className="urg">
                             <h3>{t("Procédure d'urgence")}</h3>
                             <p>
-                              {t("Délai très court : votre avocat dépose d'abord une requête sommaire pour préserver le délai, puis la complète. Prise en charge sous 10 heures ouvrées ; le cabinet vous contacte si nécessaire.")}
+                              {t("Le délai est très court. Une requête sommaire est d'abord déposée pour le préserver, puis complétée. Prise en charge sous 10 heures ouvrées.")}
                             </p>
                           </div>
                         )}
@@ -983,7 +984,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             ))}
                           </div>
                         )}
-                        <small>{t("Information générale, pas une consultation : votre avocat étudie votre situation une fois la procédure engagée.")}</small>
+                        <small>{t("Information générale, et non une consultation.")}</small>
                       </div>
                     )}
                   </>
@@ -1041,14 +1042,13 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     {urgence && <p className="fr-sub">{t("Dont {montant} de prise en charge en urgence.", { montant: formatEuros(19_000) })}</p>}
                     <ul className="off-in">
                       {(avisPrealable
-                        ? ["Un avocat du cabinet étudie votre dossier et vos documents", "Un avis écrit sous 48 heures ouvrées, avec la procédure conseillée", "69 € non déduits si la procédure est engagée ensuite"]
+                        ? ["L'étude de votre dossier par un avocat du cabinet", "Un avis écrit sous 48 heures ouvrées", "69 € non déduits si la procédure est engagée ensuite"]
                         : contenu.compris
                       ).map((c) => (
                         <li key={c}>✓ {t(c)}</li>
                       ))}
                     </ul>
                     {!avisPrealable && contenu.nonCompris && <p className="note">{t(contenu.nonCompris)}</p>}
-                    {!avisPrealable && procedure !== "DIAGNOSTIC" && <p className="ferme">{t("Prix ferme pour toute la mission décrite, sans supplément.")}</p>}
                     <div className="box">
                       <h4>{t("Après votre paiement")}</h4>
                       <ol className="apres">
@@ -1093,7 +1093,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             </button>
                           ))}
                         </div>
-                        <span className="help">{t("Pour rédiger correctement vos actes et votre attestation.")}</span>
+                        <span className="help">{t("Elle sert à la rédaction des actes.")}</span>
                       </div>
                       <div className="f">
                         <label htmlFor="q_prenom">{t("Prénom")} *</label>
@@ -1111,32 +1111,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         <label htmlFor="q_tel">{t("Téléphone")} *</label>
                         <input id="q_tel" type="tel" inputMode="tel" autoComplete="tel" value={coord.telephone} onChange={(e) => setCoord({ ...coord, telephone: e.target.value })} />
                       </div>
-                      <div className="f full">
-                        <label htmlFor="q_adresse">{t("Adresse postale")} *</label>
-                        <input id="q_adresse" type="text" autoComplete="street-address" value={coord.adresse} onChange={(e) => setCoord({ ...coord, adresse: e.target.value })} />
-                        <span className="help">{t("Elle figure sur votre facture, votre convention d'honoraires et vos actes.")}</span>
-                      </div>
-                      <div className="f">
-                        <label htmlFor="q_cp">
-                          {t("Code postal")}
-                          {coord.pays === "FR" ? " *" : ""}
-                        </label>
-                        <input id="q_cp" type="text" inputMode={coord.pays === "FR" ? "numeric" : "text"} autoComplete="postal-code" value={coord.codePostal} onChange={(e) => setCoord({ ...coord, codePostal: e.target.value })} />
-                      </div>
-                      <div className="f">
-                        <label htmlFor="q_ville">{t("Ville")} *</label>
-                        <input id="q_ville" type="text" autoComplete="address-level2" value={coord.ville} onChange={(e) => setCoord({ ...coord, ville: e.target.value })} />
-                      </div>
-                      <div className="f full">
-                        <label htmlFor="q_pays">{t("Pays")} *</label>
-                        <select id="q_pays" autoComplete="country" value={coord.pays} onChange={(e) => setCoord({ ...coord, pays: e.target.value })}>
-                          {listePays.map(([code, nom]) => (
-                            <option key={code} value={code}>
-                              {nom}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <ChampsAdresse valeur={coord} changer={(v) => setCoord((c) => ({ ...c, ...v }))} listePays={listePays} />
                       {coord.pays === "FR" && coord.codePostal.trim() !== "" && !/^\d{5}$/.test(coord.codePostal.trim()) && (
                         <p className="erreur full">{t("Code postal : 5 chiffres.")}</p>
                       )}
@@ -1151,7 +1126,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                               {t("Non")}
                             </button>
                           </div>
-                          <span className="help">{t("Les ressortissants algériens relèvent de l'accord franco-algérien de 1968 : votre procédure en tient compte.")}</span>
+                          <span className="help">{t("Les ressortissants algériens relèvent de l'accord franco-algérien de 1968.")}</span>
                         </div>
                       )}
                     </div>
@@ -1200,8 +1175,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         ✓
                       </span>
                       <div>
-                        <b>{t("Votre avocat dispose des éléments nécessaires à l'appréciation de votre situation.")}</b>
-                        <span>{t("Il ne reste qu'à valider pour recevoir son avis écrit sous 48 heures ouvrées.")}</span>
+                        <b>{t("L'avocat dispose des éléments nécessaires pour apprécier votre situation.")}</b>
+                        <span>{t("Validez pour recevoir l'avis écrit sous 48 heures ouvrées.")}</span>
                       </div>
                     </div>
                     <div className="actions">
@@ -1232,7 +1207,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         ))}
                       </div>
                       <div>
-                        <b>{t("Un avocat du cabinet accepte votre dossier, puis vous écrit.")}</b>
+                        <b>{t("Un avocat du cabinet prend votre dossier et vous écrit.")}</b>
                         <span>
                           {t(urgence ? "Un avocat du cabinet prend votre dossier sous 10 heures ouvrées." : "Un avocat du cabinet prend votre dossier sous 48 heures ouvrées.")}{" "}
                           {t("Avocats au barreau de Paris : {noms}.", { noms: EQUIPE.map((a) => a.nom).join(", ") })}

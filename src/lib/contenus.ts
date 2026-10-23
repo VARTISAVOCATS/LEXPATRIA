@@ -17,60 +17,58 @@ export interface ContenuProcedure {
 export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
   OQTF: {
     obtenir:
-      "Le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que votre avocat vérifie, et le tribunal peut annuler la décision.",
+      "Le recours formé dans le délai suspend en principe l'éloignement jusqu'au jugement. Le tribunal peut annuler la décision.",
     compris: [
-      "L'étude de votre dossier et la rédaction de la requête par un avocat du cabinet",
-      "Le dépôt au tribunal par votre avocat",
-      "Tous les mémoires en cours d'instance",
+      "La rédaction de la requête par un avocat du cabinet",
+      "Son dépôt au tribunal",
       "La plaidoirie à l'audience",
-      "Le suivi jusqu'au jugement, chaque étape dans votre espace",
+      "Le suivi jusqu'au jugement",
     ],
-    nonCompris: "L'appel et les référés sont des actes distincts, proposés par votre avocat s'il les juge utiles.",
+    nonCompris: "L'appel et les référés sont des actes distincts.",
     instance: "Tribunal administratif",
   },
   REFUS_TITRE: {
-    obtenir: "Le tribunal peut annuler le refus et ordonner à la préfecture de réexaminer votre demande ou de délivrer le titre.",
+    obtenir: "Le tribunal peut annuler le refus et ordonner le réexamen de la demande ou la délivrance du titre.",
     compris: [
-      "L'étude de votre dossier et la rédaction de la requête par un avocat du cabinet",
-      "Le dépôt au tribunal par votre avocat",
-      "Tous les mémoires en cours d'instance",
+      "La rédaction de la requête par un avocat du cabinet",
+      "Son dépôt au tribunal",
       "La plaidoirie à l'audience",
-      "Le suivi jusqu'au jugement, chaque étape dans votre espace",
+      "Le suivi jusqu'au jugement",
     ],
     nonCompris:
-      "Si votre avocat juge un référé-suspension utile, il vous le propose (490 € s'il est engagé avec la requête) ; vous décidez alors.",
+      "Un référé-suspension peut vous être proposé s'il est utile (490 €).",
     instance: "Tribunal administratif",
   },
   REFUS_VISA: {
     obtenir:
-      "Un recours préalable est obligatoire avant tout procès : l'administration réexamine le refus. En cas de nouveau rejet, le tribunal administratif de Nantes peut être saisi.",
+      "Un recours préalable est obligatoire : l'administration réexamine le refus. En cas de rejet, le tribunal administratif de Nantes peut être saisi.",
     compris: [
-      "L'étude de votre dossier et la rédaction du recours par un avocat du cabinet",
-      "L'envoi en lettre recommandée avec accusé de réception, frais compris",
+      "La rédaction du recours par un avocat du cabinet",
+      "Son envoi en recommandé avec accusé de réception",
       "Le suivi jusqu'à la réponse de l'administration",
       "Aucun déplacement : tout se fait à distance",
     ],
-    nonCompris: "En cas de rejet, la requête devant le tribunal administratif de Nantes vous est proposée à part.",
+    nonCompris: "En cas de rejet, le recours devant le tribunal fait l'objet d'une offre distincte.",
     instance: "Recours préalable, puis tribunal administratif de Nantes",
   },
   NATURALISATION: {
     obtenir:
-      "Un recours préalable au ministre de l'Intérieur est obligatoire avant tout procès : il peut conduire au réexamen de votre demande.",
+      "Un recours préalable auprès du ministre de l'Intérieur est obligatoire. Il peut conduire au réexamen de la demande.",
     compris: [
-      "L'étude de votre dossier et la rédaction du recours par un avocat du cabinet",
-      "L'envoi en lettre recommandée avec accusé de réception, frais compris",
+      "La rédaction du recours par un avocat du cabinet",
+      "Son envoi en recommandé avec accusé de réception",
       "Le suivi jusqu'à la réponse du ministre",
     ],
-    nonCompris: "En cas de rejet, la requête devant le tribunal administratif de Nantes vous est proposée à part.",
+    nonCompris: "En cas de rejet, le recours devant le tribunal fait l'objet d'une offre distincte.",
     instance: "Recours préalable au ministre, puis tribunal administratif de Nantes",
   },
   REFUS_IMPLICITE: {
     obtenir:
-      "Le silence de la préfecture vaut refus. Votre avocat en demande les motifs, puis le conteste devant le tribunal, qui peut ordonner le réexamen de votre demande.",
+      "Le silence de la préfecture vaut refus. Ses motifs sont demandés, puis le refus est contesté devant le tribunal.",
     compris: [
-      "La demande des motifs du refus à la préfecture",
-      "La rédaction et le dépôt de la requête par un avocat du cabinet",
-      "Tous les mémoires en cours d'instance et la plaidoirie",
+      "La demande des motifs à la préfecture",
+      "La rédaction et le dépôt de la requête",
+      "La plaidoirie à l'audience",
       "Le suivi jusqu'au jugement",
     ],
     instance: "Tribunal administratif",
@@ -79,7 +77,7 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     obtenir:
       "Le juge des référés peut ordonner rapidement à la préfecture de vous donner un rendez-vous ou de vous délivrer un récépissé.",
     compris: [
-      "La rédaction et le dépôt du référé par un avocat du cabinet (référé-liberté ou référé mesures utiles : votre avocat choisit la voie la plus adaptée, au même prix)",
+      "Le référé adapté à votre situation (référé-liberté ou référé mesures utiles)",
       "L'audience devant le juge des référés",
       "Le suivi jusqu'à la décision",
     ],
@@ -89,36 +87,36 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     obtenir:
       "La mise en demeure demande formellement à la préfecture d'agir. Si elle reste sans effet, un référé peut être engagé devant le tribunal.",
     compris: [
-      "La rédaction de la mise en demeure par un avocat du cabinet",
-      "L'envoi en lettre recommandée avec accusé de réception, frais compris",
+      "La rédaction de la mise en demeure",
+      "Son envoi en recommandé avec accusé de réception",
       "Le suivi de la réponse de la préfecture",
     ],
-    nonCompris: "Si la préfecture ne répond pas, le référé vous est proposé à part (990 €).",
+    nonCompris: "Sans réponse de la préfecture, un référé peut être engagé (990 €).",
     instance: "Préfecture, puis juge des référés si nécessaire",
   },
   PROCEDURE_EN_COURS: {
-    obtenir: "Votre avocat reprend entièrement le dossier : il étudie ce qui a été déposé, retravaille les écritures et suit la procédure jusqu'au jugement.",
+    obtenir: "Le cabinet reprend entièrement le dossier, retravaille les écritures et suit la procédure jusqu'au jugement.",
     compris: [
-      "L'étude complète du dossier déjà déposé",
-      "Les nouvelles écritures (mémoire, réplique) rédigées et déposées par votre avocat",
+      "L'étude du dossier déjà déposé",
+      "Les nouvelles écritures",
       "La plaidoirie à l'audience",
       "Le suivi jusqu'au jugement",
     ],
     instance: "Tribunal administratif",
   },
   DIAGNOSTIC: {
-    obtenir: "Un avocat du cabinet étudie votre situation et vous dit par écrit quelle démarche engager et dans quel délai.",
+    obtenir: "Un avocat du cabinet étudie votre situation et vous indique par écrit la démarche à engager et son délai.",
     compris: [
-      "L'étude de votre situation et de vos documents par un avocat du cabinet",
-      "Un avis écrit sous 48 heures ouvrées, avec la procédure conseillée",
+      "L'étude de votre situation et de vos documents",
+      "Un avis écrit sous 48 heures ouvrées",
       "69 € déduits si vous confiez ensuite le dossier au cabinet",
     ],
     instance: "Avis écrit",
   },
   CONSULTATION: {
     obtenir: "Un avocat du cabinet répond à vos questions en visio, au créneau que vous choisissez.",
-    compris: ["Un entretien de 30 minutes en visio avec un avocat du cabinet", "Le lien de connexion envoyé par e-mail, avec un rappel"],
-    nonCompris: "La rédaction d'un acte et le suivi d'une procédure font l'objet d'une proposition distincte.",
+    compris: ["Un entretien de 30 minutes en visio avec un avocat du cabinet", "Le lien de connexion et un rappel par e-mail"],
+    nonCompris: "La rédaction d'un acte fait l'objet d'une offre distincte.",
     instance: "Consultation en visio",
   },
 };
@@ -126,9 +124,9 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
 /** Ce qui se passe après le paiement, identique pour toutes les procédures. */
 export function apresPaiement(urgence: boolean): string[] {
   return [
-    `Un avocat du cabinet prend votre dossier sous ${urgence ? "10" : "48"} heures ouvrées et vous écrit dans votre espace.`,
-    "Vous ajoutez vos documents à votre rythme, en photo depuis votre téléphone.",
-    "Votre avocat rédige et relit l'acte, puis le dépose ou l'envoie avant la date limite. Vous suivez chaque étape.",
+    `Un avocat du cabinet prend votre dossier sous ${urgence ? "10" : "48"} heures ouvrées.`,
+    "Vous transmettez vos documents en photo, depuis votre téléphone.",
+    "L'acte est rédigé, relu et déposé avant la date limite. Vous suivez chaque étape dans votre espace.",
   ];
 }
 

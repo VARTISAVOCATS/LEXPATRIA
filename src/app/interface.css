@@ -1609,3 +1609,37 @@ main label.chk input { width: 22px; height: 22px; flex: 0 0 22px; margin-top: 1p
 .collecte .jauge { display: grid; gap: 6px; font-size: 14px; color: var(--ink-2); }
 .collecte .jauge .pbar { height: 6px; }
 .collecte .jauge .pbar i { background: rgb(31, 138, 76); }
+
+/* Suggestions d'adresses (France) : dans le flux, sous le champ */
+.adr-sug { display: grid; margin-top: 6px; background: var(--white); border: 1px solid var(--rule); border-radius: 12px; padding: 4px; box-shadow: rgba(43, 43, 43, 0.12) 0px 10px 24px; }
+.adr-sug button { text-align: start; background: none; border: 0; padding: 11px 12px; border-radius: 8px; font-size: 15px; color: var(--ink); cursor: pointer; min-height: 44px; }
+.adr-sug button:hover, .adr-sug button:focus-visible { background: var(--parch-2); }
+
+/* Blog « Actualités » */
+.art h1 { text-wrap: balance; }
+.art-chapo { font-size: 18px; color: var(--ink-2); margin: 8px 0 22px; }
+.art-date { display: block; font-size: 13px; color: var(--ink-2); margin-top: 4px; }
+.art-fil { font-size: 13px; margin-bottom: 10px; }
+.art-fil a { color: var(--ink-2); }
+.art-liste { list-style: none; padding: 0; margin: 18px 0; display: grid; gap: 14px; }
+.art-liste a { display: block; padding: 18px 20px; border: 1px solid var(--rule); border-radius: 14px; background: var(--white); color: inherit; text-decoration: none; }
+.art-liste a:hover { border-color: var(--ink); }
+.art-liste h2 { font-size: 19px; margin: 0 0 6px; text-wrap: balance; }
+.art-liste p { margin: 0 0 8px; color: var(--ink-2); }
+.art-liste time { font-size: 13px; color: var(--ink-2); }
+.art-corps { font-size: 16.5px; line-height: 1.65; }
+.art-corps h2 { font-size: 22px; margin: 30px 0 10px; }
+.art-corps h3 { font-size: 18px; margin: 22px 0 8px; }
+.art-corps ul { padding-inline-start: 22px; }
+.art-corps li { margin: 4px 0; }
+.art-mention { font-size: 13px; color: var(--ink-2); margin: 26px 0 0; }
+.art-cta { margin: 30px 0; padding: 22px; border-radius: 16px; background: var(--parch-2); }
+.art-cta h2 { margin: 0 0 8px; font-size: 20px; }
+.art-cta p { margin: 0 0 16px; }
+.art-cta-b { display: flex; flex-wrap: wrap; gap: 10px; }
+.art-autres ul { padding-inline-start: 20px; }
+.bo-blog-liste { display: grid; gap: 8px; margin: 12px 0; }
+.bo-blog-ligne { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px solid var(--rule); border-radius: 10px; }
+.bo-blog-ligne.on { border-color: var(--ink); }
+.bo-blog textarea { width: 100%; min-height: 360px; font-family: inherit; font-size: 15px; line-height: 1.5; }
+.art-cta .btn.ghost { color: var(--ink); text-decoration: none; }
