@@ -1291,13 +1291,13 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     </label>
                     <PaiementIntegre
                       total={total}
-                      troisFois={troisFoisChoisi}
+                      moyens={troisFoisChoisi ? "KLARNA" : "CARTE"}
                       verifier={() => (!caseConvention || !caseExecution ? t("Cochez les deux cases ci-dessus pour payer.") : null)}
-                      ouvrir={async () => {
+                      ouvrir={async (moyens) => {
                         const r = await fetch("/api/paiement", {
                           method: "POST",
                           headers: { "content-type": "application/json" },
-                          body: JSON.stringify({ jeton, accepteConvention: true, executionImmediate: true }),
+                          body: JSON.stringify({ jeton, accepteConvention: true, executionImmediate: true, moyens }),
                         });
                         const j = await r.json();
                         if (!r.ok) throw new Error(j.erreur);

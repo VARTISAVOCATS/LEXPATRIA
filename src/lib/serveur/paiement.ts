@@ -85,8 +85,12 @@ export async function accepterConvention(
   await journaliser(d, { dossierId: dos.id, acteur: "CLIENT", action: "CONVENTION_ACCEPTEE", details: { version: VERSION_CONVENTION, ip } });
 }
 
-/** Crée l'intention de paiement (Payment Element : carte, Apple Pay, Google Pay, Klarna). */
-export async function creerIntention(d: Base, dos: typeof dossiers.$inferSelect, cli: typeof clients.$inferSelect, parTiers: boolean) {
+/** Moyens proposés : carte (avec Apple Pay et Google Pay), Klarna (trois fois), ou les deux. Jamais d'autre moyen. */
+export const MOYENS = { CARTE: ["card"], KLARNA: ["klarna"], CARTE_KLARNA: ["card", "klarna"] } as const;
+export type Moyens = keyof typeof MOYENS;
+
+/** Crée l'intention de paiement, limitée aux moyens choisis (les autres moyens activés chez Stripe ne s'affichent pas). */
+export async function creerIntention(d: Base, dos: typeof dossiers.$inferSelect, cli: typeof clients.$inferSelect, parTiers: boolean, moyens: Moyens = "CARTE") {
   const { lignes, total } = await offre(d, dos);
   const s = await stripe();
   if (!s) {
@@ -96,8 +100,7 @@ export async function creerIntention(d: Base, dos: typeof dossiers.$inferSelect,
   const intent = await s.paymentIntents.create({
     amount: total,
     currency: "eur",
-    // Moyens activés dans le tableau de bord Stripe : carte (Apple Pay, Google Pay) et Klarna.
-    automatic_payment_methods: { enabled: true },
+    payment_method_types: [...MOYENS[moyens]],
     receipt_email: parTiers ? undefined : (cli.email ?? undefined),
     description: `LEXPATRIA ${dos.reference}`,
     metadata: { dossierId: dos.id, reference: dos.reference, parTiers: parTiers ? "1" : "0" },

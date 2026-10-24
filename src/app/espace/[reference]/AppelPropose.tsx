@@ -52,13 +52,13 @@ export function AppelPropose({ reference, total, troisFois, resume, texte, horsU
       </label>
       <PaiementIntegre
         total={total}
-        troisFois={troisFois}
+        moyens={troisFois ? "CARTE_KLARNA" : "CARTE"}
         verifier={() => (!caseConvention || !caseExecution ? t("Cochez les deux cases ci-dessus pour payer.") : null)}
-        ouvrir={async () => {
+        ouvrir={async (moyens) => {
           const r = await fetch("/api/espace/appel", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ reference, action: "payer", accepteConvention: true, executionImmediate: true }),
+            body: JSON.stringify({ reference, action: "payer", accepteConvention: true, executionImmediate: true, moyens }),
           });
           const j = await r.json();
           if (!r.ok) throw new Error(j.erreur);

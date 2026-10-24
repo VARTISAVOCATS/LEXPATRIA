@@ -11,9 +11,10 @@ import { accepterConvention, charger, creerIntention, marquerPaye } from "@/lib/
 
 export const runtime = "nodejs";
 
+const MoyensSchema = z.enum(["CARTE", "KLARNA", "CARTE_KLARNA"]).default("CARTE");
 const Corps = z.union([
-  z.object({ jeton: z.string(), accepteConvention: z.literal(true), executionImmediate: z.literal(true) }),
-  z.object({ jetonProche: z.string() }),
+  z.object({ jeton: z.string(), accepteConvention: z.literal(true), executionImmediate: z.literal(true), moyens: MoyensSchema }),
+  z.object({ jetonProche: z.string(), moyens: MoyensSchema }),
 ]);
 
 export async function POST(req: Request) {
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";
     await accepterConvention(d, c.dos, c.cli, ip);
   }
-  const r = await creerIntention(d, c.dos, c.cli, proche);
+  const r = await creerIntention(d, c.dos, c.cli, proche, corps.moyens);
 
   if (r.simulation) {
     // Développement sans clé Stripe : paiement simulé, confirmé immédiatement.
