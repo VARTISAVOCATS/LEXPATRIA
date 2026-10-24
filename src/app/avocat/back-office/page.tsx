@@ -14,6 +14,11 @@ import { ActionForm } from "../Actions";
 import { Cadre } from "../cadre";
 import { FormConnexion } from "./Connexions";
 import Modeles from "./Modeles";
+import Equipe from "./Equipe";
+import ActesReference from "./ActesReference";
+import { qualiteDe } from "@/lib/equipe";
+import { actesReferenceListe } from "@/lib/serveur/actes-reference";
+import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import { etatModeles } from "@/lib/serveur/modeles-cabinet";
 import { VARIABLES } from "@/lib/modeles";
 import { Assistant, EditeurAccueil, EditeurAvocats, EditeurDelais, EditeurFaq, EditeurRemuneration, EditeurTarifs } from "./Editeurs";
@@ -170,7 +175,9 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
             {rubrique === "modeles" &&
               (await (async () => {
                 const etat = await etatModeles(d);
+                const refs = await actesReferenceListe(d);
                 return (
+                  <>
                   <Modeles
                     variables={VARIABLES.map(({ nom, libelle }) => ({ nom, libelle }))}
                     modeles={etat.map((m) => ({
@@ -181,6 +188,11 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                       versions: m.versions.map((v) => ({ id: v.id, version: v.version, le: frDateHeure(v.creeLe), fichier: v.fichier, vide: !v.texte.trim() })),
                     }))}
                   />
+                  <ActesReference
+                    types={(Object.keys(LIBELLES_MODELE) as CodeModele[]).map((c) => [c, LIBELLES_MODELE[c]])}
+                    actes={refs.map((a) => ({ id: a.id, code: a.code, titre: a.titre, fichier: a.fichier, actif: a.actif, le: frDateHeure(a.creeLe), longueur: a.texte.length }))}
+                  />
+                  </>
                 );
               })())}
 
@@ -204,93 +216,37 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                 );
               })())}
 
-            {rubrique === "equipe" && (
-              <section className="card">
-                <h2>Équipe</h2>
-                <div className="tbl-w">
-                  <table className="tbl">
-                    <thead>
-                      <tr>
-                        <th>Nom</th>
-                        <th>E-mail</th>
-                        <th>Rôle</th>
-                        <th>Attribution</th>
-                        <th>Rémunération</th>
-                        <th>Compte</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(await equipe(d)).map((u) => (
-                        <tr key={u.id}>
-                          <td>
-                            {u.prenom} {u.nom}
-                          </td>
-                          <td>{u.email}</td>
-                          <td>{u.role}</td>
-                          <td>{u.attributionOuverte ? "ouverte" : "suspendue"}</td>
-                          <td>
-                            {u.role === "AVOCAT" || u.role === "ASSOCIE" ? (
-                              <ActionForm
-                                api="/api/backoffice"
-                                base={{ action: "remunerationMembre", id: u.id }}
-                                champs={[
-                                  {
-                                    nom: "mode",
-                                    type: "select",
-                                    label: "",
-                                    defaut: u.remuneration,
-                                    options: [
-                                      ["A_L_ACTE", "À l'acte"],
-                                      ["COLLABORATEUR_FIXE_VARIABLE", "Fixe et variable"],
-                                      ["AUCUNE", "Aucune"],
-                                    ],
-                                  },
-                                ]}
-                                libelle="Enregistrer"
-                                classe="btn sm ghost"
-                              />
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td>
-                            <ActionForm
-                              api="/api/backoffice"
-                              base={{ action: "membreActif", id: u.id, actif: !u.actif }}
-                              libelle={u.actif ? "Désactiver" : "Réactiver"}
-                              classe="btn sm ghost"
-                              confirmation={u.actif ? "Le compte ne pourra plus se connecter ni recevoir de dossiers." : undefined}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <h3>Ajouter ou modifier un membre</h3>
-                <ActionForm
-                  api="/api/backoffice"
-                  base={{ action: "membre" }}
-                  champs={[
-                    { nom: "prenom", type: "text", label: "Prénom" },
-                    { nom: "nom", type: "text", label: "Nom" },
-                    { nom: "email", type: "text", label: "E-mail professionnel" },
-                    {
-                      nom: "role",
-                      type: "select",
-                      label: "Rôle",
-                      defaut: "AVOCAT",
-                      options: [
-                        ["AVOCAT", "Avocat"],
-                        ["ASSOCIE", "Associé"],
-                        ["SECRETARIAT", "Secrétariat"],
-                      ],
-                    },
-                  ]}
-                  libelle="Enregistrer"
-                />
-              </section>
-            )}
+            {rubrique === "equipe" &&
+              (await (async () => {
+                const acteCabinet = (await lireParametre(d, "remuneration")).acteHT;
+                const e = (x: number | null) => (x == null ? null : x / 100);
+                return (
+                  <Equipe
+                    acteCabinet={acteCabinet}
+                    membres={(await equipe(d)).map((u) => ({
+                      id: u.id,
+                      prenom: u.prenom,
+                      nom: u.nom,
+                      email: u.email,
+                      qualite: qualiteDe(u),
+                      titre: u.titre ?? "",
+                      barreau: u.barreau,
+                      mobile: u.mobile ?? "",
+                      photoUrl: u.photoUrl ?? "",
+                      remuneration: u.remuneration,
+                      fixeMensuel: e(u.fixeMensuelHT),
+                      seuilVariable: e(u.seuilVariableHT),
+                      tauxVariable: u.tauxVariable == null ? null : Math.round(u.tauxVariable * 1000) / 10,
+                      acte: e(u.acteHT),
+                      avis: e(u.avisHT),
+                      validationAssocie: u.validationAssocie,
+                      attributionOuverte: u.attributionOuverte,
+                      actif: u.actif,
+                      moi: u.id === m.id,
+                    }))}
+                  />
+                );
+              })())}
 
             {rubrique === "connexions" && (
               <>

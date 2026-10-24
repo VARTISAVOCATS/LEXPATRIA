@@ -9,6 +9,7 @@ import { decider, proposer } from "@/lib/serveur/assistant";
 import { ecrireParametre, restaurer } from "@/lib/serveur/parametres";
 import { membreConnecte } from "@/lib/serveur/session";
 import { createId } from "@/db/id";
+import { CODES_QUALITE, QUALITES, VALEURS_CABINET, type Qualite } from "@/lib/equipe";
 
 const Corps = z.discriminatedUnion("action", [
   z.object({ action: z.literal("parametre"), cle: z.string(), valeur: z.unknown() }),
@@ -23,6 +24,27 @@ const Corps = z.discriminatedUnion("action", [
     role: z.enum(["ASSOCIE", "AVOCAT", "SECRETARIAT"]),
   }),
   z.object({ action: z.literal("membreActif"), id: z.string().max(40), actif: z.boolean() }),
+  z.object({
+    action: z.literal("fiche"),
+    id: z.string().max(40).optional(),
+    prenom: z.string().trim().min(1).max(60),
+    nom: z.string().trim().min(1).max(60),
+    email: z.string().trim().email().max(200),
+    qualite: z.enum(CODES_QUALITE as [Qualite, ...Qualite[]]),
+    titre: z.string().trim().max(120).default(""),
+    barreau: z.string().trim().max(60).default("Paris"),
+    mobile: z.string().trim().max(30).default(""),
+    photoUrl: z.string().trim().max(300).default(""),
+    remuneration: z.enum(["AUCUNE", "COLLABORATEUR_FIXE_VARIABLE", "A_L_ACTE"]),
+    // Montants saisis en euros HT, taux en pourcentage ; vides : valeurs du cabinet.
+    fixeMensuel: z.number().min(0).max(100_000).nullable().default(null),
+    seuilVariable: z.number().min(0).max(1_000_000).nullable().default(null),
+    tauxVariable: z.number().min(0).max(100).nullable().default(null),
+    acte: z.number().min(0).max(10_000).nullable().default(null),
+    avis: z.number().min(0).max(10_000).nullable().default(null),
+    validationAssocie: z.boolean().default(false),
+    attributionOuverte: z.boolean().default(true),
+  }),
   z.object({ action: z.literal("remunerationMembre"), id: z.string().max(40), mode: z.enum(["A_L_ACTE", "COLLABORATEUR_FIXE_VARIABLE", "AUCUNE"]) }),
 ]);
 
@@ -63,6 +85,41 @@ export async function POST(req: Request) {
       .values({ id: createId(), prenom: x.prenom, nom: x.nom, email: x.email.toLowerCase(), role: x.role })
       .onConflictDoUpdate({ target: schema.utilisateurs.email, set: { prenom: x.prenom, nom: x.nom, role: x.role, actif: true } });
     await journaliser(d, { acteur: m.id, action: "MEMBRE_ENREGISTRE", details: { email: x.email.toLowerCase(), role: x.role } });
+    return NextResponse.json({ ok: true });
+  }
+  if (x.action === "fiche") {
+    if (x.id === m.id && x.qualite !== "ASSOCIE") return NextResponse.json({ erreur: "Vous ne pouvez pas retirer votre propre qualité d'associé." }, { status: 422 });
+    const cents = (v: number | null) => (v == null ? null : Math.round(v * 100));
+    const email = x.email.toLowerCase();
+    const autre = (await d.select({ id: schema.utilisateurs.id }).from(schema.utilisateurs).where(eq(schema.utilisateurs.email, email)))[0];
+    if (autre && autre.id !== x.id) return NextResponse.json({ erreur: "Cette adresse e-mail est déjà celle d'un autre membre." }, { status: 422 });
+    const fixe = x.remuneration === "COLLABORATEUR_FIXE_VARIABLE";
+    const champs = {
+      prenom: x.prenom,
+      nom: x.nom,
+      email,
+      qualite: x.qualite,
+      role: QUALITES[x.qualite].role,
+      titre: x.titre || null,
+      barreau: x.barreau || "Paris",
+      mobile: x.mobile || null,
+      photoUrl: x.photoUrl || null,
+      remuneration: x.remuneration,
+      fixeMensuelHT: fixe ? (cents(x.fixeMensuel) ?? VALEURS_CABINET.fixeMensuelHT) : null,
+      seuilVariableHT: fixe ? (cents(x.seuilVariable) ?? VALEURS_CABINET.seuilVariableHT) : null,
+      tauxVariable: fixe ? (x.tauxVariable == null ? VALEURS_CABINET.tauxVariable : x.tauxVariable / 100) : null,
+      acteHT: x.remuneration === "A_L_ACTE" ? cents(x.acte) : null,
+      avisHT: x.remuneration === "A_L_ACTE" ? cents(x.avis) : null,
+      validationAssocie: x.validationAssocie,
+      attributionOuverte: x.attributionOuverte,
+    };
+    if (x.id) {
+      const maj = await d.update(schema.utilisateurs).set(champs).where(eq(schema.utilisateurs.id, x.id)).returning({ id: schema.utilisateurs.id });
+      if (!maj.length) return NextResponse.json({ erreur: "Membre introuvable." }, { status: 404 });
+    } else {
+      await d.insert(schema.utilisateurs).values({ id: createId(), ...champs });
+    }
+    await journaliser(d, { acteur: m.id, action: x.id ? "MEMBRE_MODIFIE" : "MEMBRE_ENREGISTRE", details: { email, qualite: x.qualite, remuneration: x.remuneration } });
     return NextResponse.json({ ok: true });
   }
   if (x.action === "remunerationMembre") {

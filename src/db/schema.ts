@@ -51,6 +51,10 @@ export const utilisateurs = pgTable("utilisateurs", {
   fixeMensuelHT: integer("fixe_mensuel_ht"),
   seuilVariableHT: integer("seuil_variable_ht"),
   tauxVariable: doublePrecision("taux_variable"),
+  // Qualité au cabinet : ASSOCIE | COLLABORATEUR | SOUS_TRAITANT | SECRETARIAT | CONFRERE_LOCAL (le rôle en découle).
+  qualite: text("qualite"),
+  acteHT: integer("acte_ht"), // rétrocession par acte propre au membre (centimes HT) ; vide : montant du cabinet
+  avisHT: integer("avis_ht"), // montant par avis ou consultation (centimes HT) ; vide : 15 €
   validationAssocie: boolean("validation_associe").notNull().default(false),
   attributionOuverte: boolean("attribution_ouverte").notNull().default(true),
   reouvertureLe: timestamp("reouverture_le", { withTimezone: true }),
@@ -347,6 +351,19 @@ export const modelesCabinet = pgTable("modeles_cabinet", {
   version: integer("version").notNull(),
   texte: text("texte").notNull(),
   fichier: text("fichier"), // nom du fichier Word importé, le cas échéant
+  auteurId: text("auteur_id").notNull(),
+  creeLe: cree(),
+});
+
+/** Actes de référence : actes déjà rédigés par le cabinet, déposés au back office pour servir d'exemples à l'IA
+ *  (structure, style, moyens), sans que leurs faits soient repris. Données personnelles masquées avant enregistrement. */
+export const actesReference = pgTable("actes_reference", {
+  id: id(),
+  code: text("code").notNull(), // CodeModele
+  titre: text("titre").notNull(),
+  texte: text("texte").notNull(),
+  fichier: text("fichier"),
+  actif: boolean("actif").notNull().default(true),
   auteurId: text("auteur_id").notNull(),
   creeLe: cree(),
 });

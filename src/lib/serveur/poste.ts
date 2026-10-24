@@ -26,6 +26,7 @@ import {
 import { adresseEnLignes } from "@/lib/pays";
 import { rang } from "@/lib/statuts";
 import { minimiser } from "@/lib/triage";
+import { referencesPour } from "./actes-reference";
 import { valeur } from "./connexions";
 import { modeleActif } from "./modeles-cabinet";
 import type { Dossier } from "./dossiers";
@@ -215,17 +216,24 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const duCabinet = await modeleActif(d, modele);
   let projet = duCabinet ? remplirModele(duCabinet, x) : genererModele(modele, x);
   const cle = await valeur("ANTHROPIC_API_KEY");
+  // Actes déjà rédigés par le cabinet pour ce type d'acte (back office) : exemples de plan, de style et de moyens.
+  const references = cle ? await referencesPour(d, modele) : [];
   if (cle) {
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 6000,
       system:
         "Tu prépares un projet d'acte pour un avocat au barreau de Paris (droit des étrangers). Tu reçois un modèle et les éléments du dossier. Complète le modèle en développant les moyens à partir des seuls éléments fournis. Règles : n'invente aucun fait, aucune date, aucune référence de jurisprudence ; laisse « XXX » partout où l'information manque ; conserve la structure, les intitulés et la signature ; ton juridique sobre. Renvoie uniquement le texte de l'acte." +
-        (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction mot pour mot et ne remplace que les « XXX » que les éléments du dossier permettent de compléter." : ""),
+        (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction mot pour mot et ne remplace que les « XXX » que les éléments du dossier permettent de compléter." : "") +
+        (references.length
+          ? " Tu reçois aussi des ACTES DE RÉFÉRENCE déjà rédigés par le cabinet pour ce type d'acte : inspire-toi de leur plan, de leur style, de leurs formulations et des moyens qui conviennent à ce dossier. N'en reprends jamais les faits, les noms, les dates, les lieux ni les références propres à l'ancienne affaire."
+          : ""),
       messages: [
         {
           role: "user",
-          content: `MODÈLE :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, analyse: dos.analyse })}`,
+          content:
+            `MODÈLE :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, analyse: dos.analyse })}` +
+            references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join(""),
         },
       ],
     });
@@ -236,7 +244,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const version = precedent && precedent.type === modele ? precedent.version + 1 : 1;
   await d.insert(actes).values({ dossierId: dos.id, type: modele, version, contenu: projet, texteIA: projet, auteurId: m.id });
   if (rang(dos.statut) < rang("EN_REDACTION")) await d.update(dossiers).set({ statut: "EN_REDACTION", majLe: new Date() }).where(eq(dossiers.id, dos.id));
-  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PROJET_GENERE", details: { modele, version, source: cle ? "IA" : "MODELE", modeleCabinet: !!duCabinet } });
+  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PROJET_GENERE", details: { modele, version, source: cle ? "IA" : "MODELE", modeleCabinet: !!duCabinet, references: references.length } });
   return { ok: true };
 }
 

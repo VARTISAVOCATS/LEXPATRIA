@@ -39,7 +39,7 @@ export interface LigneAvocat {
   baseHT: number; // honoraires HT des dossiers dont l'acte a été attesté sur la période
   variableHT: number | null; // part variable estimée (collaborateur : taux au-delà du seuil)
   actesRemunerables: number; // actes distincts attestés (un par dossier et par type d'acte, hors avis écrits)
-  montantActesHT: number | null; // rétrocession à l'acte (avocats rémunérés à l'acte)
+  montantActesHT: number | null; // rétrocession à l'acte (avocats rémunérés à l'acte), avis compris
   mode: string;
 }
 
@@ -157,7 +157,11 @@ export async function indicateurs(d: Base, periode: Periode, maintenant = new Da
       baseHT,
       variableHT,
       actesRemunerables,
-      montantActesHT: u.remuneration === "A_L_ACTE" ? actesRemunerables * remuneration.acteHT : null,
+      // Montants propres au membre (fiche Équipe), sinon ceux du cabinet ; avis et consultations à 15 € HT par défaut.
+      montantActesHT:
+        u.remuneration === "A_L_ACTE"
+          ? actesRemunerables * (u.acteHT ?? remuneration.acteHT) + avis.filter((x) => x.avocatId === u.id).length * (u.avisHT ?? 1_500)
+          : null,
       mode: u.remuneration,
     };
   });

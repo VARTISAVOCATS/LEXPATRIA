@@ -126,7 +126,22 @@ export function apresPaiement(urgence: boolean): string[] {
   ];
 }
 
-/** Situations courantes proposées dans la barre de récit (autocomplétion). */
+/** Situations courantes proposées dans la barre de récit (autocomplétion).
+ *  Chacune mène directement à sa procédure, sans analyse par l'IA : la réponse est évidente et immédiate.
+ *  L'IA n'intervient que pour un récit libre ou une décision photographiée. */
+export const SUGGESTION_PROCEDURE: Record<string, Exclude<CodeProcedure, "CONSULTATION">> = {
+  "J'ai reçu une OQTF": "OQTF",
+  "Mon titre de séjour est refusé": "REFUS_TITRE",
+  "Mon renouvellement de titre est refusé": "REFUS_TITRE",
+  "Mon visa est refusé": "REFUS_VISA",
+  "Ma naturalisation est refusée ou ajournée": "NATURALISATION",
+  "Impossible d'avoir un rendez-vous en préfecture": "BLOCAGE_SIMPLE",
+  "Mon récépissé a expiré": "BLOCAGE_SIMPLE",
+  "La préfecture ne répond pas à ma demande": "REFUS_IMPLICITE",
+  "J'ai déjà un recours en cours au tribunal": "PROCEDURE_EN_COURS",
+  "Je ne sais pas quoi faire": "DIAGNOSTIC",
+};
+
 export const SUGGESTIONS = [
   "J'ai reçu une OQTF",
   "Mon titre de séjour est refusé",

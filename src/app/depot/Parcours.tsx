@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { jour, versJour } from "@/lib/calendrier";
-import { apresPaiement, CONTENUS, SUGGESTIONS } from "@/lib/contenus";
+import { apresPaiement, CONTENUS, SUGGESTION_PROCEDURE, SUGGESTIONS } from "@/lib/contenus";
 import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
 import { adresseComplete, adresseEnLignes, nomPays, PAYS, tvaApplicable } from "@/lib/pays";
@@ -319,8 +319,65 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const avancer = (depuis: Etape, maj: Partial<ReturnType<typeof etatCourant>> = {}) =>
     setEtape(prochaine({ ...etatCourant(depuis), ...maj }));
 
+  /** Situation choisie dans les suggestions (texte inchangé, sans décision jointe) : procédure connue, sans appel à l'IA. */
+  function triageDirect(texte: string): ResultatTriage | null {
+    const cle = SUGGESTIONS.find((s) => t(s) === texte.trim() || s === texte.trim());
+    const p = cle ? SUGGESTION_PROCEDURE[cle] : undefined;
+    if (!p) return null;
+    return {
+      procedure: p,
+      horsPerimetreMotif: null,
+      situationOQTF: null,
+      detentionOuRetention: false,
+      dateDecision: null,
+      dateNotification: null,
+      dateDemande: null,
+      dateEcheance: null,
+      visaType: null,
+      naturalisationIssue: null,
+      emploiMenace: null,
+      prefecture: null,
+      nationaliteAlgerienne: null,
+      langue: langueEcran,
+      faits: [],
+      ceQueLeRecoursPeutObtenir: "",
+      traduction: null,
+    };
+  }
+
+  function appliquerTriage(tri: ResultatTriage) {
+    setTriage(tri);
+    const p = tri.procedure as CodeProcedure;
+    setProcedure(p);
+    const lue = tri.dateNotification ?? tri.dateDecision;
+    setDateLue(lue);
+    setDateDemande(tri.dateDemande);
+    if (tri.nationaliteAlgerienne !== null) setAlgerien(tri.nationaliteAlgerienne);
+    setVisaType(tri.visaType);
+    setNatuIssue(tri.naturalisationIssue);
+    // L'emploi menacé est toujours demandé explicitement (jamais deviné), comme la situation pour une OQTF.
+    setEmploi(null);
+    setEcheance(tri.dateEcheance ?? undefined);
+    setEtape(
+      prochaine({
+        p,
+        sit: null,
+        visa: tri.visaType,
+        natu: tri.naturalisationIssue,
+        emp: null,
+        ech: tri.dateEcheance ?? undefined,
+        q: "",
+        dref: undefined,
+        ddem: tri.dateDemande,
+        depuis: "ANALYSE",
+      }),
+    );
+  }
+
   async function analyser(texte: string, liste: File[]) {
     setErreur(null);
+    const direct = liste.length ? null : triageDirect(texte);
+    if (direct) return appliquerTriage(direct);
     setEtape("ANALYSE");
     try {
       const images: { mime: string; base64: string }[] = [];
@@ -338,36 +395,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.erreur ?? t("Analyse impossible"));
       const tri: ResultatTriage = j.triage;
-      setTriage(tri);
       if (j.refus) {
+        setTriage(tri);
         setRefus(j.refus);
         return setEtape("REFUS");
       }
-      const p = tri.procedure as CodeProcedure;
-      setProcedure(p);
-      const lue = tri.dateNotification ?? tri.dateDecision;
-      setDateLue(lue);
-      setDateDemande(tri.dateDemande);
-      if (tri.nationaliteAlgerienne !== null) setAlgerien(tri.nationaliteAlgerienne);
-      setVisaType(tri.visaType);
-      setNatuIssue(tri.naturalisationIssue);
-      // L'emploi menacé est toujours demandé explicitement (jamais deviné), comme la situation pour une OQTF.
-      setEmploi(null);
-      setEcheance(tri.dateEcheance ?? undefined);
-      setEtape(
-        prochaine({
-          p,
-          sit: null,
-          visa: tri.visaType,
-          natu: tri.naturalisationIssue,
-          emp: null,
-          ech: tri.dateEcheance ?? undefined,
-          q: "",
-          dref: undefined,
-          ddem: tri.dateDemande,
-          depuis: "ANALYSE",
-        }),
-      );
+      appliquerTriage(tri);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("Analyse impossible"));
       setEtape("RECIT");
