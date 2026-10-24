@@ -36,7 +36,7 @@ export const CONNECTEURS: Connecteur[] = [
   {
     id: "brevo",
     nom: "Brevo — e-mails et SMS",
-    usage: "Codes de connexion, avis de nouveaux messages, relances (avec consentement).",
+    usage: "Codes de connexion, avis de nouveaux messages, relances d'abandon par e-mail.",
     ou: "Brevo › SMTP et API › Clés API.",
     champs: [
       { nom: "BREVO_API_KEY", libelle: "Clé API", secret: true, requis: true },

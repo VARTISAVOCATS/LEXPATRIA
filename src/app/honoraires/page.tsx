@@ -12,7 +12,7 @@ const GROUPES: { titre: string; lignes: [Diligence, string][] }[] = [
   {
     titre: "Devant le tribunal",
     lignes: [
-      ["REQUETE", "Requête devant le tribunal administratif, plaidoirie comprise"],
+      ["REQUETE", "Requête devant le tribunal administratif"],
       ["REFERE_LIBERTE", "Référé-liberté ou référé mesures utiles"],
       ["REFERE_SUSPENSION_AVEC_REQUETE", "Référé-suspension, engagé avec la requête"],
       ["REFERE_SUSPENSION_SEUL", "Référé-suspension seul"],
@@ -85,7 +85,7 @@ export default async function Honoraires() {
             <div className="pg-carte">
               <Visages avocats={avocats} petit />
               <h3>{t("Un avocat, du début à la fin")}</h3>
-              <p>{t("Le forfait couvre le travail de l'avocat qui suit votre dossier : étude, rédaction, dépôt et, s'il y a audience, plaidoirie.")}</p>
+              <p>{t("Le forfait couvre l'étude de votre dossier, la rédaction et le dépôt de votre recours, puis son suivi jusqu'à la décision.")}</p>
             </div>
             <div className="pg-carte">
               <p className="acc-eye">{t("Contestations et médiation")}</p>

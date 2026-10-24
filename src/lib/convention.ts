@@ -117,8 +117,8 @@ export function resumeConvention(d: DonneesConvention): string[] {
       "Rendez-vous déplaçable jusqu'à 24 heures à l'avance.",
     ];
   return [
-    `Forfait ferme de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour ${d.appelDe ? "toute l'instance d'appel, plaidoirie comprise" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance, plaidoirie comprise"}.`,
-    "Un avocat du cabinet examine le dossier, rédige, atteste et dépose l'acte.",
+    `Forfait ferme de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour ${d.appelDe ? "toute l'instance d'appel" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance"}.`,
+    "Un avocat du cabinet étudie votre dossier et forme votre recours.",
     "Délai déjà expiré au jour du paiement : remboursement, 69 € conservés pour l'avis écrit.",
   ];
 }

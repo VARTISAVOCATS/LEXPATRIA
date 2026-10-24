@@ -21,7 +21,6 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     compris: [
       "La rédaction de la requête par un avocat du cabinet",
       "Son dépôt au tribunal",
-      "La plaidoirie à l'audience",
       "Le suivi jusqu'au jugement",
     ],
     nonCompris: "L'appel et les référés sont des actes distincts.",
@@ -32,7 +31,6 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     compris: [
       "La rédaction de la requête par un avocat du cabinet",
       "Son dépôt au tribunal",
-      "La plaidoirie à l'audience",
       "Le suivi jusqu'au jugement",
     ],
     nonCompris:
@@ -68,7 +66,6 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     compris: [
       "La demande des motifs à la préfecture",
       "La rédaction et le dépôt de la requête",
-      "La plaidoirie à l'audience",
       "Le suivi jusqu'au jugement",
     ],
     instance: "Tribunal administratif",
@@ -78,7 +75,7 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
       "Le juge des référés peut ordonner rapidement à la préfecture de vous donner un rendez-vous ou de vous délivrer un récépissé.",
     compris: [
       "Le référé adapté à votre situation (référé-liberté ou référé mesures utiles)",
-      "L'audience devant le juge des référés",
+      "Son dépôt au tribunal",
       "Le suivi jusqu'à la décision",
     ],
     instance: "Juge des référés du tribunal administratif",
@@ -99,7 +96,6 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
     compris: [
       "L'étude du dossier déjà déposé",
       "Les nouvelles écritures",
-      "La plaidoirie à l'audience",
       "Le suivi jusqu'au jugement",
     ],
     instance: "Tribunal administratif",
@@ -126,7 +122,7 @@ export function apresPaiement(urgence: boolean): string[] {
   return [
     `Un avocat du cabinet prend votre dossier sous ${urgence ? "10" : "48"} heures ouvrées.`,
     "Vous transmettez vos documents en photo, depuis votre téléphone.",
-    "L'acte est rédigé, relu et déposé avant la date limite. Vous suivez chaque étape dans votre espace.",
+    "Votre recours est déposé avant la date limite. Vous suivez chaque étape dans votre espace.",
   ];
 }
 

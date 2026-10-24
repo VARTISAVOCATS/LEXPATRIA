@@ -45,7 +45,6 @@ const Corps = z.object({
     pays: z.string().length(2),
   }),
   algerien: z.boolean().nullable().optional(),
-  consentRelances: z.boolean().default(false),
   langue: z.string().max(5).default("fr"),
   source: z.string().max(60).optional(),
 });
@@ -88,7 +87,8 @@ export async function POST(req: Request) {
         ...c.coordonnees,
         algerien: c.algerien ?? null,
         langue: c.langue,
-        consentRelances: c.consentRelances,
+        // Relance par e-mail en cas d'abandon, sans case à cocher ; le lien de désinscription l'arrête.
+        consentRelances: true,
       })
       .returning();
     const [dossier] = await tx
@@ -112,7 +112,7 @@ export async function POST(req: Request) {
       dossierId: dossier.id,
       acteur: "CLIENT",
       action: "PRE_DOSSIER_CREE",
-      details: { procedure: c.procedure, traitement: delai.traitement, consentRelances: c.consentRelances },
+      details: { procedure: c.procedure, traitement: delai.traitement, relances: true },
     });
     return dossier;
   });

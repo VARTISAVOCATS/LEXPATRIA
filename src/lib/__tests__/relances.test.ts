@@ -4,7 +4,7 @@ import { db, prochainCodeClient, prochaineReference, schema } from "@/db";
 import { relancer } from "@/lib/serveur/relances";
 
 describe("relances des pré-dossiers", () => {
-  it("relance à 2 h puis à 24 h, seulement avec consentement, et purge à 30 jours", async () => {
+  it("relance à 2 h puis à 24 h, sauf désinscription, et purge à 30 jours", async () => {
     const d = await db();
     const H = 3_600_000;
     const maintenant = new Date("2026-10-20T12:00:00Z");

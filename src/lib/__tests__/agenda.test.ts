@@ -30,7 +30,8 @@ describe("agenda et rappels", () => {
     await accepter(d, kachi, dos);
     dos = await relire(dos.id);
     const auj = jourParis();
-    const demain = jourParis(new Date(Date.now() + 86_400_000));
+    // Lendemain calendaire (robuste au changement d'heure, où une journée compte 23 ou 25 heures).
+    const demain = new Date(Date.parse(`${auj}T12:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
     await ajouterEcheance(d, kachi, dos, "AUDIENCE", demain);
     await ajouterEcheance(d, kachi, dos, "MEMOIRE_COMPLEMENTAIRE", "2020-01-01");
     const a = await agenda(d, kachi);
@@ -42,14 +43,16 @@ describe("agenda et rappels", () => {
     const [e] = await d.select().from(schema.echeances).where(eq(schema.echeances.date, demain));
     expect(e.rappelLe).toBe(auj);
     // Le lendemain, l'échéance du jour est rappelée une seconde fois.
-    expect((await rappelerEcheances(d, new Date(Date.now() + 86_400_000))).rappels).toBeGreaterThanOrEqual(1);
+    expect((await rappelerEcheances(d, new Date(`${demain}T10:00:00Z`))).rappels).toBeGreaterThanOrEqual(1);
   });
 
   it("n'attribue pas de dossier à un avocat qui part dans moins de 2 jours ouvrés", async () => {
     const d = await db();
     const rafik = await membre("rafik.rabia@exemple.invalid");
     const avocats = (await d.select().from(schema.utilisateurs)).filter((u) => u.role === "AVOCAT" && u.actif);
-    const demain = jourParis(new Date(Date.now() + 86_400_000));
+    const auj = jourParis();
+    // Lendemain calendaire (robuste au changement d'heure, où une journée compte 23 ou 25 heures).
+    const demain = new Date(Date.parse(`${auj}T12:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
     for (const u of avocats) expect((await ajouterIndisponibilite(d, rafik.id, u.id, demain, "2099-12-31", "FORMATION")).ok).toBe(true);
     const dos = await dossier("attrib@exemple.invalid", { avocatId: null });
     const choisi = await attribuer(d, dos.id, false);

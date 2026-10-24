@@ -33,7 +33,7 @@ COPY --from=build --chown=lex:lex /app/public ./public
 COPY --from=build --chown=lex:lex /app/drizzle ./drizzle
 # Scripts de migration et d'équipe, avec leurs seuls pilotes (dossier séparé de l'application).
 COPY --from=outils --chown=lex:lex /outils ./outils
-COPY --from=build --chown=lex:lex /app/scripts/migrer.mjs /app/scripts/equipe.mjs ./outils/
+COPY --from=build --chown=lex:lex /app/scripts/migrer.mjs /app/scripts/equipe.mjs /app/scripts/code-secours.mjs ./outils/
 # Pièces stockées sur le serveur tant que le stockage objet n'est pas configuré (volume persistant, voir compose.yaml).
 RUN mkdir -p /app/.stockage && chown lex:lex /app/.stockage
 USER lex

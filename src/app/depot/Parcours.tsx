@@ -128,7 +128,6 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   // Coordonnées et paiement
   const [coord, setCoord] = useState({ civilite: "", prenom: "", nom: "", email: "", telephone: "", adresse: "", codePostal: "", ville: "", pays: "FR" });
   const [algerien, setAlgerien] = useState<boolean | null>(null);
-  const [consent, setConsent] = useState(false);
   const [jeton, setJeton] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
   const [caseConvention, setCaseConvention] = useState(false);
@@ -394,7 +393,6 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
           avisPrealable,
           coordonnees: coord,
           algerien,
-          consentRelances: consent,
           langue: triage?.langue ?? "fr",
           source,
           qualification: {
@@ -1158,10 +1156,6 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         </div>
                       )}
                     </div>
-                    <label className="chk rel">
-                      <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} />
-                      {t("J'accepte d'être relancé(e) par SMS ou e-mail si je ne termine pas mon dépôt.")}
-                    </label>
                     <div className="actions">
                       <button className="btn ghost" onClick={() => setEtape("RECOURS")}>
                         {t("Retour")}

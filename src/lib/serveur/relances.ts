@@ -1,6 +1,6 @@
 // Relance des pré-dossiers abandonnés (cahier des charges, 12 « Suivi des abandons ») :
-// seulement avec le consentement exprès recueilli aux coordonnées ; à 2 heures puis à 24 heures ;
-// lien vers le point d'arrêt ; lien de désinscription obligatoire. Textes à valider par l'avocat.
+// par e-mail uniquement (jamais par SMS), sans case à cocher ; à 2 heures puis à 24 heures ;
+// lien vers le point d'arrêt ; lien de désinscription obligatoire (il coupe les relances). Textes à valider par l'avocat.
 // Purge des pré-dossiers non payés après 30 jours.
 
 import { and, eq, lt, sql } from "drizzle-orm";
@@ -36,8 +36,8 @@ export async function relancer(d: Base, maintenant = new Date(), origine = proce
       echeance: dos.dateLimite ? " " + traduire(langue, "Date limite estimée : {date}.", { date: dos.dateLimite.split("-").reverse().join("/") }) : "",
       desinscription: `${origine}/desinscription?jeton=${encodeURIComponent(jeton)}`,
     });
-    const canal = cli.telephone && dos.relancesEnvoyees === 0 ? "SMS" : "EMAIL";
-    const destinataire = canal === "SMS" ? cli.telephone! : cli.email!;
+    const canal = "EMAIL" as const;
+    const destinataire = cli.email;
     if (!destinataire) continue;
     const r = await envoyer({ canal, destinataire, sujet: traduire(langue, "Votre dépôt de dossier n'est pas terminé"), texte });
     await d
