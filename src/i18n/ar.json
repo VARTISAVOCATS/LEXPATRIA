@@ -937,16 +937,13 @@
   "Si une procédure est utile, l'avis indique laquelle et dans quel délai l'engager.": "إذا كان إجراء ما مفيدًا، يبيّن الرأي ماهيته وأجل مباشرته.",
   "Quelle est votre situation ?": "ما هو وضعك؟",
   "Je souhaite m'entretenir avec un avocat": "أرغب في التحدث إلى محامٍ",
-  "Le cabinet étudie votre situation et forme votre recours, devant l'administration ou devant le tribunal administratif.": "يدرس المكتب وضعك ويقدم طعنك أمام الإدارة أو أمام المحكمة الإدارية.",
   "Déroulement": "سير الإجراء",
   "Il prend contact avec vous sous 48 heures ouvrées ; vous suivez ensuite chaque étape depuis votre espace.": "يتواصل معك المحامي خلال 48 ساعة عمل، ثم تتابع كل مرحلة من فضائك الشخصي.",
   "Les recours selon votre situation": "طرق الطعن حسب وضعك",
-  "Chaque décision est lue intégralement et chaque délai vérifié avant tout engagement.": "يُقرأ كل قرار كاملًا ويُتحقق من كل أجل قبل أي التزام.",
   "Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris. Aide juridictionnelle non acceptée.": "Lexpatria Avocats هو الاسم التجاري لشركة SELARL VARTIS Avocats، شركة محاماة لدى هيئة باريس. لا تُقبل المساعدة القضائية.",
   "Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris.": "Lexpatria Avocats هو الاسم التجاري لشركة SELARL VARTIS Avocats، شركة محاماة لدى هيئة باريس.",
   "Le forfait de chaque procédure": "الأتعاب الجزافية لكل إجراء",
   "Hors Île-de-France, seuls les frais de déplacement font l'objet d'un avenant, soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet ; l'avis écrit ne l'est pas.": "خارج منطقة إيل دو فرانس، لا تخضع لملحق إلا مصاريف التنقل، وذلك بموافقتك. ويُخصم التشخيص المكتوب إذا أسندت الملف بعد ذلك إلى المكتب، بخلاف الرأي المكتوب.",
-  "Consultation avec un avocat": "استشارة مع محامٍ",
   "Un entretien de 30 minutes en visio avec un avocat au barreau de Paris. Vous choisissez le créneau juste après le paiement.": "لقاء مرئي مدته 30 دقيقة مع محامٍ لدى هيئة باريس. تختار الموعد مباشرة بعد الدفع.",
   "Un outil d'intelligence artificielle du cabinet oriente votre demande ; un avocat étudie ensuite votre dossier.": "توجّه أداة ذكاء اصطناعي تابعة للمكتب طلبك، ثم يدرس محامٍ ملفك.",
   "Voici la procédure envisagée ; elle sera confirmée lors de la prise en charge.": "هذا هو الإجراء المقترح، وسيُؤكَّد عند التكفل بالملف.",
@@ -957,5 +954,7 @@
   "Cochez les deux cases pour accepter la convention.": "ضع علامة في الخانتين لقبول الاتفاقية.",
   "Votre dossier {reference} reste à votre nom. Votre proche voit uniquement la référence, la procédure, le montant et votre nom ; il n'a accès ni à votre récit ni à vos documents. Vous êtes prévenu dès le règlement.": "يبقى ملفك {reference} باسمك. لا يرى قريبك سوى المرجع والإجراء والمبلغ واسمك، ولا يطّلع على روايتك ولا على وثائقك. تُبلَّغ فور الدفع.",
   "Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.": "الرابط صالح لمدة 14 يومًا. لا يُتكفل بالملف إلا بعد الدفع، فراعِ أجلك.",
-  "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "تحقق من كل نقطة، فخطأ في الوقائع قد يغيّر مآل الملف."
+  "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "تحقق من كل نقطة، فخطأ في الوقائع قد يغيّر مآل الملف.",
+  "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "يدرس المكتب وضعك ويقدم طعنك أمام الإدارة أو المحكمة الإدارية.",
+  "Consulter un avocat": "استشارة محامٍ"
 }

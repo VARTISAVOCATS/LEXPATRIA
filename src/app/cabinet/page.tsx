@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { contenusPublics } from "@/lib/serveur/parametres";
 import { EnteteSite } from "../composants/Entete";
 import PiedSite from "../composants/PiedSite";
-import { BandeFin, Bandeau, CartesAvocats, MotCabinet } from "../composants/Vitrine";
+import { BandeFin, Bandeau, CartesAvocats } from "../composants/Vitrine";
 
 export const metadata = { title: "Le cabinet — LEXPATRIA Avocats" };
 
@@ -18,12 +18,6 @@ export default async function Cabinet() {
           surtitre={t("Le cabinet")}
           titre={t("Un avocat suit votre recours jusqu'à la décision du tribunal")}
           chapo={t("Le cabinet réunit des avocats au barreau de Paris qui consacrent leur pratique au contentieux du droit des étrangers. Ils assistent chaque jour des personnes visées par une OQTF ou par un refus de titre de séjour, de visa ou de naturalisation.")}
-          aside={
-            <MotCabinet
-              avocats={AVOCATS}
-              texte={t("Chaque décision est lue intégralement et chaque délai vérifié avant tout engagement.")}
-            />
-          }
         />
 
         <div className="wrap">

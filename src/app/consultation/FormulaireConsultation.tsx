@@ -118,7 +118,7 @@ export default function FormulaireConsultation({ source }: { source?: string }) 
   return (
     <div className="card q1">
       <p className="surtitre">{t("Consultation en visio")}</p>
-      <h1>{t("Consultation avec un avocat")}</h1>
+      <h1>{t("Consulter un avocat")}</h1>
       <p>{t("Un entretien de 30 minutes en visio avec un avocat au barreau de Paris. Vous choisissez le créneau juste après le paiement.")}</p>
       <div className="recap">
         <span>{t("Honoraires TTC")}</span> <b>{formatEuros(prix)}</b>

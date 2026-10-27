@@ -937,16 +937,13 @@
   "Si une procédure est utile, l'avis indique laquelle et dans quel délai l'engager.": "If a procedure is appropriate, the opinion states which one and the deadline for bringing it.",
   "Quelle est votre situation ?": "What is your situation?",
   "Je souhaite m'entretenir avec un avocat": "I would like to speak with a lawyer",
-  "Le cabinet étudie votre situation et forme votre recours, devant l'administration ou devant le tribunal administratif.": "The firm studies your situation and files your appeal, before the administration or the administrative court.",
   "Déroulement": "How it works",
   "Il prend contact avec vous sous 48 heures ouvrées ; vous suivez ensuite chaque étape depuis votre espace.": "The lawyer contacts you within 48 business hours; you then follow each step from your personal space.",
   "Les recours selon votre situation": "Appeals by situation",
-  "Chaque décision est lue intégralement et chaque délai vérifié avant tout engagement.": "Every decision is read in full and every deadline checked before any commitment.",
   "Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris. Aide juridictionnelle non acceptée.": "Lexpatria Avocats is the trading name of SELARL VARTIS Avocats, a law firm at the Paris Bar. Legal aid not accepted.",
   "Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris.": "Lexpatria Avocats is the trading name of SELARL VARTIS Avocats, a law firm at the Paris Bar.",
   "Le forfait de chaque procédure": "The flat fee for each procedure",
   "Hors Île-de-France, seuls les frais de déplacement font l'objet d'un avenant, soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet ; l'avis écrit ne l'est pas.": "Outside the Île-de-France region, only travel expenses are covered by an amendment, subject to your agreement. The written assessment is deducted if you then entrust the case to the firm; the written opinion is not.",
-  "Consultation avec un avocat": "Consultation with a lawyer",
   "Un entretien de 30 minutes en visio avec un avocat au barreau de Paris. Vous choisissez le créneau juste après le paiement.": "A 30-minute video meeting with a lawyer at the Paris Bar. You choose the time slot right after payment.",
   "Un outil d'intelligence artificielle du cabinet oriente votre demande ; un avocat étudie ensuite votre dossier.": "An artificial intelligence tool used by the firm directs your request; a lawyer then studies your case.",
   "Voici la procédure envisagée ; elle sera confirmée lors de la prise en charge.": "This is the proposed procedure; it will be confirmed when the case is taken on.",
@@ -957,5 +954,7 @@
   "Cochez les deux cases pour accepter la convention.": "Tick both boxes to accept the agreement.",
   "Votre dossier {reference} reste à votre nom. Votre proche voit uniquement la référence, la procédure, le montant et votre nom ; il n'a accès ni à votre récit ni à vos documents. Vous êtes prévenu dès le règlement.": "Your case {reference} remains in your name. Your relative sees only the reference, the procedure, the amount and your name; they have no access to your account or your documents. You are notified as soon as payment is made.",
   "Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.": "The link is valid for 14 days. The case is taken on only once paid: bear your deadline in mind.",
-  "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Check each point: a factual error can change the outcome of the case."
+  "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Check each point: a factual error can change the outcome of the case.",
+  "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "The firm studies your situation and files your appeal with the administration or the administrative court.",
+  "Consulter un avocat": "Consult a lawyer"
 }

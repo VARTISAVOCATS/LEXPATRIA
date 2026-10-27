@@ -937,16 +937,13 @@
   "Si une procédure est utile, l'avis indique laquelle et dans quel délai l'engager.": "Si un procedimiento resulta útil, el dictamen indica cuál y en qué plazo iniciarlo.",
   "Quelle est votre situation ?": "¿Cuál es su situación?",
   "Je souhaite m'entretenir avec un avocat": "Deseo hablar con un abogado",
-  "Le cabinet étudie votre situation et forme votre recours, devant l'administration ou devant le tribunal administratif.": "El despacho estudia su situación y presenta su recurso ante la administración o ante el tribunal administrativo.",
   "Déroulement": "Cómo funciona",
   "Il prend contact avec vous sous 48 heures ouvrées ; vous suivez ensuite chaque étape depuis votre espace.": "El abogado se pone en contacto con usted en un plazo de 48 horas hábiles; después usted sigue cada etapa desde su espacio personal.",
   "Les recours selon votre situation": "Los recursos según su situación",
-  "Chaque décision est lue intégralement et chaque délai vérifié avant tout engagement.": "Cada decisión se lee íntegramente y cada plazo se comprueba antes de cualquier compromiso.",
   "Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris. Aide juridictionnelle non acceptée.": "Lexpatria Avocats es el nombre comercial de la SELARL VARTIS Avocats, sociedad de abogados del Colegio de Abogados de París. No se acepta la ayuda jurídica.",
   "Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris.": "Lexpatria Avocats es el nombre comercial de la SELARL VARTIS Avocats, sociedad de abogados del Colegio de Abogados de París.",
   "Le forfait de chaque procédure": "La tarifa de cada procedimiento",
   "Hors Île-de-France, seuls les frais de déplacement font l'objet d'un avenant, soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet ; l'avis écrit ne l'est pas.": "Fuera de Île-de-France, solo los gastos de desplazamiento son objeto de una cláusula adicional, sujeta a su aprobación. El diagnóstico escrito se descuenta si después confía el expediente al despacho; el dictamen escrito no.",
-  "Consultation avec un avocat": "Consulta con un abogado",
   "Un entretien de 30 minutes en visio avec un avocat au barreau de Paris. Vous choisissez le créneau juste après le paiement.": "Una entrevista de 30 minutos por videollamada con un abogado del Colegio de Abogados de París. Usted elige la franja horaria justo después del pago.",
   "Un outil d'intelligence artificielle du cabinet oriente votre demande ; un avocat étudie ensuite votre dossier.": "Una herramienta de inteligencia artificial del despacho orienta su solicitud; después, un abogado estudia su expediente.",
   "Voici la procédure envisagée ; elle sera confirmée lors de la prise en charge.": "Este es el procedimiento previsto; se confirmará cuando se asuma el expediente.",
@@ -957,5 +954,7 @@
   "Cochez les deux cases pour accepter la convention.": "Marque las dos casillas para aceptar el convenio.",
   "Votre dossier {reference} reste à votre nom. Votre proche voit uniquement la référence, la procédure, le montant et votre nom ; il n'a accès ni à votre récit ni à vos documents. Vous êtes prévenu dès le règlement.": "Su expediente {reference} sigue a su nombre. Su allegado solo ve la referencia, el procedimiento, el importe y su nombre; no tiene acceso ni a su relato ni a sus documentos. Se le avisa en cuanto se efectúa el pago.",
   "Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.": "El enlace es válido durante 14 días. El expediente solo se asume una vez pagado: tenga en cuenta su fecha límite.",
-  "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Compruebe cada punto: un error de hecho puede modificar el resultado del expediente."
+  "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Compruebe cada punto: un error de hecho puede modificar el resultado del expediente.",
+  "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "El despacho estudia su situación y presenta su recurso ante la administración o el tribunal administrativo.",
+  "Consulter un avocat": "Consultar a un abogado"
 }
