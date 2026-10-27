@@ -38,8 +38,10 @@ export const ResultatTriage = z.object({
   langue: z.string(),
   faits: z.array(z.string()).max(8), // faits qui comptent, tirés du récit, à confirmer par le client
   ceQueLeRecoursPeutObtenir: z.string(), // information générale, ni argument ni pronostic
+  // Pré-analyse personnalisée de la décision jointe (2 à 4 phrases), vide sans décision.
+  preAnalyse: z.string().default(""),
   // Pour l'affichage : faits et information générale traduits dans la langue du récit, si ce n'est pas le français.
-  traduction: z.object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string() }).nullable().optional(),
+  traduction: z.object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string(), preAnalyse: z.string().optional() }).nullable().optional(),
 });
 export type ResultatTriage = z.infer<typeof ResultatTriage>;
 
@@ -73,8 +75,9 @@ Règles :
 - N'invente aucun fait, aucune date. Une date absente vaut null. Les dates sont au format AAAA-MM-JJ.
 - "faits" : au plus 8 faits du récit qui comptent (ancienneté du séjour, vie familiale, enfants, emploi), formulés brièvement en français, sans les embellir.
 - "ceQueLeRecoursPeutObtenir" : une ou deux phrases d'information générale en français (ex. pour une OQTF : le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision). Jamais d'argument juridique, jamais de pronostic, jamais les mots « gratuit », « garanti », « offert ».
+- "preAnalyse" : seulement si une décision est jointe ; sinon "". Deux à quatre phrases courtes en français, au nom du cabinet (« nous »), adressées à la personne (« vous »), sur ce que dit SA décision : l'autorité et la nature de la décision, sa date et, si elle figure, la date de notification ; le délai de recours indiqué dans la mention des voies et délais ; les mesures qui l'accompagnent (délai de départ volontaire, interdiction de retour, pays de renvoi) ; le motif principal tel qu'il est écrit. Exemple de ton : « Nous avons lu votre décision. Le préfet de police vous oblige à quitter le territoire dans un délai de trente jours… ». Aucun argument juridique, aucun pronostic, aucune promesse. Phrases sobres, sans virgules superflues.
 - "langue" : code ISO 639-1 de la langue du récit (celle dans laquelle la personne a écrit, pas celle des mots cités).
-- "traduction" : si la langue du récit n'est pas le français, { "langue": code ISO 639-1, "faits": les mêmes faits traduits dans cette langue, "obtenir": "ceQueLeRecoursPeutObtenir" traduit dans cette langue } ; sinon null.
+- "traduction" : si la langue du récit n'est pas le français, { "langue": code ISO 639-1, "faits": les mêmes faits traduits dans cette langue, "obtenir": "ceQueLeRecoursPeutObtenir" traduit dans cette langue, "preAnalyse": "preAnalyse" traduite dans cette langue } ; sinon null.
 - Un refus de titre SANS obligation de quitter le territoire est REFUS_TITRE, jamais OQTF.
 - "visaType" : COURT (moins de 90 jours, tourisme, visite) ou LONG (études, conjoint, travail, regroupement) si le récit le dit, sinon null.
 - "naturalisationIssue" : REFUS ou AJOURNEMENT si le récit le dit, sinon null.
@@ -84,6 +87,8 @@ Réponds UNIQUEMENT par un objet JSON conforme à ce schéma : ${JSON.stringify(
 
 export interface EntreeTriage {
   recit?: string;
+  /** Procédure choisie par la personne parmi les situations courantes, avant de transmettre sa décision. */
+  procedure?: string;
   images?: { mime: "image/jpeg" | "image/png" | "image/webp"; base64: string }[];
   pdfs?: { base64: string }[];
 }
@@ -98,12 +103,14 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   }
   contenu.push({
     type: "text",
-    text: entree.recit ? `Récit de la personne :\n${minimiser(entree.recit)}` : "La personne a seulement transmis sa décision.",
+    text:
+      (entree.recit ? `Récit de la personne :\n${minimiser(entree.recit)}` : "La personne a seulement transmis sa décision.") +
+      (entree.procedure ? `\nSituation choisie par la personne : ${entree.procedure}. Retiens-la sauf si la décision jointe dit clairement autre chose.` : ""),
   });
 
   const rep = await client.messages.create({
     model: modele ?? process.env.ANTHROPIC_MODEL_TRIAGE ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
-    max_tokens: 1500,
+    max_tokens: 2000,
     system: CONSIGNE,
     messages: [
       { role: "user", content: contenu },
@@ -121,6 +128,10 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   if (controlerTexte(res.ceQueLeRecoursPeutObtenir).length > 0) {
     res.ceQueLeRecoursPeutObtenir = "";
     if (res.traduction) res.traduction.obtenir = "";
+  }
+  if (controlerTexte(res.preAnalyse).length > 0) {
+    res.preAnalyse = "";
+    if (res.traduction) res.traduction.preAnalyse = "";
   }
   return res;
 }
@@ -161,6 +172,7 @@ export function trierSimule(recit: string): ResultatTriage {
     nationaliteAlgerienne: /alg[ée]rien/.test(r) ? true : null,
     langue: "fr",
     faits: [],
-    ceQueLeRecoursPeutObtenir: procedure === "OQTF" ? "" : "",
+    ceQueLeRecoursPeutObtenir: "",
+    preAnalyse: "",
   };
 }

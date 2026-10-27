@@ -1819,3 +1819,7 @@ main.acc { padding-top: 0; }
 .pa dt { font-size: 13px; color: var(--ink-3); letter-spacing: .02em; }
 .pa dd { margin: 0; font-size: 15px; color: var(--ink); line-height: 1.45; }
 @media (max-width: 480px) { .pa dl > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+.pa-txt { margin: 0 0 12px; font-size: 15.5px; line-height: 1.55; color: var(--ink); }
+.dec-dem { display: grid; gap: 12px; }
+.dec-dem .dec-btn { justify-self: start; }
+.dec-dem .link { justify-self: start; }

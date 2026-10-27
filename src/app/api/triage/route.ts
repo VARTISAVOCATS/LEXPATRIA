@@ -18,6 +18,7 @@ const Corps = z.object({
     .max(10)
     .optional(),
   pdfs: z.array(z.object({ base64: z.string() })).max(3).optional(),
+  procedure: z.enum(["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"]).optional(),
 });
 
 function parseDate(s: string | null): Date | undefined {

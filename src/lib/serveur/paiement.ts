@@ -12,6 +12,7 @@ import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { signer } from "@/lib/jeton";
 import { carteCouvre, dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
+import { etapesDeroule } from "@/lib/deroule";
 import { stripe } from "@/lib/stripe";
 import { attribuer } from "./attribution";
 import { valeur } from "./connexions";
@@ -209,6 +210,27 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
   }
   await attribuer(d, dossierId, dos.traitement === "URGENCE");
   await confirmerAuClient(d, dossierId);
+  // Second message : le déroulé de la procédure, étape par étape.
+  await envoyerDeroule(d, dossierId).catch(() => undefined);
+}
+
+/** E-mail « Ce qui va se passer » : les étapes de la procédure que le client doit connaître, dans sa langue. */
+export async function envoyerDeroule(d: Base, dossierId: string) {
+  const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
+  if (!dos || dos.dossierParentId) return;
+  const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
+  if (!cli?.email) return;
+  const etapes = etapesDeroule(dos.procedure, dos.avisPrealable);
+  if (!etapes.length) return;
+  const langue = estLangue(cli.langue) ? cli.langue : "fr";
+  const delai = traduire(langue, dos.traitement === "URGENCE" && !dos.avisPrealable ? "10 heures ouvrées" : "48 heures ouvrées");
+  const lignes = etapes.map((e, i) => `${i + 1}. ${traduire(langue, e, { delai })}`).join("\n\n");
+  await envoyer({
+    canal: "EMAIL",
+    destinataire: cli.email,
+    sujet: traduire(langue, "Ce qui va se passer — dossier {ref}", { ref: dos.reference }),
+    texte: `${traduire(langue, "Bonjour,")}\n\n${traduire(langue, "Voici comment se déroule votre procédure.")}\n\n${lignes}\n\nLEXPATRIA Avocats`,
+  });
 }
 
 /** E-mail de confirmation au client après paiement : avocat attribué, lien vers l'espace, pièces à transmettre. */

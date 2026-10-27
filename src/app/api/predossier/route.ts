@@ -26,6 +26,8 @@ const Corps = z.object({
       emploiMenace: z.boolean().nullable().optional(),
       question: z.string().max(3000).nullable().optional(),
       silenceApresRecoursPrealable: z.boolean().optional(),
+      typeDemande: z.enum(["PREMIER", "RENOUVELLEMENT", "CHANGEMENT"]).nullable().optional(),
+      prefecture: z.string().max(120).nullable().optional(),
     })
     .default({}),
   dateReference: date, // réception de la décision (confirmée par le client)

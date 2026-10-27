@@ -5,6 +5,7 @@
 // Chaque procédure ne pose que les questions qui fixent la procédure, le délai et le prix.
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PREFECTURES } from "@/lib/listes";
 import { jour, versJour } from "@/lib/calendrier";
 import { apresPaiement, CONTENUS, SUGGESTION_PROCEDURE, SUGGESTIONS } from "@/lib/contenus";
 import { resumeConvention, texteConvention } from "@/lib/convention";
@@ -32,6 +33,9 @@ type Etape =
   | "Q_EMPLOI"
   | "Q_ECHEANCE"
   | "Q_DIAG"
+  | "DECISION"
+  | "Q_DEMANDE"
+  | "Q_PREFECTURE"
   | "DATE"
   | "RESULTAT"
   | "RECOURS"
@@ -54,6 +58,15 @@ const SITUATIONS: { v: SituationOQTF; l: string }[] = [
   { v: "INCONNUE", l: "Je ne sais pas" },
 ];
 
+/** Procédures contre une décision écrite : la décision est toujours demandée, puis lue par l'IA (pré-analyse personnalisée). */
+const AVEC_DECISION: CodeProcedure[] = ["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"];
+/** Blocages et silence de la préfecture : quelques questions pour une information personnalisée avant paiement. */
+const AVEC_DEMANDE: CodeProcedure[] = ["REFUS_IMPLICITE", "BLOCAGE_EMPLOI", "BLOCAGE_SIMPLE"];
+const TYPES_DEMANDE = [
+  { v: "PREMIER", l: "Une première demande de titre de séjour" },
+  { v: "RENOUVELLEMENT", l: "Le renouvellement de mon titre de séjour" },
+  { v: "CHANGEMENT", l: "Un changement de statut (étudiant vers salarié, par exemple)" },
+];
 const AVEC_DATE: CodeProcedure[] = ["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION", "REFUS_IMPLICITE"];
 const REGIME_ALGERIEN: CodeProcedure[] = ["OQTF", "REFUS_TITRE", "REFUS_IMPLICITE", "BLOCAGE_EMPLOI", "BLOCAGE_SIMPLE"];
 const ETAPES_PROGRESSION: Etape[] = ["RECIT", "RESULTAT", "RECOURS", "COORDONNEES", "FAITS", "QUESTIONNAIRE", "PIECES", "PRET", "PAIEMENT"];
@@ -92,6 +105,7 @@ async function enBase64(f: File): Promise<{ mime: string; base64: string }> {
 
 export default function Parcours({ modePhoto, source, reprise }: { modePhoto: boolean; source?: string; reprise?: string }) {
   const t = useT();
+  const langueEcran = useLangue();
   const { tarifs, avocats, echeancier: reglesEch } = useContenus();
   // Avocats montrés au paiement : ceux du back office (photos comprises), pour inspirer confiance sans nommer l'avocat attribué.
   const EQUIPE = avocats.map((a) => ({
@@ -119,6 +133,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const [visaType, setVisaType] = useState<"COURT" | "LONG" | null>(null);
   const [natuIssue, setNatuIssue] = useState<"REFUS" | "AJOURNEMENT" | null>(null);
   const [emploi, setEmploi] = useState<boolean | null>(null);
+  // Décision lue par l'IA, ou passée par la personne (« je ne l'ai pas sous la main »).
+  const [decisionLue, setDecisionLue] = useState(false);
+  const [decisionPassee, setDecisionPassee] = useState(false);
+  const [typeDemande, setTypeDemande] = useState<string | null | undefined>(undefined);
+  const [prefecture, setPrefecture] = useState<string | null | undefined>(undefined);
+  const [prefChoisie, setPrefChoisie] = useState("");
   const [echeance, setEcheance] = useState<string | null | undefined>(undefined); // undefined : pas encore demandée
   const [question, setQuestion] = useState("");
   const [dateLue, setDateLue] = useState<string | null>(null);
@@ -292,14 +312,20 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     q: string;
     dref: string | null | undefined;
     ddem: string | null;
+    dec: boolean;
+    dmd: string | null | undefined;
+    pref: string | null | undefined;
     depuis: Etape;
   }): Etape {
     const { p } = etat;
     if (!p) return "RECIT";
+    if (AVEC_DECISION.includes(p) && !etat.dec) return "DECISION";
     if (p === "OQTF" && !etat.sit) return "Q_SITUATION";
     if (p === "REFUS_VISA" && !etat.visa) return "Q_VISA";
     if (p === "NATURALISATION" && !etat.natu) return "Q_NATU";
     if ((p === "BLOCAGE_EMPLOI" || p === "BLOCAGE_SIMPLE") && etat.emp === null) return "Q_EMPLOI";
+    if (AVEC_DEMANDE.includes(p) && etat.dmd === undefined) return "Q_DEMANDE";
+    if (AVEC_DEMANDE.includes(p) && etat.pref === undefined) return "Q_PREFECTURE";
     if (p === "PROCEDURE_EN_COURS" && etat.ech === undefined) return "Q_ECHEANCE";
     if (p === "DIAGNOSTIC" && etat.depuis !== "Q_DIAG" && !etat.q.trim()) return "Q_DIAG";
     if (AVEC_DATE.includes(p) && etat.depuis !== "DATE") {
@@ -318,6 +344,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     q: question,
     dref: dateRef,
     ddem: dateDemande,
+    dec: decisionLue || decisionPassee,
+    dmd: typeDemande,
+    pref: prefecture,
     depuis,
   });
   const avancer = (depuis: Etape, maj: Partial<ReturnType<typeof etatCourant>> = {}) =>
@@ -345,11 +374,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       langue: langueEcran,
       faits: [],
       ceQueLeRecoursPeutObtenir: "",
+      preAnalyse: "",
       traduction: null,
     };
   }
 
-  function appliquerTriage(tri: ResultatTriage) {
+  function appliquerTriage(tri: ResultatTriage, decisionJointe = false) {
     setTriage(tri);
     const p = tri.procedure as CodeProcedure;
     setProcedure(p);
@@ -373,12 +403,15 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         q: "",
         dref: undefined,
         ddem: tri.dateDemande,
+        dec: decisionJointe || decisionPassee,
+        dmd: typeDemande,
+        pref: prefecture,
         depuis: "ANALYSE",
       }),
     );
   }
 
-  async function analyser(texte: string, liste: File[]) {
+  async function analyser(texte: string, liste: File[], procedureIndiquee?: CodeProcedure | null) {
     setErreur(null);
     const direct = liste.length ? null : triageDirect(texte);
     if (direct) {
@@ -398,7 +431,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       const r = await fetch("/api/triage", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ recit: texte || undefined, images, pdfs }),
+        body: JSON.stringify({
+          recit: texte || undefined,
+          images,
+          pdfs,
+          procedure: procedureIndiquee && AVEC_DECISION.includes(procedureIndiquee) ? procedureIndiquee : undefined,
+        }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(j.erreur ?? t("Analyse impossible"));
@@ -408,10 +446,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         setRefus(j.refus);
         return setEtape("REFUS");
       }
-      appliquerTriage(tri);
+      if (liste.length) setDecisionLue(true);
+      appliquerTriage(tri, liste.length > 0);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : t("Analyse impossible"));
-      setEtape("RECIT");
+      setEtape(procedureIndiquee && AVEC_DECISION.includes(procedureIndiquee) ? "DECISION" : "RECIT");
     }
   }
 
@@ -440,6 +479,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
             visaType,
             naturalisationIssue: natuIssue,
             emploiMenace: emploi,
+            typeDemande: typeDemande ?? null,
+            prefecture: prefecture ?? null,
             question: question || null,
             silenceApresRecoursPrealable: apresRecours,
           },
@@ -494,6 +535,31 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     return PROCEDURES[procedure].libelle;
   })();
   const libelleOffre = avisPrealable ? "Avis écrit d'un avocat" : titreProcedure;
+  // Information personnalisée avant paiement : lecture de la décision par l'IA ; à défaut, phrases construites
+  // à partir des réponses (blocages, silence de la préfecture, procédure en cours, diagnostic).
+  const preAnalyseIA = (langueEcran === "fr" ? triage?.preAnalyse : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.preAnalyse : "")) || "";
+  const infoPersonnalisee = (() => {
+    if (!procedure) return "";
+    if (preAnalyseIA) return preAnalyseIA;
+    const pref = prefecture ? t("la préfecture de {p}", { p: prefecture.replace(/\s*\(.*\)$/, "") }) : t("la préfecture");
+    const demarche = typeDemande === "RENOUVELLEMENT" ? t("renouvellement de titre") : typeDemande === "CHANGEMENT" ? t("changement de statut") : t("demande de titre");
+    if (AVEC_DECISION.includes(procedure))
+      return t("Sans la décision, nous nous fondons sur vos réponses. Nous confirmerons le délai et la voie de recours à sa lecture.");
+    if (procedure === "REFUS_IMPLICITE")
+      return dateDemande
+        ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Nous demandons d'abord ses motifs à la préfecture, puis nous contestons ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
+        : t("Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Nous demandons d'abord ses motifs, puis nous contestons ce refus devant le tribunal administratif.");
+    if (procedure === "BLOCAGE_EMPLOI")
+      return t("Votre dossier ({d}) est bloqué auprès de {p} et votre emploi est menacé. Le juge des référés peut ordonner rapidement à la préfecture de vous donner un rendez-vous ou de vous délivrer un récépissé.", { d: demarche, p: pref });
+    if (procedure === "BLOCAGE_SIMPLE")
+      return t("Nous mettons en demeure {p} de traiter votre dossier ({d}). Si cette démarche reste sans effet, un référé peut être engagé devant le tribunal administratif.", { d: demarche, p: pref });
+    if (procedure === "PROCEDURE_EN_COURS")
+      return echeance
+        ? t("Votre recours est déjà engagé. La prochaine date fixée par le tribunal est le {date}. Nous reprenons le dossier et préparons les écritures avant cette date.", { date: dateLongue(isoVersDate(echeance)!) })
+        : t("Votre recours est déjà engagé. Nous vérifions la prochaine échéance dans les courriers du tribunal, puis nous reprenons le dossier.");
+    if (procedure === "DIAGNOSTIC") return t("Nous étudions votre situation à partir de vos réponses et de vos documents. Notre avis écrit vous indique la démarche à engager et son délai.");
+    return "";
+  })();
   // Pré-analyse : la situation telle que la personne l'a décrite, en une ligne.
   const situationTexte = (() => {
     if (!procedure) return "";
@@ -528,7 +594,6 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     (!demanderAlgerien || algerien !== null);
   const obtenir = (triage?.ceQueLeRecoursPeutObtenir || contenu?.obtenir) ?? "";
   // Textes de l'IA : en français pour l'avocat ; traduits dans la langue du récit pour l'affichage, si c'est la langue de l'écran.
-  const langueEcran = useLangue();
   const listePays = useMemo(
     () => PAYS.map((c) => [c, nomPays(c, langueEcran)] as const).sort((a, b) => (a[0] === "FR" ? -1 : b[0] === "FR" ? 1 : a[1].localeCompare(b[1], langueEcran))),
     [langueEcran],
@@ -572,7 +637,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       : null;
 
   // ---- Présentation : interface validée (démonstration « Encre ») ----
-  const orientation = ["RECIT", "ANALYSE", "REFUS", "Q_SITUATION", "Q_VISA", "Q_NATU", "Q_EMPLOI", "Q_ECHEANCE", "Q_DIAG", "DATE", "RESULTAT"].includes(etape);
+  const orientation = ["RECIT", "ANALYSE", "REFUS", "Q_SITUATION", "Q_VISA", "Q_NATU", "Q_EMPLOI", "Q_ECHEANCE", "Q_DIAG", "DECISION", "Q_DEMANDE", "Q_PREFECTURE", "DATE", "RESULTAT"].includes(etape);
   useEffect(() => {
     document.body.classList.toggle("pay1", etape === "PAIEMENT");
     return () => document.body.classList.remove("pay1");
@@ -943,6 +1008,94 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     },
                   )}
 
+                {etape === "DECISION" && procedure && (
+                  <div className="oqreg oq-first dec-dem">
+                    <b>{t("Photographiez votre décision")}</b>
+                    <span className="fr-sub">
+                      {t("Nous la lisons pour vous donner une première analyse personnalisée : ce qu'elle dit, votre délai et la voie de recours.")}
+                    </span>
+                    <button className="btn dec-btn cam" onClick={() => champFichier.current?.click()}>
+                      <IconeImport />
+                      <span className="ph-lm">{t("Photographier ma décision")}</span>
+                      <span className="ph-ld">{t("Importer ma décision")}</span>
+                    </button>
+                    {fichiers.length > 0 && (
+                      <>
+                        <div className="vign">
+                          {fichiers.map((f, i) => (
+                            <span key={i}>
+                              {t("Page {n}", { n: i + 1 })}
+                              <button onClick={() => setFichiers((l) => l.filter((_, j) => j !== i))} aria-label={t("Retirer")}>
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <span className="dec-h">{t("Toutes les pages, y compris celle des voies et délais de recours.")}</span>
+                        <button className="btn cta big" onClick={() => analyser(recit, fichiers, procedure)}>
+                          {t("Analyser ma décision")} →
+                        </button>
+                      </>
+                    )}
+                    <button
+                      className="link"
+                      onClick={() => {
+                        setDecisionPassee(true);
+                        avancer("DECISION", { dec: true });
+                      }}
+                    >
+                      {t("Je n'ai pas ma décision sous la main")}
+                    </button>
+                  </div>
+                )}
+
+                {etape === "Q_DEMANDE" &&
+                  question1(
+                    procedure === "REFUS_IMPLICITE" ? "Qu'avez-vous demandé à la préfecture ?" : "Pour quelle démarche êtes-vous bloqué(e) ?",
+                    null,
+                    TYPES_DEMANDE,
+                    (v) => {
+                      setTypeDemande(v);
+                      avancer("Q_DEMANDE", { dmd: v });
+                    },
+                  )}
+
+                {etape === "Q_PREFECTURE" && (
+                  <div className="dategate">
+                    <b>{t("Quelle préfecture traite votre dossier ?")}</b>
+                    <span className="fr-sub">{t("Celle de votre département de résidence, en général.")}</span>
+                    <div className="dg-row">
+                      <select value={prefChoisie} onChange={(e) => setPrefChoisie(e.target.value)} aria-label={t("Préfecture")}>
+                        <option value="">{t("Choisissez")}</option>
+                        {PREFECTURES.map(([code, nom]) => (
+                          <option key={code} value={nom}>
+                            {nom}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        className="btn cta"
+                        disabled={!prefChoisie}
+                        onClick={() => {
+                          setPrefecture(prefChoisie);
+                          avancer("Q_PREFECTURE", { pref: prefChoisie });
+                        }}
+                      >
+                        {t("Valider")}
+                      </button>
+                    </div>
+                    <button
+                      className="link"
+                      onClick={() => {
+                        setPrefecture(null);
+                        avancer("Q_PREFECTURE", { pref: null });
+                      }}
+                    >
+                      {t("Je ne sais pas")}
+                    </button>
+                  </div>
+                )}
+
                 {etape === "Q_DIAG" && (
                   <div className="dategate">
                     <b>{t("Quelle question voulez-vous poser à l'avocat ?")}</b>
@@ -1043,6 +1196,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       <>
                         <div className="pa">
                           <b className="pa-t">{t("Notre première analyse")}</b>
+                          {infoPersonnalisee && <p className="pa-txt">{infoPersonnalisee}</p>}
                           <dl>
                             <div>
                               <dt>{t("Votre situation")}</dt>
@@ -1053,7 +1207,15 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                               <dd>
                                 {avecDelai
                                   ? `${joursPourAgir(jours!, t)} · ${dateLongue(delai.dateLimite!)}`
-                                  : t(procedure === "DIAGNOSTIC" ? "Nous l'indiquons dans notre avis écrit" : "Nous le vérifions à la lecture de votre décision")}
+                                  : t(
+                                      procedure === "DIAGNOSTIC"
+                                        ? "Nous l'indiquons dans notre avis écrit"
+                                        : procedure === "BLOCAGE_EMPLOI"
+                                          ? "À traiter en urgence : votre emploi est en jeu"
+                                          : procedure === "BLOCAGE_SIMPLE"
+                                            ? "Aucun délai de recours ne court pour l'instant"
+                                            : "Nous le vérifions à la lecture de votre décision",
+                                    )}
                               </dd>
                             </div>
                             <div>
@@ -1064,7 +1226,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             </div>
                           </dl>
                         </div>
-                        {avecDelai && <p className="fr-sub">{t("Estimation à confirmer à la lecture de la décision.")}</p>}
+                        {avecDelai && !decisionLue && <p className="fr-sub">{t("Estimation à confirmer à la lecture de la décision.")}</p>}
                         {situation === "INCONNUE" && (
                           <p className="note">{t("Sans précision sur votre situation, nous retenons par prudence le délai le plus court : 7 jours. Le délai exact sera vérifié.")}</p>
                         )}
@@ -1087,7 +1249,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       </>
                     )}
 
-                    {((obtenirAffiche && !delai.refusImpliciteNonNe) || faitsAffiches.length > 0) && (
+                    {analyseIA && ((obtenirAffiche && !delai.refusImpliciteNonNe) || faitsAffiches.length > 0) && (
                       <div className="sit-b">
                         <b className="sit-t">{t("Ce que nous avons retenu")}</b>
                         {obtenirAffiche && !delai.refusImpliciteNonNe && <p className="sit-v">{obtenirAffiche}</p>}
