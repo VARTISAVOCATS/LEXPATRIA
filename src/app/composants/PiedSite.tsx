@@ -9,7 +9,7 @@ export default function PiedSite() {
   return (
     <div className="foot">
       <p className="lx-brand lx-brand-f">
-        {t("Lexpatria Avocats est la marque de la SELARL VARTIS Avocats, avocats au barreau de Paris. Aide juridictionnelle non acceptée.")}
+        {t("Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris. Aide juridictionnelle non acceptée.")}
       </p>
       <span className="si-foot">
         {SITUATIONS.map((s, i) => (

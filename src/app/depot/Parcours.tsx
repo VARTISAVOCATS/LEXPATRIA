@@ -502,7 +502,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
   async function demanderProche() {
     if (!jeton) return;
-    if (!caseConvention || !caseExecution) return setErreur(t("Cochez d'abord les deux cases : c'est vous qui acceptez la convention."));
+    if (!caseConvention || !caseExecution) return setErreur(t("Cochez les deux cases pour accepter la convention."));
     setEnvoi(true);
     setErreur(null);
     try {
@@ -762,7 +762,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
               <div>
                 <div className="composer">
                   <p className="lx-ia">
-                    {t("Un outil d'intelligence artificielle du cabinet oriente votre demande. Un avocat étudie ensuite votre dossier.")}
+                    {t("Un outil d'intelligence artificielle du cabinet oriente votre demande ; un avocat étudie ensuite votre dossier.")}
                   </p>
                   <label className="comp-q" htmlFor="tri_in">
                     {t("Quelle est votre situation ?")}
@@ -923,7 +923,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     <span className="pill ai">{t("Assistant IA")}</span>
                   </div>
                 )}
-                <p className="serif tr-msg">{t("Voici la procédure envisagée. Elle est confirmée à la prise en charge.")}</p>
+                <p className="serif tr-msg">{t("Voici la procédure envisagée ; elle sera confirmée lors de la prise en charge.")}</p>
                 <div className="tr-proc">
                   <b>{t(titreProcedure)}</b>
                 </div>
@@ -940,7 +940,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                 )}
 
                 {etape === "Q_SITUATION" &&
-                  question1("Où vous trouvez-vous aujourd'hui ?", "Votre situation fixe le délai pour contester l'OQTF.", SITUATIONS.map((s) => ({ v: s.v, l: s.l })), (v) => {
+                  question1("Où vous trouvez-vous aujourd'hui ?", "Le délai pour contester l'OQTF dépend de votre situation.", SITUATIONS.map((s) => ({ v: s.v, l: s.l })), (v) => {
                     const sit = v as SituationOQTF;
                     setSituation(sit);
                     if (sit === "DETENTION" || sit === "RETENTION") {
@@ -953,7 +953,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                 {etape === "Q_VISA" &&
                   question1(
                     "Quel visa avez-vous demandé ?",
-                    "Le recours n'est pas adressé à la même autorité.",
+                    "L'autorité à laquelle le recours est adressé en dépend.",
                     [
                       { v: "COURT", l: "Un visa de court séjour (visite, tourisme, moins de 3 mois)" },
                       { v: "LONG", l: "Un visa de long séjour (conjoint, études, travail, famille)" },
@@ -1063,7 +1063,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                 {etape === "Q_PREFECTURE" && (
                   <div className="dategate">
                     <b>{t("Quelle préfecture traite votre dossier ?")}</b>
-                    <span className="fr-sub">{t("Celle de votre département de résidence, en général.")}</span>
+                    <span className="fr-sub">{t("En principe, celle de votre département de résidence.")}</span>
                     <div className="dg-row">
                       <select value={prefChoisie} onChange={(e) => setPrefChoisie(e.target.value)} aria-label={t("Préfecture")}>
                         <option value="">{t("Choisissez")}</option>
@@ -1237,7 +1237,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                           <div className="urg">
                             <h3>{t("Procédure d'urgence")}</h3>
                             <p>
-                              {t("Le délai est très court. Une requête sommaire est d'abord déposée pour le préserver, puis complétée. Prise en charge sous 10 heures ouvrées.")}
+                              {t("Le délai est très court : une requête sommaire est d'abord déposée pour le préserver, puis complétée. Le dossier est pris en charge sous 10 heures ouvrées.")}
                             </p>
                           </div>
                         )}
@@ -1701,7 +1701,7 @@ function EcranProche({ lien, reference, total, prenom }: { lien: string; referen
       <h1>{t("Envoyez le lien à votre proche")}</h1>
       <p className="aide">
         {t(
-          "Votre dossier {reference} reste à votre nom. Votre proche voit seulement la référence, la procédure, le montant et votre nom ; jamais votre récit ni vos documents. Vous serez prévenu dès le règlement.",
+          "Votre dossier {reference} reste à votre nom. Votre proche voit uniquement la référence, la procédure, le montant et votre nom ; il n'a accès ni à votre récit ni à vos documents. Vous êtes prévenu dès le règlement.",
           { reference },
         )}
         {prenom ? "" : ""}
@@ -1723,7 +1723,7 @@ function EcranProche({ lien, reference, total, prenom }: { lien: string; referen
           {copie ? t("Lien copié") : t("Copier le lien")}
         </button>
       </div>
-      <p className="petite">{t("Le lien est valable 14 jours. Pensez à votre date limite : le dossier n'est pris en charge qu'une fois réglé.")}</p>
+      <p className="petite">{t("Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.")}</p>
     </>
   );
 }

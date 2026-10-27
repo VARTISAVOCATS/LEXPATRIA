@@ -79,12 +79,11 @@ export function Bandeau({ surtitre, titre, chapo, aside, children }: { surtitre:
 }
 
 /** Encart sombre : les visages des avocats et un mot du cabinet. */
-export function MotCabinet({ avocats, texte, signature }: { avocats: Avocat[]; texte: string; signature: string }) {
+export function MotCabinet({ avocats, texte }: { avocats: Avocat[]; texte: string }) {
   return (
     <aside className="acc-mot">
       <Visages avocats={avocats} />
       <blockquote>{texte}</blockquote>
-      <p className="acc-sign">{signature}</p>
     </aside>
   );
 }

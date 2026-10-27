@@ -66,7 +66,6 @@ export default async function Accueil() {
                   "Un avocat du cabinet analyse votre décision, identifie le recours ouvert et agit avant l'expiration du délai.",
                 )}
               </blockquote>
-              <p className="acc-sign">{t("Les avocats du cabinet")}</p>
             </aside>
           </div>
         </section>
@@ -100,7 +99,7 @@ export default async function Accueil() {
           </section>
 
           <section className="acc-sec">
-            <p className="acc-eye">{t("Comment cela se passe")}</p>
+            <p className="acc-eye">{t("Déroulement")}</p>
             <h2>{t("Trois étapes, sans vous déplacer")}</h2>
             <ol className="acc-etapes">
               <li>
@@ -113,14 +112,14 @@ export default async function Accueil() {
               </li>
               <li>
                 <b>{t("Un avocat forme votre recours")}</b>
-                <span>{t("Il prend contact avec vous sous 48 heures ouvrées, et vous suivez chaque étape depuis votre espace.")}</span>
+                <span>{t("Il prend contact avec vous sous 48 heures ouvrées ; vous suivez ensuite chaque étape depuis votre espace.")}</span>
               </li>
             </ol>
           </section>
 
           <section className="acc-sec">
             <p className="acc-eye">{t("Vos démarches")}</p>
-            <h2>{t("Votre situation, expliquée simplement")}</h2>
+            <h2>{t("Les recours selon votre situation")}</h2>
             <div className="acc-situ">
               {SITUATIONS.map((s) => (
                 <Link key={s.slug} href={`/${s.slug}`} className="acc-situ-c">

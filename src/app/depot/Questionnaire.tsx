@@ -26,7 +26,7 @@ export function ConfirmationFaits({ jeton, faits, suite }: { jeton: string; fait
     <>
       <p className="surtitre">{t("Votre récit")}</p>
       <h1>{t("Éléments relevés dans votre récit")}</h1>
-      <p className="aide">{t("Vérifiez chaque point. Une erreur de fait peut changer l'issue d'un dossier.")}</p>
+      <p className="aide">{t("Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.")}</p>
       <ul className="faits-a-confirmer">
         {etat.map((e, i) => (
           <li key={i}>

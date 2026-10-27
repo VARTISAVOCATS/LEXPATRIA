@@ -59,7 +59,7 @@ export default async function Honoraires() {
         <div className="wrap">
           <section className="acc-sec">
             <p className="acc-eye">{t("Forfaits")}</p>
-            <h2>{t("Chaque procédure a son prix")}</h2>
+            <h2>{t("Le forfait de chaque procédure")}</h2>
             <div className="pg-tarifs">
               {GROUPES.map((g) => (
                 <div className="pg-carte" key={g.titre}>
@@ -76,7 +76,7 @@ export default async function Honoraires() {
               ))}
             </div>
             <p className="acc-lead pg-note">
-              {t("Hors Île-de-France, seuls les frais de déplacement font l'objet d'un avenant, soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet ; l'avis préalable ne l'est pas.")}
+              {t("Hors Île-de-France, seuls les frais de déplacement font l'objet d'un avenant, soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet ; l'avis écrit ne l'est pas.")}
             </p>
             <p className="note warn">{t("Aide juridictionnelle non acceptée.")}</p>
           </section>

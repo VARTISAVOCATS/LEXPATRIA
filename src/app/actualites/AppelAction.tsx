@@ -10,7 +10,7 @@ export default async function AppelAction({ titre }: { titre?: string }) {
     <aside className="acc-fin art-fin">
       <Visages avocats={avocats} petit />
       <h2>{titre ?? "Vous êtes dans cette situation ?"}</h2>
-      <p>Exposez votre situation en ligne : la procédure et votre date limite vous sont indiquées, puis un avocat du cabinet prend votre dossier sous 48 heures ouvrées.</p>
+      <p>Exposez votre situation en ligne : la procédure et votre date limite vous sont indiquées, puis un avocat du cabinet prend votre dossier en charge sous 48 heures ouvrées.</p>
       <div className="art-cta-b">
         <Link className="btn cta" href="/depot">
           Engager la procédure

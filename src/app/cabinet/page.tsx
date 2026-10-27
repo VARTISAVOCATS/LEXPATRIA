@@ -21,8 +21,7 @@ export default async function Cabinet() {
           aside={
             <MotCabinet
               avocats={AVOCATS}
-              texte={t("Chaque dossier est confié à un avocat qui le suit jusqu'à la décision.")}
-              signature={t("Les avocats du cabinet")}
+              texte={t("Chaque décision est lue intégralement et chaque délai vérifié avant tout engagement.")}
             />
           }
         />
@@ -67,7 +66,7 @@ export default async function Cabinet() {
             <div className="pg-carte">
               <p className="acc-eye">{t("Le cabinet")}</p>
               <h3>SELARL VARTIS Avocats</h3>
-              <p>{t("Lexpatria Avocats est la dénomination commerciale de la SELARL VARTIS Avocats, cabinet d'avocats au barreau de Paris.")}</p>
+              <p>{t("Lexpatria Avocats est le nom commercial de la SELARL VARTIS Avocats, société d'avocats au barreau de Paris.")}</p>
               <p className="pg-adr">222 boulevard Saint-Germain, 75007 Paris</p>
             </div>
           </section>
