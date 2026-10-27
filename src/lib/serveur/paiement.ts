@@ -4,7 +4,7 @@
 import { estLangue, traduire } from "@/i18n";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Base } from "@/db";
-import { clients, conventions, dossiers, echeancier, paiements, utilisateurs } from "@/db/schema";
+import { clients, conventions, dossiers, echeancier, paiements, pieces, utilisateurs } from "@/db/schema";
 import { ajouterHeuresOuvrees, instantParis } from "@/lib/calendrier";
 import { adresseEnLignes, tvaApplicable } from "@/lib/pays";
 import { conventionsActives } from "./modeles-cabinet";
@@ -252,11 +252,19 @@ async function confirmerAuClient(d: Base, dossierId: string) {
   const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
   // Lien direct vers la suite du dépôt (pièces et questionnaire), valable 14 jours ; il ne montre aucune donnée du dossier.
   const lienSuite = `${origine}/depot/merci?ref=${encodeURIComponent(dos.reference)}&suite=${encodeURIComponent(signer(dos.id, 24 * 14))}`;
-  const pieces =
+  const decisionRecue = (await d.select({ fichiers: pieces.fichiers }).from(pieces).where(and(eq(pieces.dossierId, dos.id), eq(pieces.type, "DECISION")))).some(
+    (x) => Array.isArray(x.fichiers) && x.fichiers.length > 0,
+  );
+  const aJoindre =
     dos.avisPrealable || dos.procedure === "DIAGNOSTIC"
       ? ""
       : "\n\n" +
-        traduire(langue, "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.") +
+        traduire(
+          langue,
+          decisionRecue
+            ? "Votre décision a bien été jointe au dossier. Pour que votre avocat avance dès maintenant, ajoutez dans votre espace l'enveloppe ou la preuve de notification, puis vos autres documents."
+            : "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.",
+        ) +
         "\n" +
         traduire(langue, "Transmettre mes documents : {lien}", { lien: lienSuite });
   await envoyer({
@@ -264,7 +272,7 @@ async function confirmerAuClient(d: Base, dossierId: string) {
     destinataire: cli.email,
     sujet: traduire(langue, "Paiement confirmé — dossier {ref}", { ref: dos.reference }),
     texte:
-      `${traduire(langue, "Bonjour,")}\n\n${traduire(langue, "Votre paiement est confirmé.")} ${suite}${pieces}\n\n` +
+      `${traduire(langue, "Bonjour,")}\n\n${traduire(langue, "Votre paiement est confirmé.")} ${suite}${aJoindre}\n\n` +
       `${traduire(langue, "Votre espace : {lien} (connexion par un code reçu à cette adresse).", { lien: `${origine}/espace` })}\n\nLEXPATRIA Avocats`,
   });
 }

@@ -133,9 +133,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const [visaType, setVisaType] = useState<"COURT" | "LONG" | null>(null);
   const [natuIssue, setNatuIssue] = useState<"REFUS" | "AJOURNEMENT" | null>(null);
   const [emploi, setEmploi] = useState<boolean | null>(null);
-  // Décision lue par l'IA, ou passée par la personne (« je ne l'ai pas sous la main »).
+  // Décision lue par l'IA : obligatoire pour contester une décision explicite.
   const [decisionLue, setDecisionLue] = useState(false);
-  const [decisionPassee, setDecisionPassee] = useState(false);
   const [typeDemande, setTypeDemande] = useState<string | null | undefined>(undefined);
   const [prefecture, setPrefecture] = useState<string | null | undefined>(undefined);
   const [prefChoisie, setPrefChoisie] = useState("");
@@ -344,7 +343,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     q: question,
     dref: dateRef,
     ddem: dateDemande,
-    dec: decisionLue || decisionPassee,
+    dec: decisionLue,
     dmd: typeDemande,
     pref: prefecture,
     depuis,
@@ -403,7 +402,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         q: "",
         dref: undefined,
         ddem: tri.dateDemande,
-        dec: decisionJointe || decisionPassee,
+        dec: decisionJointe,
         dmd: typeDemande,
         pref: prefecture,
         depuis: "ANALYSE",
@@ -490,6 +489,15 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       if (!r.ok) throw new Error(j.erreur);
       setJeton(j.jeton);
       setReference(j.reference);
+      // La décision photographiée rejoint le dossier : elle ne sera pas redemandée après le paiement.
+      if (fichiers.length && AVEC_DECISION.includes(procedure)) {
+        const fd = new FormData();
+        fd.append("jeton", j.jeton);
+        fd.append("type", "DECISION");
+        fd.append("libelle", "La décision contestée (toutes les pages)");
+        for (const f of fichiers) fd.append("fichiers", f);
+        await fetch("/api/pieces", { method: "POST", body: fd }).catch(() => null);
+      }
       // Avis préalable et diagnostic : questionnaire et pièces avant le paiement, rien n'est redemandé après (cahier des charges, 4.9).
       if (avisOuDiagnostic) setEtape(faits.length ? "FAITS" : "QUESTIONNAIRE");
       else setEtape("PAIEMENT");
@@ -544,7 +552,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     const pref = prefecture ? t("la préfecture de {p}", { p: prefecture.replace(/\s*\(.*\)$/, "") }) : t("la préfecture");
     const demarche = typeDemande === "RENOUVELLEMENT" ? t("renouvellement de titre") : typeDemande === "CHANGEMENT" ? t("changement de statut") : t("demande de titre");
     if (AVEC_DECISION.includes(procedure))
-      return t("En l'absence de la décision, cette première orientation repose sur vos réponses ; le délai et la voie de recours seront confirmés à sa lecture.");
+      return t("Votre avocat vérifiera, à la lecture de votre décision, le délai et la voie de recours.");
     if (procedure === "REFUS_IMPLICITE")
       return dateDemande
         ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat en demandera d'abord les motifs à la préfecture, puis contestera ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
@@ -1039,15 +1047,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         </button>
                       </>
                     )}
-                    <button
-                      className="link"
-                      onClick={() => {
-                        setDecisionPassee(true);
-                        avancer("DECISION", { dec: true });
-                      }}
-                    >
-                      {t("Je n'ai pas ma décision sous la main")}
-                    </button>
+                    <span className="fr-sub">
+                      {t("La décision est indispensable : sans elle, ni le délai ni la voie de recours ne peuvent être vérifiés. Vous pourrez reprendre votre dossier dès que vous l'aurez.")}
+                    </span>
                   </div>
                 )}
 

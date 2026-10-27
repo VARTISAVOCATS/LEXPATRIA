@@ -32,6 +32,11 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
   }
   const [frais] = dos ? await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id)) : [];
   const [client] = frais ? await d.select().from(schema.clients).where(eq(schema.clients.id, frais.clientId)) : [];
+  const deposees = frais
+    ? (await d.select({ type: schema.pieces.type, fichiers: schema.pieces.fichiers }).from(schema.pieces).where(eq(schema.pieces.dossierId, frais.id)))
+        .filter((x) => Array.isArray(x.fichiers) && x.fichiers.length > 0)
+        .map((x) => x.type)
+    : [];
   const [avocat] = frais?.avocatId ? await d.select().from(schema.utilisateurs).where(eq(schema.utilisateurs.id, frais.avocatId)) : [];
   const paye = frais && frais.statut !== "PRE_DOSSIER" && frais.statut !== "ATTENTE_PROCHE";
   const urgent = frais?.traitement === "URGENCE";
@@ -71,6 +76,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
               contexte={{ procedure: frais.procedure as CodeProcedure, algerien: client?.algerien ?? null, avisOuDiagnostic: false }}
               reponsesInitiales={((frais.qualification ?? {}) as { reponses?: Reponses }).reponses ?? {}}
               faits={((frais.triage ?? {}) as { faits?: string[] }).faits ?? []}
+              deposees={deposees}
             />
               </>
             )}

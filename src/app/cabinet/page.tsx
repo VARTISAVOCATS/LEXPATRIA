@@ -25,7 +25,7 @@ export default async function Cabinet() {
             <p className="acc-eye">{t("Vos avocats")}</p>
             <h2>{t("Une équipe d'avocats docteurs en droit")}</h2>
             <p className="acc-lead">
-              {t("Tous docteurs en droit, les avocats du cabinet associent la rigueur de la recherche à la pratique quotidienne des préfectures et des juridictions administratives. Votre dossier est confié à l'un d'eux, qui l'étudie, rédige et dépose chaque acte.")}
+              {t("Tous docteurs en droit, les avocats du cabinet associent la rigueur de la recherche à la pratique quotidienne des préfectures et des juridictions administratives.")}
             </p>
             <CartesAvocats avocats={AVOCATS} t={t} />
           </section>

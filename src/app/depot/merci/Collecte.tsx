@@ -24,12 +24,15 @@ export default function Collecte({
   contexte,
   reponsesInitiales,
   faits,
+  deposees = [],
 }: {
   reference: string;
   jetonServeur: string | null;
   contexte: Contexte;
   reponsesInitiales: Reponses;
   faits: string[];
+  /** Pièces déjà transmises avant le paiement (la décision photographiée) : elles ne sont pas redemandées. */
+  deposees?: string[];
 }) {
   const t = useT();
   const [jeton, setJeton] = useState<string | null>(jetonServeur);
@@ -81,7 +84,7 @@ export default function Collecte({
           jeton={jeton}
           contexte={contexte}
           reponses={reponses}
-          filtre={estEssentiel}
+          filtre={(type) => estEssentiel(type) && !deposees.includes(type)}
           ordre={ESSENTIEL}
           titre="Pour commencer sans attendre"
           suite={() => apres("ESSENTIEL")}
