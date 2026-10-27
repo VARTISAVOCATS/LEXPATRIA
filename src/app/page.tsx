@@ -63,7 +63,7 @@ export default async function Accueil() {
               </div>
               <blockquote>
                 {t(
-                  "Recevoir une décision de la préfecture est une épreuve. Vous n'avez pas à l'affronter seul. Nous lisons votre décision. Nous vous disons ce qu'elle permet. Puis nous agissons dans les délais.",
+                  "Un avocat du cabinet analyse votre décision, identifie le recours ouvert et agit avant l'expiration du délai.",
                 )}
               </blockquote>
               <p className="acc-sign">{t("Les avocats du cabinet")}</p>
@@ -74,10 +74,10 @@ export default async function Accueil() {
         <div className="wrap">
           <section className="acc-sec">
             <p className="acc-eye">{t("Vos avocats")}</p>
-            <h2>{t("Des avocats, pas une plateforme anonyme")}</h2>
+            <h2>{t("Un avocat identifié pour chaque dossier")}</h2>
             <p className="acc-lead">
               {t(
-                "Votre dossier est confié à l'un de nous. Nous l'étudions, rédigeons l'acte et le déposons. Vous savez qui vous défend. Vous pouvez nous écrire à tout moment depuis votre espace.",
+                "Chaque dossier est confié à un avocat du cabinet, qui l'étudie, rédige l'acte et le dépose. Son nom vous est communiqué dès la prise en charge et vous pouvez lui écrire à tout moment depuis votre espace.",
               )}
             </p>
             <div className="acc-avocats">
@@ -105,15 +105,15 @@ export default async function Accueil() {
             <ol className="acc-etapes">
               <li>
                 <b>{t("Vous exposez votre situation")}</b>
-                <span>{t("Par écrit, à la voix ou en photo. Dans votre langue.")}</span>
+                <span>{t("Par écrit, à la voix ou en photographiant votre décision, dans la langue de votre choix.")}</span>
               </li>
               <li>
-                <b>{t("Nous vous indiquons la procédure et votre délai")}</b>
-                <span>{t("Nos honoraires vous sont présentés avant tout paiement.")}</span>
+                <b>{t("La procédure et votre délai vous sont indiqués")}</b>
+                <span>{t("Les honoraires du cabinet vous sont présentés avant tout paiement.")}</span>
               </li>
               <li>
-                <b>{t("Nous formons votre recours")}</b>
-                <span>{t("Nous vous écrivons sous 48 heures ouvrées. Vous suivez chaque étape dans votre espace.")}</span>
+                <b>{t("Un avocat forme votre recours")}</b>
+                <span>{t("Il prend contact avec vous sous 48 heures ouvrées, et vous suivez chaque étape depuis votre espace.")}</span>
               </li>
             </ol>
           </section>
@@ -131,7 +131,7 @@ export default async function Accueil() {
             </div>
             <p className="acc-visio">
               <Link className="link" href="/consultation">
-                {t("Vous préférez parler à un avocat ? Consultation en visio de 30 minutes, {prix}", { prix: formatEuros(tarifs.CONSULTATION) })}
+                {t("Vous souhaitez vous entretenir avec un avocat ? Une consultation de 30 minutes en visio vous est proposée pour {prix}.", { prix: formatEuros(tarifs.CONSULTATION) })}
               </Link>
             </p>
           </section>
@@ -153,7 +153,7 @@ export default async function Accueil() {
 
           <section className="acc-sec h-faq">
             <p className="acc-eye">{t("Questions fréquentes")}</p>
-            <h2>{t("Ce que l'on nous demande souvent")}</h2>
+            <h2>{t("Les réponses aux questions les plus courantes")}</h2>
             {FAQ.map((f) => (
               <details key={f.q}>
                 <summary>{t(f.q)}</summary>
@@ -163,8 +163,8 @@ export default async function Accueil() {
           </section>
 
           <section className="acc-fin">
-            <h2>{t("Vous n'êtes pas seul face à cette décision")}</h2>
-            <p>{t("Exposez votre situation en quelques minutes. Nous prenons le relais.")}</p>
+            <h2>{t("Votre décision appelle une réponse dans un délai court")}</h2>
+            <p>{t("Exposez votre situation en quelques minutes : un avocat du cabinet prend ensuite votre dossier en charge.")}</p>
             <div className="h-cta ph-cta">
               <BoutonsAccueil />
             </div>

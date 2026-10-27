@@ -24,7 +24,7 @@ export default async function Consultation({ searchParams }: { searchParams: Pro
             <div className="pg-carte">
               <Visages avocats={avocats} petit />
               <h3>{t("Un échange avec un avocat du cabinet")}</h3>
-              <p>{t("Vous posez vos questions de vive voix. Nous avons lu votre message avant le rendez-vous. Nous vous disons ce que permet votre situation.")}</p>
+              <p>{t("Vous posez vos questions de vive voix à un avocat qui a pris connaissance de votre message avant le rendez-vous et vous indique ce que permet votre situation.")}</p>
               <ul className="pg-coches">
                 <li>{t("30 minutes, en visio")}</li>
                 <li>{t("Le créneau de votre choix")}</li>

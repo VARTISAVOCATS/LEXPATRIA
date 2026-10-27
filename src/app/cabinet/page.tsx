@@ -16,12 +16,12 @@ export default async function Cabinet() {
       <main className="acc">
         <Bandeau
           surtitre={t("Le cabinet")}
-          titre={t("Des avocats à vos côtés, du premier mot à la décision du juge")}
-          chapo={t("Nous sommes avocats au barreau de Paris. Nous consacrons notre pratique au contentieux du droit des étrangers. Chaque jour nous défendons des personnes confrontées à une OQTF ou à un refus de titre, de visa ou de naturalisation.")}
+          titre={t("Un avocat suit votre recours jusqu'à la décision du tribunal")}
+          chapo={t("Le cabinet réunit des avocats au barreau de Paris qui consacrent leur pratique au contentieux du droit des étrangers. Ils assistent chaque jour des personnes visées par une OQTF ou par un refus de titre de séjour, de visa ou de naturalisation.")}
           aside={
             <MotCabinet
               avocats={AVOCATS}
-              texte={t("Derrière chaque dossier il y a une vie. Une famille, un travail. Nous prenons le temps de comprendre la vôtre avant d'agir.")}
+              texte={t("Chaque dossier est confié à un avocat qui le suit jusqu'à la décision.")}
               signature={t("Les avocats du cabinet")}
             />
           }
@@ -30,38 +30,38 @@ export default async function Cabinet() {
         <div className="wrap">
           <section className="acc-sec">
             <p className="acc-eye">{t("Vos avocats")}</p>
-            <h2>{t("Une équipe que vous connaissez")}</h2>
+            <h2>{t("Une équipe d'avocats docteurs en droit")}</h2>
             <p className="acc-lead">
-              {t("Tous docteurs en droit, nous allions la rigueur de la recherche à la pratique des préfectures et des tribunaux. Votre dossier est confié à l'un de nous. Il l'étudie puis rédige et dépose chaque acte.")}
+              {t("Tous docteurs en droit, les avocats du cabinet associent la rigueur de la recherche à la pratique quotidienne des préfectures et des juridictions administratives. Votre dossier est confié à l'un d'eux, qui l'étudie, rédige et dépose chaque acte.")}
             </p>
             <CartesAvocats avocats={AVOCATS} t={t} />
           </section>
 
           <section className="acc-sec">
-            <p className="acc-eye">{t("Notre manière de travailler")}</p>
-            <h2>{t("Écouter, expliquer, agir à temps")}</h2>
+            <p className="acc-eye">{t("Méthode de travail")}</p>
+            <h2>{t("Écoute, clarté et respect des délais")}</h2>
             <div className="acc-etapes pg-valeurs">
               <div>
                 <b>{t("L'écoute")}</b>
-                <span>{t("Vous vous exprimez dans votre langue et à votre rythme. Nous ne jugeons rien de ce que vous dites.")}</span>
+                <span>{t("Vous exposez votre situation dans votre langue, par écrit ou à l'oral, sans contrainte de temps.")}</span>
               </div>
               <div>
                 <b>{t("La clarté")}</b>
-                <span>{t("Avant tout engagement vous savez ce que permet votre décision. Vous savez ce que nous allons faire et ce que cela coûte.")}</span>
+                <span>{t("Avant tout engagement, vous savez ce que permet votre décision, quelle procédure sera engagée et quel en est le coût.")}</span>
               </div>
               <div>
                 <b>{t("La rigueur des délais")}</b>
-                <span>{t("Les délais sont courts en droit des étrangers. Nous prenons votre dossier en charge sous 48 heures ouvrées.")}</span>
+                <span>{t("Les délais de recours sont brefs en droit des étrangers : chaque dossier est pris en charge sous 48 heures ouvrées.")}</span>
               </div>
             </div>
           </section>
 
           <section className="acc-sec pg-duo">
             <div className="pg-carte">
-              <p className="acc-eye">{t("Notre méthode")}</p>
-              <h3>{t("L'intelligence artificielle, sous notre contrôle")}</h3>
+              <p className="acc-eye">{t("Outils")}</p>
+              <h3>{t("L'intelligence artificielle, sous le contrôle de l'avocat")}</h3>
               <p>
-                {t("Des outils d'intelligence artificielle nous aident à lire les décisions et à préparer les projets d'actes. Chaque acte est relu et validé par l'un de nous. Aucune décision n'est prise de manière automatisée. La plateforme est hébergée en France.")}
+                {t("Des outils d'intelligence artificielle facilitent la lecture des décisions et la préparation des projets d'actes. Chaque acte est relu et validé par un avocat du cabinet, et aucune décision n'est prise de manière automatisée. La plateforme est hébergée en France.")}
               </p>
             </div>
             <div className="pg-carte">
@@ -72,7 +72,7 @@ export default async function Cabinet() {
             </div>
           </section>
 
-          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Nous prenons le relais.")} />
+          <BandeFin titre={t("Votre décision appelle une réponse dans un délai court")} texte={t("Exposez votre situation en quelques minutes : un avocat du cabinet prend ensuite votre dossier en charge.")} />
           <PiedSite />
         </div>
       </main>

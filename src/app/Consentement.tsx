@@ -99,7 +99,7 @@ export default function Consentement() {
     <div className="consentement" role="dialog" aria-label={t("Cookies")}>
       <p>
         {t(
-          "Avec votre accord, nous utilisons des cookies pour mesurer l'efficacité de nos annonces. Vous pouvez refuser : le site fonctionne de la même façon.",
+          "Avec votre accord, le site utilise des cookies pour mesurer l'efficacité de ses annonces. Vous pouvez les refuser sans incidence sur le fonctionnement du site.",
         )}
       </p>
       <div className="consentement-boutons">

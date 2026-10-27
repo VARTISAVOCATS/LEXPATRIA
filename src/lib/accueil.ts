@@ -10,22 +10,22 @@ export const AVOCATS = [
 export const FAQ = [
   {
     q: "Quelles décisions pouvez-vous contester ?",
-    r: "Les OQTF, les refus de titre de séjour (y compris les certificats de résidence algériens), les refus de visa, les refus et ajournements de naturalisation, ainsi que les blocages de la préfecture : rendez-vous impossible, récépissé expiré, demande restée sans réponse. Nous reprenons aussi les recours déjà déposés.",
+    r: "Les OQTF, les refus de titre de séjour (y compris les certificats de résidence algériens), les refus de visa, les refus et ajournements de naturalisation, ainsi que les blocages de la préfecture : rendez-vous impossible, récépissé expiré, demande restée sans réponse. Le cabinet reprend également les recours déjà engagés.",
   },
   {
     q: "Combien coûte mon recours ?",
-    r: "Le prix est annoncé dès que la procédure adaptée à votre situation est identifiée, avant tout paiement. C'est un forfait ferme, payable en une fois ou en trois fois.",
+    r: "Le prix vous est indiqué dès que la procédure adaptée à votre situation est identifiée, avant tout paiement. Il s'agit d'un forfait ferme, payable en une ou en trois fois.",
   },
   {
     q: "Dois-je me déplacer ?",
-    r: "Non. Tout se fait en ligne : vous déposez votre dossier, votre avocat vous écrit dans votre espace et plaide pour vous si une audience a lieu.",
+    r: "Non. La procédure se déroule entièrement en ligne : vous déposez votre dossier, puis votre avocat échange avec vous depuis votre espace.",
   },
   {
     q: "Acceptez-vous l'aide juridictionnelle ?",
-    r: "Non. Nous n'intervenons pas au titre de l'aide juridictionnelle. Les dossiers sont traités aux honoraires annoncés.",
+    r: "Non. Le cabinet n'intervient pas au titre de l'aide juridictionnelle ; les dossiers sont traités aux honoraires annoncés.",
   },
   {
     q: "Mes informations sont-elles protégées ?",
-    r: "Oui. Vos données sont hébergées en France. Elles servent uniquement au traitement de votre dossier.",
+    r: "Oui. Vos données sont hébergées en France et ne servent qu'au traitement de votre dossier.",
   },
 ];

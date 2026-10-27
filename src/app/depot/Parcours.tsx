@@ -544,20 +544,20 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     const pref = prefecture ? t("la préfecture de {p}", { p: prefecture.replace(/\s*\(.*\)$/, "") }) : t("la préfecture");
     const demarche = typeDemande === "RENOUVELLEMENT" ? t("renouvellement de titre") : typeDemande === "CHANGEMENT" ? t("changement de statut") : t("demande de titre");
     if (AVEC_DECISION.includes(procedure))
-      return t("Sans la décision, nous nous fondons sur vos réponses. Nous confirmerons le délai et la voie de recours à sa lecture.");
+      return t("En l'absence de la décision, cette première orientation repose sur vos réponses ; le délai et la voie de recours seront confirmés à sa lecture.");
     if (procedure === "REFUS_IMPLICITE")
       return dateDemande
-        ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Nous demandons d'abord ses motifs à la préfecture, puis nous contestons ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
-        : t("Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Nous demandons d'abord ses motifs, puis nous contestons ce refus devant le tribunal administratif.");
+        ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat en demandera d'abord les motifs à la préfecture, puis contestera ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
+        : t("Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat en demandera d'abord les motifs, puis contestera ce refus devant le tribunal administratif.");
     if (procedure === "BLOCAGE_EMPLOI")
       return t("Votre dossier ({d}) est bloqué auprès de {p} et votre emploi est menacé. Le juge des référés peut ordonner rapidement à la préfecture de vous donner un rendez-vous ou de vous délivrer un récépissé.", { d: demarche, p: pref });
     if (procedure === "BLOCAGE_SIMPLE")
-      return t("Nous mettons en demeure {p} de traiter votre dossier ({d}). Si cette démarche reste sans effet, un référé peut être engagé devant le tribunal administratif.", { d: demarche, p: pref });
+      return t("Votre avocat mettra {p} en demeure de traiter votre dossier ({d}). Si cette démarche reste sans effet, un référé pourra être engagé devant le tribunal administratif.", { d: demarche, p: pref });
     if (procedure === "PROCEDURE_EN_COURS")
       return echeance
-        ? t("Votre recours est déjà engagé. La prochaine date fixée par le tribunal est le {date}. Nous reprenons le dossier et préparons les écritures avant cette date.", { date: dateLongue(isoVersDate(echeance)!) })
-        : t("Votre recours est déjà engagé. Nous vérifions la prochaine échéance dans les courriers du tribunal, puis nous reprenons le dossier.");
-    if (procedure === "DIAGNOSTIC") return t("Nous étudions votre situation à partir de vos réponses et de vos documents. Notre avis écrit vous indique la démarche à engager et son délai.");
+        ? t("Votre recours est déjà engagé et la prochaine date fixée par le tribunal est le {date}. Votre avocat reprendra le dossier et préparera les écritures avant cette date.", { date: dateLongue(isoVersDate(echeance)!) })
+        : t("Votre recours est déjà engagé. Votre avocat vérifiera la prochaine échéance dans les courriers du tribunal avant de reprendre le dossier.");
+    if (procedure === "DIAGNOSTIC") return t("Un avocat du cabinet étudiera votre situation à partir de vos réponses et de vos documents. Son avis écrit vous indiquera la démarche à engager et son délai.");
     return "";
   })();
   // Pré-analyse : la situation telle que la personne l'a décrite, en une ligne.
@@ -688,7 +688,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       {(recit || question) && (
         <details className="box m-fold">
           <summary>
-            <h4>{t("Ce que vous nous avez dit")}</h4>
+            <h4>{t("Ce que vous avez indiqué")}</h4>
           </summary>
           <div dir="auto" style={{ fontSize: 13.5, color: "var(--ink-2)", maxHeight: 140, overflow: "auto" }}>
             {recit || question}
@@ -700,7 +700,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         <div>{t("Un avocat du cabinet le prend en charge sous 48 heures ouvrées.")}</div>
         <div className="tr-l">
           <span className="av sm">RR</span>
-          <span>{t("Cabinet dirigé par Me Rafik Rabia")}</span>
+          <span>{t("Avocats au barreau de Paris")}</span>
         </div>
       </div>
       <div className="box d-only">
@@ -765,10 +765,10 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     {t("Un outil d'intelligence artificielle du cabinet oriente votre demande. Un avocat étudie ensuite votre dossier.")}
                   </p>
                   <label className="comp-q" htmlFor="tri_in">
-                    {t("Qu'est-ce qui vous arrive ?")}
+                    {t("Quelle est votre situation ?")}
                   </label>
                   {etape === "RECIT" && (
-                    <p className="dep-intro">{t("Dites-le-nous avec vos mots. Nous vous indiquons la procédure adaptée et votre délai.")}</p>
+                    <p className="dep-intro">{t("Décrivez votre situation avec vos mots : la procédure adaptée et votre délai vous seront indiqués.")}</p>
                   )}
                   {etape !== "RECIT" && (recit || fichiers.length > 0) && (
                     <div className="thread">
@@ -874,7 +874,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       </div>
                       <div>
                         <b>{t("Votre dossier est confié à un avocat du cabinet.")}</b>
-                        <p>{t("Nous sommes avocats au barreau de Paris et docteurs en droit. Nous prenons chaque dossier en charge sous 48 heures ouvrées.")}</p>
+                        <p>{t("Le cabinet réunit des avocats au barreau de Paris, docteurs en droit. Chaque dossier est pris en charge sous 48 heures ouvrées.")}</p>
                         <ul>
                           <li>{t("Dans votre langue")}</li>
                           <li>{t("Honoraires présentés avant paiement")}</li>
@@ -900,7 +900,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
               <div className="triresult">
                 <div className="think">
                   <span className="spin" />
-                  {fichiers.length ? t("Nous lisons votre décision…") : t("Analyse de votre situation…")}
+                  {fichiers.length ? t("Lecture de votre décision…") : t("Analyse de votre situation…")}
                 </div>
               </div>
             )}
@@ -1012,7 +1012,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                   <div className="oqreg oq-first dec-dem">
                     <b>{t("Photographiez votre décision")}</b>
                     <span className="fr-sub">
-                      {t("Nous la lisons pour vous donner une première analyse personnalisée : ce qu'elle dit, votre délai et la voie de recours.")}
+                      {t("Sa lecture permet de vous donner une première analyse personnalisée : ce que dit la décision, votre délai et la voie de recours.")}
                     </span>
                     <button className="btn dec-btn cam" onClick={() => champFichier.current?.click()}>
                       <IconeImport />
@@ -1171,7 +1171,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             date: dateLongue(delai.refusImpliciteNonNe.dateNaissance),
                           })}
                         </p>
-                        <p className="fr-sub">{t("D'ici là, un avocat peut étudier votre situation et vous dire quoi faire.")}</p>
+                        <p className="fr-sub">{t("D'ici là, un avocat peut étudier votre situation et vous indiquer la démarche à suivre.")}</p>
                         <div className="tr-choice">
                           <button className="tc main" onClick={() => { setAvisPrealable(true); setEtape("RECOURS"); }}>
                             <b>{t("Recevoir l'avis écrit d'un avocat")} →</b>
@@ -1195,7 +1195,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     ) : (
                       <>
                         <div className="pa">
-                          <b className="pa-t">{t("Notre première analyse")}</b>
+                          <b className="pa-t">{t("Première analyse")}</b>
                           {infoPersonnalisee && <p className="pa-txt">{infoPersonnalisee}</p>}
                           <dl>
                             <div>
@@ -1209,12 +1209,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                                   ? `${joursPourAgir(jours!, t)} · ${dateLongue(delai.dateLimite!)}`
                                   : t(
                                       procedure === "DIAGNOSTIC"
-                                        ? "Nous l'indiquons dans notre avis écrit"
+                                        ? "Indiqué dans l'avis écrit de l'avocat"
                                         : procedure === "BLOCAGE_EMPLOI"
                                           ? "À traiter en urgence : votre emploi est en jeu"
                                           : procedure === "BLOCAGE_SIMPLE"
                                             ? "Aucun délai de recours ne court pour l'instant"
-                                            : "Nous le vérifions à la lecture de votre décision",
+                                            : "Vérifié à la lecture de votre décision",
                                     )}
                               </dd>
                             </div>
@@ -1228,7 +1228,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         </div>
                         {avecDelai && !decisionLue && <p className="fr-sub">{t("Estimation à confirmer à la lecture de la décision.")}</p>}
                         {situation === "INCONNUE" && (
-                          <p className="note">{t("Sans précision sur votre situation, nous retenons par prudence le délai le plus court : 7 jours. Le délai exact sera vérifié.")}</p>
+                          <p className="note">{t("Faute de précision sur votre situation, le délai le plus court, soit 7 jours, est retenu par prudence ; le délai exact sera vérifié.")}</p>
                         )}
                         {delai.dateInconnue && procedure !== "PROCEDURE_EN_COURS" && (
                           <p className="note">{t("Sans date de réception, la date limite est vérifiée en priorité.")}</p>
@@ -1251,7 +1251,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
                     {analyseIA && ((obtenirAffiche && !delai.refusImpliciteNonNe) || faitsAffiches.length > 0) && (
                       <div className="sit-b">
-                        <b className="sit-t">{t("Ce que nous avons retenu")}</b>
+                        <b className="sit-t">{t("Éléments retenus")}</b>
                         {obtenirAffiche && !delai.refusImpliciteNonNe && <p className="sit-v">{obtenirAffiche}</p>}
                         {faitsAffiches.length > 0 && (
                           <div className="sit-chips">
@@ -1481,7 +1481,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       <div>
                         <b>{t("Votre dossier est confié à un avocat du cabinet.")}</b>
                         <span>
-                          {t(urgence ? "Nous le prenons en charge sous 10 heures ouvrées. Nous vous écrivons dans votre espace." : "Nous le prenons en charge sous 48 heures ouvrées. Nous vous écrivons dans votre espace.")}
+                          {t(urgence ? "Un avocat le prend en charge sous 10 heures ouvrées et vous écrit dans votre espace." : "Un avocat le prend en charge sous 48 heures ouvrées et vous écrit dans votre espace.")}
                         </span>
                       </div>
                     </div>
@@ -1612,7 +1612,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                   [
                     ["TROP_CHER", "C'est trop cher"],
                     ["REFLECHIR", "Je veux réfléchir"],
-                    ["PARLER", "Je préfère parler à quelqu'un"],
+                    ["PARLER", "Je souhaite m'entretenir avec un avocat"],
                   ] as const
                 ).map(([m, l]) => (
                   <button
@@ -1654,7 +1654,7 @@ function EcranRefus({ refus }: { refus: Refus | null }) {
   if (refus === "HORS_PERIMETRE")
     return (
       <>
-        <h1>{t("Nous ne pouvons pas prendre ce dossier en ligne")}</h1>
+        <h1>{t("Ce dossier ne peut pas être traité en ligne")}</h1>
         <p>
           {t(
             "Votre situation ne relève pas des recours traités sur cette plateforme (asile, admission exceptionnelle au séjour ou procédure devant le juge judiciaire). Un avocat ou une association de votre région pourra vous orienter.",

@@ -52,7 +52,7 @@ const schemaRemuneration = z.object({
 export const ACCUEIL_DEFAUT = {
   titre: "Vous avez reçu une OQTF ou un refus de la préfecture ?",
   sousTitre:
-    "Nous sommes avocats au barreau de Paris. Nous étudions votre situation et formons votre recours, devant l'administration ou le tribunal.",
+    "Le cabinet réunit des avocats au barreau de Paris qui étudient votre situation et forment votre recours, devant l'administration ou devant le tribunal administratif.",
 };
 
 export const PARAMETRES = {

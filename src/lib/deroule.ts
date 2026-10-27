@@ -4,73 +4,73 @@
 
 import type { CodeProcedure } from "./procedures";
 
-const PRISE_EN_CHARGE = "Nous prenons votre dossier en charge sous {delai}. L'avocat chargé de votre dossier se présente dans votre espace.";
-const SUIVI = "Vous suivez chaque étape dans votre espace et pouvez nous y écrire à tout moment.";
+const PRISE_EN_CHARGE = "Un avocat du cabinet prend votre dossier en charge sous {delai} et se présente à vous dans votre espace.";
+const SUIVI = "Vous suivez chaque étape dans votre espace et pouvez y écrire à votre avocat à tout moment.";
 
 const TRIBUNAL = [
-  "Le tribunal enregistre la requête et la communique à la préfecture, qui présente sa défense. Nous y répondons si nécessaire.",
-  "Le tribunal fixe une audience. Nous vous en communiquons la date. Votre présence n'est pas obligatoire.",
-  "Le jugement est rendu. Nous vous l'adressons et vous expliquons ce qu'il change pour vous.",
+  "Le tribunal enregistre la requête et la communique à la préfecture, qui présente sa défense ; votre avocat y répond si nécessaire.",
+  "Le tribunal fixe ensuite une audience, dont la date vous est communiquée ; votre présence n'est pas obligatoire.",
+  "Une fois le jugement rendu, votre avocat vous l'adresse et vous en explique la portée.",
 ];
 
 export const DEROULE: Partial<Record<CodeProcedure, string[]>> = {
   OQTF: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez vos documents depuis votre espace : la décision, l'enveloppe ou la preuve de notification, puis vos autres pièces.",
-    "Nous déposons votre requête au tribunal administratif avant la date limite. Formé dans le délai, ce recours empêche en principe votre éloignement jusqu'au jugement.",
+    "Vous transmettez depuis votre espace la décision, l'enveloppe ou la preuve de notification, puis vos autres pièces.",
+    "Votre avocat dépose la requête au tribunal administratif avant la date limite. Formé dans le délai, ce recours suspend en principe l'exécution de l'éloignement jusqu'au jugement.",
     ...TRIBUNAL,
   ],
   REFUS_TITRE: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez vos documents depuis votre espace : la décision, l'enveloppe ou la preuve de notification, puis vos autres pièces.",
-    "Nous déposons votre requête au tribunal administratif avant la date limite.",
+    "Vous transmettez depuis votre espace la décision, l'enveloppe ou la preuve de notification, puis vos autres pièces.",
+    "Votre avocat dépose la requête au tribunal administratif avant la date limite.",
     ...TRIBUNAL,
   ],
   REFUS_IMPLICITE: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez la preuve du dépôt de votre demande et vos autres documents depuis votre espace.",
-    "Nous demandons à la préfecture les motifs de son refus. Elle dispose d'un mois pour les communiquer.",
-    "Nous déposons ensuite la requête au tribunal administratif, dans le délai de recours.",
+    "Vous transmettez depuis votre espace la preuve du dépôt de votre demande et vos autres documents.",
+    "Votre avocat demande à la préfecture la communication des motifs du refus ; elle dispose d'un mois pour y répondre.",
+    "Il dépose ensuite la requête au tribunal administratif, dans le délai de recours.",
     ...TRIBUNAL,
   ],
   REFUS_VISA: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez la décision de refus et les pièces de votre demande de visa depuis votre espace.",
-    "Nous adressons votre recours préalable en recommandé avec accusé de réception à l'autorité compétente.",
-    "L'administration dispose de deux mois pour répondre. Sans réponse dans ce délai, le recours est réputé rejeté.",
-    "Nous vous transmettons la réponse. En cas de rejet, un recours devant le tribunal administratif de Nantes reste possible. Il fait l'objet d'une offre distincte.",
+    "Vous transmettez depuis votre espace la décision de refus et les pièces de votre demande de visa.",
+    "Votre avocat adresse le recours préalable à l'autorité compétente, en recommandé avec accusé de réception.",
+    "L'administration dispose de deux mois pour répondre ; à défaut de réponse dans ce délai, le recours est réputé rejeté.",
+    "La réponse vous est transmise. En cas de rejet, un recours devant le tribunal administratif de Nantes reste possible ; il fait l'objet d'une offre distincte.",
   ],
   NATURALISATION: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez la décision et les pièces de votre demande de naturalisation depuis votre espace.",
-    "Nous adressons votre recours au ministre de l'Intérieur en recommandé avec accusé de réception.",
-    "Le ministre dispose de quatre mois pour répondre. Sans réponse dans ce délai, le recours est réputé rejeté.",
-    "Nous vous transmettons la réponse. En cas de rejet, un recours devant le tribunal administratif de Nantes reste possible. Il fait l'objet d'une offre distincte.",
+    "Vous transmettez depuis votre espace la décision et les pièces de votre demande de naturalisation.",
+    "Votre avocat adresse le recours au ministre de l'Intérieur, en recommandé avec accusé de réception.",
+    "Le ministre dispose de quatre mois pour répondre ; à défaut de réponse dans ce délai, le recours est réputé rejeté.",
+    "La réponse vous est transmise. En cas de rejet, un recours devant le tribunal administratif de Nantes reste possible ; il fait l'objet d'une offre distincte.",
   ],
   BLOCAGE_EMPLOI: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez depuis votre espace votre récépissé ou la preuve de vos démarches, et un document de votre employeur.",
-    "Nous déposons le référé au tribunal administratif.",
-    "Le juge des référés examine la demande en urgence. Si une audience est fixée, nous vous prévenons aussitôt.",
-    "Nous vous transmettons sa décision et vous indiquons la suite à donner auprès de la préfecture.",
+    "Vous transmettez depuis votre espace votre récépissé ou la preuve de vos démarches, ainsi qu'un document de votre employeur.",
+    "Votre avocat dépose le référé au tribunal administratif.",
+    "Le juge des référés examine la demande en urgence ; si une audience est fixée, vous en êtes informé sans délai.",
+    "Sa décision vous est transmise, avec la suite à donner auprès de la préfecture.",
   ],
   BLOCAGE_SIMPLE: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez depuis votre espace votre récépissé ou la preuve de vos démarches auprès de la préfecture.",
-    "Nous adressons la mise en demeure à la préfecture en recommandé avec accusé de réception.",
-    "Nous suivons la réponse de la préfecture et vous la transmettons.",
-    "Si la mise en demeure reste sans effet, un référé peut être engagé. Nous vous le proposons. Il fait l'objet d'une offre distincte.",
+    "Vous transmettez depuis votre espace votre récépissé ou la preuve de vos démarches auprès de la préfecture.",
+    "Votre avocat adresse la mise en demeure à la préfecture, en recommandé avec accusé de réception.",
+    "Il suit la réponse de la préfecture et vous la transmet.",
+    "Si la mise en demeure reste sans effet, un référé peut vous être proposé ; il fait l'objet d'une offre distincte.",
   ],
   PROCEDURE_EN_COURS: [
     PRISE_EN_CHARGE,
-    "Vous nous transmettez depuis votre espace tout ce qui a déjà été déposé : la requête, les pièces et les courriers du tribunal.",
-    "Nous informons le tribunal que nous vous représentons et préparons les écritures avant la prochaine échéance.",
+    "Vous transmettez depuis votre espace tout ce qui a déjà été déposé : la requête, les pièces et les courriers du tribunal.",
+    "Votre avocat informe le tribunal qu'il vous représente et prépare les écritures avant la prochaine échéance.",
     ...TRIBUNAL.slice(1),
   ],
   DIAGNOSTIC: [
-    "Nous étudions votre situation à partir de vos réponses et de vos documents.",
-    "Vous recevez notre avis écrit dans votre espace sous {delai}.",
-    "Si une procédure est utile, l'avis vous indique laquelle et dans quel délai l'engager.",
+    "Un avocat du cabinet étudie votre situation à partir de vos réponses et de vos documents.",
+    "Son avis écrit vous est remis dans votre espace sous {delai}.",
+    "Si une procédure est utile, l'avis indique laquelle et dans quel délai l'engager.",
   ],
 };
 

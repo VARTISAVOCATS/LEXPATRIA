@@ -10,7 +10,7 @@ import { dateFr } from "./Contenu";
 
 export const metadata = {
   title: "Actualités du droit des étrangers — LEXPATRIA Avocats",
-  description: "OQTF, titre de séjour, visa, naturalisation : nos articles pour comprendre vos droits et les délais pour agir.",
+  description: "OQTF, titre de séjour, visa, naturalisation : les articles du cabinet pour comprendre vos droits et les délais pour agir.",
   alternates: { canonical: "/actualites" },
 };
 

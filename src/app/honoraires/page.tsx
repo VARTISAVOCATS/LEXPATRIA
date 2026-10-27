@@ -47,7 +47,7 @@ export default async function Honoraires() {
         <Bandeau
           surtitre={t("Honoraires")}
           titre={t("Des honoraires clairs, connus avant de vous engager")}
-          chapo={t("Nos forfaits sont fermes et toutes taxes comprises. Ils sont les mêmes pour tous. Nous vous indiquons le prix de votre recours dès que la procédure est identifiée, avant tout paiement.")}
+          chapo={t("Les forfaits du cabinet sont fermes, toutes taxes comprises et identiques pour tous. Le prix de votre recours vous est indiqué dès que la procédure est identifiée, avant tout paiement.")}
         >
           <ul className="acc-eng">
             <li>{t("Forfait ferme, toutes taxes comprises")}</li>
@@ -58,7 +58,7 @@ export default async function Honoraires() {
 
         <div className="wrap">
           <section className="acc-sec">
-            <p className="acc-eye">{t("Nos forfaits")}</p>
+            <p className="acc-eye">{t("Forfaits")}</p>
             <h2>{t("Chaque procédure a son prix")}</h2>
             <div className="pg-tarifs">
               {GROUPES.map((g) => (
@@ -98,7 +98,7 @@ export default async function Honoraires() {
             </div>
           </section>
 
-          <BandeFin titre={t("Connaître le prix de votre recours")} texte={t("Exposez votre situation. Nous vous indiquons la procédure, votre délai et notre forfait avant tout paiement.")} />
+          <BandeFin titre={t("Connaître le prix de votre recours")} texte={t("Exposez votre situation : la procédure, votre délai et le forfait applicable vous sont indiqués avant tout paiement.")} />
           <PiedSite />
         </div>
       </main>

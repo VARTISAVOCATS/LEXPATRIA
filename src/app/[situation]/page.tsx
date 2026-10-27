@@ -89,7 +89,7 @@ export default async function Situation({ params }: { params: Promise<{ situatio
             <div className="pg-carte">
               <Visages avocats={avocats} petit />
               <h3>Chaque situation est particulière</h3>
-              <p>Exposez-nous la vôtre : la procédure applicable et votre date limite vous sont indiquées, puis un avocat du cabinet étudie votre dossier.</p>
+              <p>Exposez la vôtre : la procédure applicable et votre date limite vous sont indiquées, puis un avocat du cabinet étudie votre dossier.</p>
               <Link className="btn cta" href="/depot">
                 Exposer ma situation
               </Link>
@@ -98,7 +98,7 @@ export default async function Situation({ params }: { params: Promise<{ situatio
         </div>
 
         <div className="wrap">
-          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Nous prenons le relais.")} />
+          <BandeFin titre={t("Votre décision appelle une réponse dans un délai court")} texte={t("Exposez votre situation en quelques minutes : un avocat du cabinet prend ensuite votre dossier en charge.")} />
           <PiedSite />
         </div>
       </main>

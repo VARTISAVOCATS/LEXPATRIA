@@ -16,7 +16,7 @@ export default async function AppelAction({ titre }: { titre?: string }) {
           Engager la procédure
         </Link>
         <Link className="btn ghost" href="/depot?mode=photo">
-          Confier mon dossier à nos avocats
+          Confier mon dossier au cabinet
         </Link>
       </div>
     </aside>

@@ -72,7 +72,7 @@ for (const f of ["src/lib/accueil.ts", "src/app/depot/Parcours.tsx"]) {
   "10 heures ouvrées",
   "C'est trop cher",
   "Je veux réfléchir",
-  "Je préfère parler à quelqu'un",
+  "Je souhaite m'entretenir avec un avocat",
   "Date limite estimée : {date}.",
   "Votre dépôt de dossier n'est pas terminé",
   "Bonjour, votre dépôt de dossier sur LEXPATRIA Avocats n'est pas terminé. Vous pouvez le reprendre là où vous l'avez laissé : {lien}{echeance} Pour ne plus recevoir ces messages : {desinscription}",

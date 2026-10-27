@@ -26,9 +26,9 @@ export default async function Page({ params }: { params: Promise<{ jeton: string
           <div className="card">
             <h1>{t("Régler votre échéance")}</h1>
             {!e ? (
-              <p>{t("Ce lien a expiré. Écrivez-nous depuis votre espace.")}</p>
+              <p>{t("Ce lien a expiré. Vous pouvez écrire au cabinet depuis votre espace.")}</p>
             ) : e.statut === "PAYE" ? (
-              <p>{t("Cette échéance est réglée. Merci.")}</p>
+              <p>{t("Cette échéance est réglée.")}</p>
             ) : e.statut !== "ECHEC" ? (
               <p>{t("Cette échéance n'est pas à régler pour le moment.")}</p>
             ) : (
