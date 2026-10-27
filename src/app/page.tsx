@@ -73,7 +73,7 @@ export default async function Accueil() {
         <div className="wrap">
           <section className="acc-sec">
             <p className="acc-eye">{t("Vos avocats")}</p>
-            <h2>{t("Les avocats du cabinet")}</h2>
+            <h2>{t("Un avocat du cabinet désigné pour chaque dossier")}</h2>
             <p className="acc-lead">
               {t(
                 "L'avocat à qui votre dossier est confié l'étudie, rédige l'acte et le dépose, puis reste votre interlocuteur dans votre espace jusqu'à la décision.",
