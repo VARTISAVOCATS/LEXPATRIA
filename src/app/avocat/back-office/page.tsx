@@ -19,7 +19,8 @@ import ActesReference from "./ActesReference";
 import { qualiteDe } from "@/lib/equipe";
 import { actesReferenceListe } from "@/lib/serveur/actes-reference";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
-import { etatModeles } from "@/lib/serveur/modeles-cabinet";
+import { etatConventions, etatModeles } from "@/lib/serveur/modeles-cabinet";
+import { CODES_CONVENTION, modeleIntegre, VARIABLES_CONVENTION } from "@/lib/convention";
 import { VARIABLES } from "@/lib/modeles";
 import { Assistant, EditeurAccueil, EditeurAvocats, EditeurDelais, EditeurFaq, EditeurEcheancier, EditeurRemuneration, EditeurTarifs } from "./Editeurs";
 
@@ -29,6 +30,7 @@ const RUBRIQUES = [
   ["assistant", "Assistant"],
   ["contenus", "Contenus et tarifs"],
   ["modeles", "Modèles d'actes"],
+  ["conventions", "Conventions d'honoraires"],
   ["blog", "Blog"],
   ["equipe", "Équipe"],
   ["connexions", "Connexions (API)"],
@@ -194,6 +196,27 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                     actes={refs.map((a) => ({ id: a.id, code: a.code, titre: a.titre, fichier: a.fichier, actif: a.actif, le: frDateHeure(a.creeLe), longueur: a.texte.length }))}
                   />
                   </>
+                );
+              })())}
+
+            {rubrique === "conventions" &&
+              (await (async () => {
+                const etat = await etatConventions(d);
+                return (
+                  <Modeles
+                    api="/api/backoffice/conventions"
+                    libelleType="Modèle de convention"
+                    application="Il s'applique aux conventions acceptées ensuite ; les conventions déjà acceptées restent archivées à l'identique."
+                    variables={VARIABLES_CONVENTION.map(({ nom, libelle }) => ({ nom, libelle }))}
+                    integres={Object.fromEntries(CODES_CONVENTION.map((c) => [c, modeleIntegre(c)]))}
+                    modeles={etat.map((m) => ({
+                      code: m.code,
+                      libelle: m.libelle,
+                      cabinet: m.cabinet,
+                      texte: m.actuel?.texte ?? "",
+                      versions: m.versions.map((v) => ({ id: v.id, version: v.version, le: frDateHeure(v.creeLe), fichier: v.fichier, vide: !v.texte.trim() })),
+                    }))}
+                  />
                 );
               })())}
 

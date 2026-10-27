@@ -953,7 +953,7 @@
   "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Check each point: a factual error can change the outcome of the case.",
   "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "The firm studies your situation and files your appeal with the administration or the administrative court.",
   "Consulter un avocat": "Consult a lawyer",
-  "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.": "Your case will be handled by Maître {nom}, who will contact you within {delai}.",
-  "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.": "Your file has been sent to the firm: a lawyer will contact you within {delai}.",
-  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "The fee note is issued in your relative's name, marked “paid by a third party”. The content of the case is not accessible to you."
+  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "The fee note is issued in your relative's name, marked “paid by a third party”. The content of the case is not accessible to you.",
+  "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.": "Your case will be handled by Maître {nom}, who will contact you within {delai}.",
+  "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.": "Your file has been sent to the firm: a lawyer will contact you within {delai}."
 }

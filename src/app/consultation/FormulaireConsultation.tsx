@@ -12,7 +12,7 @@ import { formatEuros, LIBELLES_DILIGENCE } from "@/lib/procedures";
 export default function FormulaireConsultation({ source }: { source?: string }) {
   const t = useT();
   const langue = useLangue();
-  const prix = useContenus().tarifs.CONSULTATION;
+  const { tarifs: { CONSULTATION: prix }, conventions } = useContenus();
   const [c, setC] = useState({ civilite: "", prenom: "", nom: "", email: "", telephone: "", adresse: "", codePostal: "", ville: "", pays: "FR" });
   const [question, setQuestion] = useState("");
   const [cree, setCree] = useState<{ jeton: string; jetonRdv: string; reference: string } | null>(null);
@@ -44,6 +44,7 @@ export default function FormulaireConsultation({ source }: { source?: string }) 
     procedureLibelle: "Consultation en visio avec un avocat",
     recoursPrealable: false,
     consultation: true,
+    modeles: conventions,
     lignes: [{ diligence: "CONSULTATION" as const, libelle: LIBELLES_DILIGENCE.CONSULTATION, montant: prix }],
   };
 

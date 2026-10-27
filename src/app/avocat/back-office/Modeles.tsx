@@ -28,7 +28,22 @@ function Surligne({ texte }: { texte: string }) {
   );
 }
 
-export default function Modeles({ modeles, variables }: { modeles: EtatModele[]; variables: { nom: string; libelle: string }[] }) {
+export default function Modeles({
+  modeles,
+  variables,
+  api = "/api/backoffice/modeles",
+  libelleType = "Type d'acte",
+  application = "Le modèle s'applique aux projets générés ensuite ; les projets existants ne changent pas.",
+  integres,
+}: {
+  modeles: EtatModele[];
+  variables: { nom: string; libelle: string }[];
+  api?: string;
+  libelleType?: string;
+  application?: string;
+  /** Texte des modèles intégrés, avec leurs variables : point de départ proposé à l'associé. */
+  integres?: Record<string, string>;
+}) {
   const router = useRouter();
   const [code, setCode] = useState(modeles[0]?.code ?? "");
   const actuel = modeles.find((m) => m.code === code)!;
@@ -51,12 +66,12 @@ export default function Modeles({ modeles, variables }: { modeles: EtatModele[];
   // Aperçu avec un dossier fictif, recalculé après une courte pause de frappe.
   useEffect(() => {
     const t = setTimeout(async () => {
-      const r = await fetch("/api/backoffice/modeles", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "apercu", code, texte }) }).catch(() => null);
+      const r = await fetch(api, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "apercu", code, texte }) }).catch(() => null);
       const j = await r?.json().catch(() => null);
       if (j?.apercu !== undefined) setApercu(j.apercu);
     }, 400);
     return () => clearTimeout(t);
-  }, [code, texte]);
+  }, [code, texte, api]);
 
   const inconnues = useMemo(() => {
     const connues = new Set(variables.map((v) => v.nom));
@@ -80,7 +95,7 @@ export default function Modeles({ modeles, variables }: { modeles: EtatModele[];
     setErreur(null);
     const fd = new FormData();
     fd.append("fichier", f);
-    const r = await fetch("/api/backoffice/modeles", { method: "POST", body: fd }).catch(() => null);
+    const r = await fetch(api, { method: "POST", body: fd }).catch(() => null);
     const j = await r?.json().catch(() => null);
     if (!r?.ok) return setErreur(j?.erreur ?? "Import impossible.");
     setTexte(j.texte);
@@ -92,7 +107,7 @@ export default function Modeles({ modeles, variables }: { modeles: EtatModele[];
     setEnvoi(true);
     setErreur(null);
     setInfo(null);
-    const r = await fetch("/api/backoffice/modeles", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corps) }).catch(() => null);
+    const r = await fetch(api, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corps) }).catch(() => null);
     const j = await r?.json().catch(() => null);
     setEnvoi(false);
     if (!r?.ok) return setErreur(j?.erreur ?? "L'enregistrement a échoué.");
@@ -106,7 +121,7 @@ export default function Modeles({ modeles, variables }: { modeles: EtatModele[];
       <section className="card">
         <div className="cab-barre">
           <label className="af-c">
-            <span>Type d&apos;acte</span>
+            <span>{libelleType}</span>
             <select className="champ" value={code} onChange={(e) => setCode(e.target.value)}>
               {modeles.map((m) => (
                 <option key={m.code} value={m.code}>
@@ -119,14 +134,18 @@ export default function Modeles({ modeles, variables }: { modeles: EtatModele[];
           <span className={`pill ${actuel.cabinet ? "ok" : "n"}`}>{actuel.cabinet ? `Modèle du cabinet, version ${actuel.versions[0]?.version}` : "Modèle intégré à la plateforme"}</span>
         </div>
         <p className="note">
-          Déposez votre modèle Word ou rédigez-le ici. Placez les variables là où les données du dossier doivent apparaître ; ce qui reste à compléter s&apos;écrit XXX. Le modèle
-          s&apos;applique aux projets générés ensuite ; les projets existants ne changent pas.
+          Déposez votre modèle Word ou rédigez-le ici. Placez les variables là où les données du dossier doivent apparaître ; ce qui reste à compléter s&apos;écrit XXX. {application}
         </p>
         <div className="cab-actions">
           <label className="btn sm ghost mo-import">
             Importer un fichier Word (.docx)
             <input type="file" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden onChange={(e) => e.target.files?.[0] && importer(e.target.files[0])} />
           </label>
+          {integres?.[code] && (
+            <button className="btn sm ghost" type="button" onClick={() => setTexte(integres[code])}>
+              Partir du modèle intégré
+            </button>
+          )}
           {actuel.cabinet && (
             <button className="btn sm ghost" disabled={envoi} onClick={() => poster({ action: "enregistrer", code, texte: "" }, "Le modèle intégré s'applique de nouveau.")}>
               Revenir au modèle intégré
@@ -149,7 +168,7 @@ export default function Modeles({ modeles, variables }: { modeles: EtatModele[];
           />
           {inconnues.length > 0 && <p className="erreur">Variable(s) inconnue(s) : {inconnues.map((x) => `{{${x}}}`).join(", ")}</p>}
           <div className="cab-actions">
-            <button className="btn cta sm" disabled={envoi || !modifie || !texte.trim() || inconnues.length > 0} onClick={() => poster({ action: "enregistrer", code, texte, fichier }, "Modèle enregistré : il s'applique aux prochains projets.")}>
+            <button className="btn cta sm" disabled={envoi || !modifie || !texte.trim() || inconnues.length > 0} onClick={() => poster({ action: "enregistrer", code, texte, fichier }, `Modèle enregistré. ${application}`)}>
               Enregistrer le modèle
             </button>
             {modifie && (

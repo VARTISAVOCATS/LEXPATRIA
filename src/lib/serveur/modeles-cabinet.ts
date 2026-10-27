@@ -2,10 +2,11 @@
 // Chaque enregistrement est une version (historique, retour arrière) ; la plus récente s'applique aux nouveaux projets.
 // Un projet déjà généré n'est jamais modifié par un changement de modèle.
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Base } from "@/db";
 import { modelesCabinet } from "@/db/schema";
 import { journaliser } from "@/lib/journal";
+import { CODES_CONVENTION, estCodeConvention, LIBELLES_CONVENTION, variablesConventionInconnues, type ModelesConvention } from "@/lib/convention";
 import { LIBELLES_MODELE, variablesInconnues, type CodeModele } from "@/lib/modeles";
 import type { Membre } from "./session";
 
@@ -17,20 +18,34 @@ export async function modeleActif(d: Base, code: CodeModele): Promise<string | n
   return m && m.texte.trim() ? m.texte : null;
 }
 
-export async function etatModeles(d: Base) {
+export async function etatModeles(d: Base, libelles: Record<string, string> = LIBELLES_MODELE) {
   const toutes = await d.select().from(modelesCabinet).orderBy(desc(modelesCabinet.version));
-  return (Object.keys(LIBELLES_MODELE) as CodeModele[]).map((code) => {
+  return Object.keys(libelles).map((code) => {
     const versions = toutes.filter((x) => x.code === code);
     const actuel = versions[0];
-    return { code, libelle: LIBELLES_MODELE[code], cabinet: !!actuel?.texte.trim(), actuel: actuel ?? null, versions };
+    return { code, libelle: libelles[code], cabinet: !!actuel?.texte.trim(), actuel: actuel ?? null, versions };
   });
+}
+
+export const etatConventions = (d: Base) => etatModeles(d, LIBELLES_CONVENTION);
+
+/** Modèles de convention du cabinet en vigueur (texte et numéro de version), par type de convention. */
+export async function conventionsActives(d: Base): Promise<ModelesConvention> {
+  const toutes = await d.select().from(modelesCabinet).where(inArray(modelesCabinet.code, CODES_CONVENTION)).orderBy(desc(modelesCabinet.version));
+  const r: ModelesConvention = {};
+  for (const code of CODES_CONVENTION) {
+    const m = toutes.find((x) => x.code === code);
+    r[code] = m && m.texte.trim() ? { texte: m.texte, version: m.version } : null;
+  }
+  return r;
 }
 
 export async function enregistrerModele(d: Base, m: Membre, code: string, texte: string, fichier?: string | null) {
   if (m.role !== "ASSOCIE") return { ok: false as const, erreur: "Réservé aux associés." };
-  if (!estCode(code)) return { ok: false as const, erreur: "Type d'acte inconnu." };
+  const convention = estCodeConvention(code);
+  if (!estCode(code) && !convention) return { ok: false as const, erreur: "Type de modèle inconnu." };
   const t = texte.replace(/\r\n/g, "\n").slice(0, 200_000);
-  const inconnues = variablesInconnues(t);
+  const inconnues = convention ? variablesConventionInconnues(t) : variablesInconnues(t);
   if (inconnues.length) return { ok: false as const, erreur: `Variable(s) inconnue(s) : ${inconnues.map((x) => `{{${x}}}`).join(", ")}.` };
   const [dernier] = await d.select().from(modelesCabinet).where(eq(modelesCabinet.code, code)).orderBy(desc(modelesCabinet.version)).limit(1);
   if (dernier && dernier.texte === t) return { ok: false as const, erreur: "Aucune modification." };

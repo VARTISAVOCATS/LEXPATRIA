@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { AVOCATS, FAQ } from "./accueil";
+import type { ModelesConvention } from "./convention";
 import { ECHEANCIER_DEFAUT, type ReglesEcheancier } from "./echeancier";
 import { LIBELLES_DILIGENCE, TARIFS_DEFAUT, type Diligence } from "./procedures";
 
@@ -129,6 +130,8 @@ export interface ContenusPublics {
   avocats: { nom: string; titre: string; photo: string | null }[];
   accueil: { titre: string; sousTitre: string };
   echeancier: ReglesEcheancier;
+  /** Modèles de convention du cabinet en vigueur (back office › Modèles) ; vides : modèles intégrés. */
+  conventions: ModelesConvention;
 }
 
 export const CONTENUS_DEFAUT: ContenusPublics = {
@@ -142,6 +145,7 @@ export const CONTENUS_DEFAUT: ContenusPublics = {
   avocats: AVOCATS,
   accueil: ACCUEIL_DEFAUT,
   echeancier: ECHEANCIER_DEFAUT,
+  conventions: {},
 };
 
 /** Tous les textes d'une valeur (pour le filtre déontologique). */

@@ -106,7 +106,7 @@ async function enBase64(f: File): Promise<{ mime: string; base64: string }> {
 export default function Parcours({ modePhoto, source, reprise }: { modePhoto: boolean; source?: string; reprise?: string }) {
   const t = useT();
   const langueEcran = useLangue();
-  const { tarifs, avocats, echeancier: reglesEch } = useContenus();
+  const { tarifs, avocats, echeancier: reglesEch, conventions: modelesConvention } = useContenus();
   // Avocats montrés au paiement : ceux du back office (photos comprises), pour inspirer confiance sans nommer l'avocat attribué.
   const EQUIPE = avocats.map((a) => ({
     nom: a.nom,
@@ -620,6 +620,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         reference: reference ?? "—",
         procedureLibelle: libelleOffre,
         recoursPrealable: estRecoursPrealable(procedure) && !avisPrealable,
+        avis: avisPrealable || procedure === "DIAGNOSTIC",
+        modeles: modelesConvention,
         lignes: offre,
         echeancier: fractionnable ? plan : null,
         regles: reglesEch,

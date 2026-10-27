@@ -7,7 +7,8 @@ import type { Base } from "@/db";
 import { clients, conventions, dossiers, echeancier, paiements, utilisateurs } from "@/db/schema";
 import { ajouterHeuresOuvrees, instantParis } from "@/lib/calendrier";
 import { adresseEnLignes, tvaApplicable } from "@/lib/pays";
-import { texteConvention, VERSION_CONVENTION, type DonneesConvention } from "@/lib/convention";
+import { conventionsActives } from "./modeles-cabinet";
+import { texteConvention, versionConvention, type DonneesConvention } from "@/lib/convention";
 import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { signer } from "@/lib/jeton";
@@ -57,6 +58,8 @@ export async function donneesConvention(d: Base, dos: typeof dossiers.$inferSele
         ? "Avis écrit d'un avocat sur votre situation"
         : PROCEDURES[code].libelle,
     recoursPrealable: estRecoursPrealable(code) && !dos.avisPrealable && !parent,
+    avis: !parent && (dos.avisPrealable || code === "DIAGNOSTIC"),
+    modeles: await conventionsActives(d),
     appelDe: parent?.reference,
     consultation: dos.procedure === "CONSULTATION",
     lignes,
@@ -74,17 +77,18 @@ export async function accepterConvention(
 ) {
   const donnees = await donneesConvention(d, dos, cli);
   const texte = texteConvention(donnees);
+  const version = versionConvention(donnees);
   const parent = !!donnees.appelDe;
   await d.insert(conventions).values({
     dossierId: dos.id,
     type: parent ? "AVENANT_APPEL" : "CONVENTION",
-    version: VERSION_CONVENTION,
+    version,
     texte,
     empreinte: empreinteTexte(texte),
     ip,
     executionImmediate: true,
   });
-  await journaliser(d, { dossierId: dos.id, acteur: "CLIENT", action: "CONVENTION_ACCEPTEE", details: { version: VERSION_CONVENTION, ip } });
+  await journaliser(d, { dossierId: dos.id, acteur: "CLIENT", action: "CONVENTION_ACCEPTEE", details: { version, ip } });
 }
 
 /** Mode de règlement : en une fois (carte, Apple Pay, Google Pay) ou en trois fois sans frais (échéancier du cabinet). */
@@ -243,8 +247,8 @@ async function confirmerAuClient(d: Base, dossierId: string) {
   const langue = estLangue(cli.langue) ? cli.langue : "fr";
   const delai = traduire(langue, dos.traitement === "URGENCE" ? "10 heures ouvrées" : "48 heures ouvrées");
   const suite = av
-    ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
-    : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.", { delai });
+    ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
+    : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai });
   const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
   // Lien direct vers la suite du dépôt (pièces et questionnaire), valable 14 jours ; il ne montre aucune donnée du dossier.
   const lienSuite = `${origine}/depot/merci?ref=${encodeURIComponent(dos.reference)}&suite=${encodeURIComponent(signer(dos.id, 24 * 14))}`;

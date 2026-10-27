@@ -7,6 +7,7 @@ import { parametres, parametresHistorique } from "@/db/schema";
 import { controlerTexte, type Infraction } from "@/lib/deontologie";
 import { journaliser } from "@/lib/journal";
 import { configPublique } from "./connexions";
+import { conventionsActives } from "./modeles-cabinet";
 import { CLES_PARAMETRES, PARAMETRES, textesDe, type CleParametre, type ContenusPublics, type ValeurParametre } from "@/lib/parametres";
 
 // Petit cache mémoire : les pages publiques ne relisent la base qu'une fois toutes les 30 secondes.
@@ -43,7 +44,7 @@ export async function contenusPublics(d: Base): Promise<ContenusPublics> {
     lireParametre(d, "accueil"),
     lireParametre(d, "echeancier"),
   ]);
-  return { config: await configPublique(), tarifs, faq, avocats, accueil, echeancier: echeancier as ContenusPublics["echeancier"] };
+  return { config: await configPublique(), tarifs, faq, avocats, accueil, echeancier: echeancier as ContenusPublics["echeancier"], conventions: await conventionsActives(d) };
 }
 
 export interface ControleEcriture {

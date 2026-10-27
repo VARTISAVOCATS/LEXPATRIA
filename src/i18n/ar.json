@@ -953,7 +953,7 @@
   "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "تحقق من كل نقطة، فخطأ في الوقائع قد يغيّر مآل الملف.",
   "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "يدرس المكتب وضعك ويقدم طعنك أمام الإدارة أو المحكمة الإدارية.",
   "Consulter un avocat": "استشارة محامٍ",
-  "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.": "سيعالج ملفكم الأستاذ {nom}، الذي سيتصل بكم خلال {delai}.",
-  "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.": "تمت إحالة ملفكم إلى المكتب: سيتصل بكم محامٍ خلال {delai}.",
-  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "تُحرَّر مذكرة الأتعاب باسم قريبك مع عبارة «سُدّدت من طرف الغير». ولا يمكنك الاطلاع على محتوى الملف."
+  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "تُحرَّر مذكرة الأتعاب باسم قريبك مع عبارة «سُدّدت من طرف الغير». ولا يمكنك الاطلاع على محتوى الملف.",
+  "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.": "سيعالج ملفكم الأستاذ {nom}، الذي سيتصل بكم خلال {delai}.",
+  "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.": "تمت إحالة ملفكم إلى المكتب: سيتصل بكم محامٍ خلال {delai}."
 }
