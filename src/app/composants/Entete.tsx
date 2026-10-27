@@ -24,7 +24,6 @@ export function EnteteSite() {
   const [menu, setMenu] = useState(false);
   return (
     <>
-      <div className="notpref">{t("Lexpatria Avocats, avocats au barreau de Paris. Ce site n'est pas un service de la préfecture ni de l'administration.")}</div>
       <header className="site-h">
         <div className="wrap">
           <Logo />
