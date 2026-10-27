@@ -148,7 +148,6 @@
   "La décision contestée (toutes les pages)": "La decisión impugnada (todas las páginas)",
   "La décision prononce-t-elle aussi une interdiction de retour en France ?": "¿La decisión impone también una prohibición de regreso a Francia?",
   "La mise en demeure demande formellement à la préfecture d'agir. Si elle reste sans effet, un référé peut être engagé devant le tribunal.": "El requerimiento formal pide oficialmente a la prefectura que actúe. Si no surte efecto, puede iniciarse un procedimiento urgente ante el tribunal.",
-  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Vous ne voyez pas le contenu du dossier, couvert par le secret professionnel.": "La factura de honorarios se emite a nombre de su familiar, con la mención «pagada por un tercero». Usted no ve el contenido del expediente, protegido por el secreto profesional.",
   "La personne détenue ne peut ni utiliser la plateforme ni y signer sa convention. Le délai pour contester est très court : appelez le cabinet sans attendre, ou adressez-vous au point d'accès au droit de l'établissement. Aucun paiement n'est demandé en ligne.": "La persona detenida no puede utilizar la plataforma ni firmar en ella su convenio. El plazo para impugnar es muy corto: llame al despacho sin demora, o diríjase al punto de acceso al derecho del centro penitenciario. No se solicita ningún pago en línea.",
   "La plaidoirie à l'audience": "El alegato en la vista",
   "La procédure adaptée": "El procedimiento adecuado",
@@ -338,8 +337,6 @@
   "Votre conjoint est :": "Su cónyuge es:",
   "Votre dernier certificat de résidence": "Su último certificado de residencia",
   "Votre dernier titre de séjour": "Su último permiso de residencia",
-  "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.": "Su expediente se ha transmitido al despacho: un abogado se pondrá en contacto con usted en un plazo de {delai}.",
-  "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.": "Su expediente será tramitado por Maître {nom}, que se pondrá en contacto con usted en un plazo de {delai}.",
   "Votre dossier {ref} est conservé. Cette page se met à jour dès que le paiement est confirmé.": "Su expediente {ref} se conserva. Esta página se actualiza en cuanto se confirma el pago.",
   "Votre question": "Su pregunta",
   "Votre récit": "Su relato",
@@ -955,5 +952,8 @@
   "Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.": "El enlace es válido durante 14 días. El expediente solo se asume una vez pagado: tenga en cuenta su fecha límite.",
   "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Compruebe cada punto: un error de hecho puede modificar el resultado del expediente.",
   "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "El despacho estudia su situación y presenta su recurso ante la administración o el tribunal administrativo.",
-  "Consulter un avocat": "Consultar a un abogado"
+  "Consulter un avocat": "Consultar a un abogado",
+  "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.": "Su expediente será tramitado por Maître {nom}, que se pondrá en contacto con usted en un plazo de {delai}.",
+  "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.": "Su expediente se ha transmitido al despacho: un abogado se pondrá en contacto con usted en un plazo de {delai}.",
+  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "La nota de honorarios se emite a nombre de su allegado, con la mención «pagada por un tercero». El contenido del expediente no le es accesible."
 }

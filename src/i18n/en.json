@@ -148,7 +148,6 @@
   "La décision contestée (toutes les pages)": "The contested decision (all pages)",
   "La décision prononce-t-elle aussi une interdiction de retour en France ?": "Does the decision also impose a ban on returning to France?",
   "La mise en demeure demande formellement à la préfecture d'agir. Si elle reste sans effet, un référé peut être engagé devant le tribunal.": "The formal notice formally asks the prefecture to act. If it has no effect, an urgent application can be brought before the court.",
-  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Vous ne voyez pas le contenu du dossier, couvert par le secret professionnel.": "The fee note is issued in your relative's name, with the mention \"paid by a third party\". You do not see the contents of the case file, which is covered by professional secrecy.",
   "La personne détenue ne peut ni utiliser la plateforme ni y signer sa convention. Le délai pour contester est très court : appelez le cabinet sans attendre, ou adressez-vous au point d'accès au droit de l'établissement. Aucun paiement n'est demandé en ligne.": "The detained person cannot use the platform or sign their agreement on it. The deadline to challenge is very short: call the firm without delay, or contact the legal access point (point d'accès au droit) of the prison. No payment is requested online.",
   "La plaidoirie à l'audience": "Pleading at the hearing",
   "La procédure adaptée": "The appropriate procedure",
@@ -338,8 +337,6 @@
   "Votre conjoint est :": "Your spouse is:",
   "Votre dernier certificat de résidence": "Your latest residence certificate",
   "Votre dernier titre de séjour": "Your latest residence permit",
-  "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.": "Your file has been sent to the firm: a lawyer will contact you within {delai}.",
-  "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.": "Your case will be handled by Maître {nom}, who will contact you within {delai}.",
   "Votre dossier {ref} est conservé. Cette page se met à jour dès que le paiement est confirmé.": "Your case {ref} has been kept. This page updates as soon as the payment is confirmed.",
   "Votre question": "Your question",
   "Votre récit": "Your account",
@@ -955,5 +952,8 @@
   "Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.": "The link is valid for 14 days. The case is taken on only once paid: bear your deadline in mind.",
   "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "Check each point: a factual error can change the outcome of the case.",
   "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "The firm studies your situation and files your appeal with the administration or the administrative court.",
-  "Consulter un avocat": "Consult a lawyer"
+  "Consulter un avocat": "Consult a lawyer",
+  "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.": "Your case will be handled by Maître {nom}, who will contact you within {delai}.",
+  "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.": "Your file has been sent to the firm: a lawyer will contact you within {delai}.",
+  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "The fee note is issued in your relative's name, marked “paid by a third party”. The content of the case is not accessible to you."
 }

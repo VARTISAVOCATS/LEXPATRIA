@@ -56,7 +56,7 @@ export default async function Regler({ params }: { params: Promise<{ jeton: stri
                   </p>
                 </div>
                 <p className="petite">
-                  {t("La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Vous ne voyez pas le contenu du dossier, couvert par le secret professionnel.")}
+                  {t("La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.")}
                 </p>
                 <ReglementProche jeton={jeton} total={o.total} />
               </>

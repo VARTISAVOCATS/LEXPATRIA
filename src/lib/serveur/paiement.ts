@@ -243,8 +243,8 @@ async function confirmerAuClient(d: Base, dossierId: string) {
   const langue = estLangue(cli.langue) ? cli.langue : "fr";
   const delai = traduire(langue, dos.traitement === "URGENCE" ? "10 heures ouvrées" : "48 heures ouvrées");
   const suite = av
-    ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
-    : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai });
+    ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
+    : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.", { delai });
   const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
   // Lien direct vers la suite du dépôt (pièces et questionnaire), valable 14 jours ; il ne montre aucune donnée du dossier.
   const lienSuite = `${origine}/depot/merci?ref=${encodeURIComponent(dos.reference)}&suite=${encodeURIComponent(signer(dos.id, 24 * 14))}`;

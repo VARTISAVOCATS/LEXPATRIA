@@ -56,8 +56,8 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
             <div className="succ"><span className="succ-i" aria-hidden>✓</span><div><b>{t("Paiement validé")}</b></div></div>
             <h1>
               {avocat
-                ? t("Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${avocat.prenom} ${avocat.nom}`, delai: t(delaiPriseEnCharge) })
-                : t("Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai: t(delaiPriseEnCharge) })}
+                ? t("Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.", { nom: `${avocat.prenom} ${avocat.nom}`, delai: t(delaiPriseEnCharge) })
+                : t("Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.", { delai: t(delaiPriseEnCharge) })}
             </h1>
             <p className="aide">{t("Dossier {ref}. Un e-mail de confirmation vous est envoyé.", { ref: frais.reference })}</p>
 

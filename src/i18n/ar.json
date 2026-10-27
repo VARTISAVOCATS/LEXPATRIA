@@ -148,7 +148,6 @@
   "La décision contestée (toutes les pages)": "القرار المطعون فيه (جميع الصفحات)",
   "La décision prononce-t-elle aussi une interdiction de retour en France ?": "هل ينص القرار أيضًا على منع العودة إلى فرنسا؟",
   "La mise en demeure demande formellement à la préfecture d'agir. Si elle reste sans effet, un référé peut être engagé devant le tribunal.": "يطالب الإنذار الرسمي المحافظة رسميًا بالتصرف. وإذا بقي دون أثر، يمكن رفع دعوى استعجالية أمام المحكمة.",
-  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Vous ne voyez pas le contenu du dossier, couvert par le secret professionnel.": "تُحرر مذكرة الأتعاب باسم قريبكم، مع عبارة «مدفوعة من طرف الغير». ولا يطلع على محتوى الملف المشمول بالسر المهني.",
   "La personne détenue ne peut ni utiliser la plateforme ni y signer sa convention. Le délai pour contester est très court : appelez le cabinet sans attendre, ou adressez-vous au point d'accès au droit de l'établissement. Aucun paiement n'est demandé en ligne.": "لا يمكن للشخص المحتجز استعمال المنصة ولا التوقيع فيها على اتفاقيته. أجل الطعن قصير جدًا: اتصلوا بالمكتب دون تأخير، أو توجهوا إلى نقطة الوصول إلى القانون في المؤسسة. لا يُطلب أي دفع عبر الإنترنت.",
   "La plaidoirie à l'audience": "المرافعة في الجلسة",
   "La procédure adaptée": "الإجراء المناسب",
@@ -338,8 +337,6 @@
   "Votre conjoint est :": "زوجكم (زوجتكم):",
   "Votre dernier certificat de résidence": "آخر شهادة إقامة لديكم",
   "Votre dernier titre de séjour": "آخر بطاقة إقامة لديكم",
-  "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.": "تمت إحالة ملفكم إلى المكتب: سيتصل بكم محامٍ خلال {delai}.",
-  "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.": "سيعالج ملفكم الأستاذ {nom}، الذي سيتصل بكم خلال {delai}.",
   "Votre dossier {ref} est conservé. Cette page se met à jour dès que le paiement est confirmé.": "ملفكم {ref} محفوظ. يتم تحديث هذه الصفحة بمجرد تأكيد الدفع.",
   "Votre question": "سؤالكم",
   "Votre récit": "روايتكم",
@@ -955,5 +952,8 @@
   "Le lien est valable 14 jours. Le dossier n'est pris en charge qu'une fois réglé : tenez compte de votre date limite.": "الرابط صالح لمدة 14 يومًا. لا يُتكفل بالملف إلا بعد الدفع، فراعِ أجلك.",
   "Vérifiez chaque point : une erreur de fait peut modifier l'issue du dossier.": "تحقق من كل نقطة، فخطأ في الوقائع قد يغيّر مآل الملف.",
   "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.": "يدرس المكتب وضعك ويقدم طعنك أمام الإدارة أو المحكمة الإدارية.",
-  "Consulter un avocat": "استشارة محامٍ"
+  "Consulter un avocat": "استشارة محامٍ",
+  "Votre dossier sera traité par Maître {nom}, qui prendra contact avec vous sous {delai}.": "سيعالج ملفكم الأستاذ {nom}، الذي سيتصل بكم خلال {delai}.",
+  "Votre dossier est transmis au cabinet : un avocat prendra contact avec vous sous {delai}.": "تمت إحالة ملفكم إلى المكتب: سيتصل بكم محامٍ خلال {delai}.",
+  "La note d'honoraires est établie au nom de votre proche, avec la mention « réglée par un tiers ». Le contenu du dossier ne vous est pas accessible.": "تُحرَّر مذكرة الأتعاب باسم قريبك مع عبارة «سُدّدت من طرف الغير». ولا يمكنك الاطلاع على محتوى الملف."
 }
