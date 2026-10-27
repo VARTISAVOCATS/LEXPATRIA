@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ECHEANCIER_DEFAUT } from "@/lib/echeancier";
 import { ajouterHeuresOuvrees, estFerie, estOuvre, jour, joursOuvresEntre } from "../calendrier";
 import { evaluerDelai } from "../delais";
 import { controlerTexte } from "../deontologie";
@@ -98,7 +99,7 @@ describe("convention", () => {
       procedureLibelle: "Recours contre une OQTF",
       recoursPrealable: false,
       lignes: [{ diligence: "REQUETE", libelle: "Requête", montant: 99_000 }],
-      troisFois: true,
+      echeancier: [{ rang: 1 as const, montant: 49_500, le: "2026-10-26" }, { rang: 2 as const, montant: 24_700, le: "2026-11-20" }, { rang: 3 as const, montant: 24_800, le: "2026-12-15" }], regles: ECHEANCIER_DEFAUT,
     });
     expect(controlerTexte(t)).toEqual([]);
     expect(t).toContain("990 € TTC");

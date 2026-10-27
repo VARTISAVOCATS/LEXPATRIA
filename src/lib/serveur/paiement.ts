@@ -2,23 +2,22 @@
 // confirmation (idempotente) et attribution du dossier.
 
 import { estLangue, traduire } from "@/i18n";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import type { Base } from "@/db";
-import { clients, conventions, dossiers, paiements, utilisateurs } from "@/db/schema";
+import { clients, conventions, dossiers, echeancier, paiements, utilisateurs } from "@/db/schema";
 import { ajouterHeuresOuvrees, instantParis } from "@/lib/calendrier";
 import { adresseEnLignes, tvaApplicable } from "@/lib/pays";
 import { texteConvention, VERSION_CONVENTION, type DonneesConvention } from "@/lib/convention";
 import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { signer } from "@/lib/jeton";
+import { carteCouvre, dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
 import { stripe } from "@/lib/stripe";
 import { attribuer } from "./attribution";
 import { valeur } from "./connexions";
 import { facturer } from "./integrations/pennylane";
 import { envoyer } from "./notifications";
 import { lireParametre } from "./parametres";
-
-export const SEUIL_TROIS_FOIS = 10_000; // centimes
 
 export async function charger(d: Base, dossierId: string) {
   const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
@@ -42,6 +41,7 @@ const frDate = (iso?: string | null) => (iso ? iso.split("-").reverse().join("/"
 /** Données de la convention (ou de l'avenant d'appel) d'un dossier, pour l'afficher puis l'archiver à l'identique. */
 export async function donneesConvention(d: Base, dos: typeof dossiers.$inferSelect, cli: typeof clients.$inferSelect): Promise<DonneesConvention> {
   const { code, lignes, total } = await offre(d, dos);
+  const regles = await lireParametre(d, "echeancier");
   const parent = dos.dossierParentId ? (await d.select().from(dossiers).where(eq(dossiers.id, dos.dossierParentId)))[0] : null;
   return {
     civilite: (cli.civilite as "MADAME" | "MONSIEUR") ?? undefined,
@@ -59,7 +59,8 @@ export async function donneesConvention(d: Base, dos: typeof dossiers.$inferSele
     appelDe: parent?.reference,
     consultation: dos.procedure === "CONSULTATION",
     lignes,
-    troisFois: total >= SEUIL_TROIS_FOIS,
+    echeancier: echelonnable(total, regles) ? planEcheances(total, regles) : null,
+    regles,
     dateLimite: frDate(dos.dateLimite),
   };
 }
@@ -85,28 +86,79 @@ export async function accepterConvention(
   await journaliser(d, { dossierId: dos.id, acteur: "CLIENT", action: "CONVENTION_ACCEPTEE", details: { version: VERSION_CONVENTION, ip } });
 }
 
-/** Moyens proposés : carte (avec Apple Pay et Google Pay), Klarna (trois fois), ou les deux. Jamais d'autre moyen. */
-export const MOYENS = { CARTE: ["card"], KLARNA: ["klarna"], CARTE_KLARNA: ["card", "klarna"] } as const;
-export type Moyens = keyof typeof MOYENS;
+/** Mode de règlement : en une fois (carte, Apple Pay, Google Pay) ou en trois fois sans frais (échéancier du cabinet). */
+export type Moyens = "CARTE" | "ECHEANCIER";
 
-/** Crée l'intention de paiement, limitée aux moyens choisis (les autres moyens activés chez Stripe ne s'affichent pas). */
-export async function creerIntention(d: Base, dos: typeof dossiers.$inferSelect, cli: typeof clients.$inferSelect, parTiers: boolean, moyens: Moyens = "CARTE") {
+type Intention =
+  | { simulation: true; paiementId: string; total: number }
+  | { simulation: false; clientSecret: string; total: number }
+  | { erreur: string };
+
+/** Crée l'intention de paiement. En trois fois : seule la première échéance est réglée maintenant, la carte est enregistrée
+ *  pour les deux suivantes, et elle doit rester valable jusqu'à la dernière. */
+export async function creerIntention(
+  d: Base,
+  dos: typeof dossiers.$inferSelect,
+  cli: typeof clients.$inferSelect,
+  parTiers: boolean,
+  moyens: Moyens = "CARTE",
+  moyenId?: string,
+): Promise<Intention> {
   const { lignes, total } = await offre(d, dos);
+  const regles = await lireParametre(d, "echeancier");
+  const enTroisFois = moyens === "ECHEANCIER" && !parTiers && echelonnable(total, regles);
+  const plan = enTroisFois ? planEcheances(total, regles) : null;
+  const libelle = lignes.map((l) => l.libelle).join(" + ");
+  const lignesPaiement = plan ? [{ diligence: "ECHEANCE", libelle: `${libelle} — échéance 1/3`, montant: plan[0].montant }] : lignes;
+  const montant = plan ? plan[0].montant : total;
+  // Une tentative précédente non aboutie est remplacée (pas de doublon d'échéancier).
+  await d.delete(echeancier).where(and(eq(echeancier.dossierId, dos.id), inArray(echeancier.statut, ["EN_ATTENTE", "A_VENIR"])));
+
   const s = await stripe();
   if (!s) {
-    const [p] = await d.insert(paiements).values({ dossierId: dos.id, montant: total, lignes, parTiers, statut: "EN_ATTENTE" }).returning();
-    return { simulation: true as const, paiementId: p.id, total };
+    const [p] = await d.insert(paiements).values({ dossierId: dos.id, montant, lignes: lignesPaiement, parTiers, statut: "EN_ATTENTE" }).returning();
+    if (plan) await d.insert(echeancier).values(plan.map((e) => ({ dossierId: dos.id, rang: e.rang, montant: e.montant, le: e.le, statut: e.rang === 1 ? "EN_ATTENTE" : "A_VENIR" })));
+    return { simulation: true, paiementId: p.id, total: montant };
+  }
+
+  let clientStripe: string | undefined;
+  if (plan) {
+    if (!moyenId) return { erreur: "Saisissez votre carte bancaire." };
+    const pm = await s.paymentMethods.retrieve(moyenId).catch(() => null);
+    if (!pm?.card) return { erreur: "Le paiement en trois fois se règle par carte bancaire." };
+    if (!carteCouvre(pm.card.exp_month, pm.card.exp_year, plan[2].le))
+      return { erreur: `Votre carte expire avant la dernière échéance du ${dateCourte(plan[2].le)}. Payez en une fois ou utilisez une autre carte.` };
+    const c = await s.customers.create({
+      email: cli.email ?? undefined,
+      name: [cli.prenom, cli.nom].filter(Boolean).join(" ") || undefined,
+      metadata: { dossierId: dos.id, reference: dos.reference },
+    });
+    clientStripe = c.id;
   }
   const intent = await s.paymentIntents.create({
-    amount: total,
+    amount: montant,
     currency: "eur",
-    payment_method_types: [...MOYENS[moyens]],
+    payment_method_types: ["card"],
+    ...(plan ? { customer: clientStripe, payment_method: moyenId, setup_future_usage: "off_session" as const } : {}),
     receipt_email: parTiers ? undefined : (cli.email ?? undefined),
-    description: `LEXPATRIA ${dos.reference}`,
-    metadata: { dossierId: dos.id, reference: dos.reference, parTiers: parTiers ? "1" : "0" },
+    description: `LEXPATRIA ${dos.reference}${plan ? " — échéance 1/3" : ""}`,
+    metadata: { dossierId: dos.id, reference: dos.reference, parTiers: parTiers ? "1" : "0", ...(plan ? { echeancier: "1" } : {}) },
   });
-  await d.insert(paiements).values({ dossierId: dos.id, stripeIntentId: intent.id, montant: total, lignes, parTiers, statut: "EN_ATTENTE" });
-  return { simulation: false as const, clientSecret: intent.client_secret!, total };
+  await d.insert(paiements).values({ dossierId: dos.id, stripeIntentId: intent.id, montant, lignes: lignesPaiement, parTiers, statut: "EN_ATTENTE" });
+  if (plan)
+    await d.insert(echeancier).values(
+      plan.map((e) => ({
+        dossierId: dos.id,
+        rang: e.rang,
+        montant: e.montant,
+        le: e.le,
+        statut: e.rang === 1 ? "EN_ATTENTE" : "A_VENIR",
+        intentId: e.rang === 1 ? intent.id : null,
+        stripeClientId: clientStripe,
+        stripeMoyenId: moyenId,
+      })),
+    );
+  return { simulation: false, clientSecret: intent.client_secret!, total: montant };
 }
 
 /** Confirme un paiement (webhook Stripe ou simulation). Idempotent. */
@@ -118,6 +170,8 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
     .where(and(cond, eq(paiements.statut, "EN_ATTENTE")))
     .returning();
   if (!maj.length) return;
+  // Paiement en trois fois : la première échéance est réglée, les suivantes seront prélevées à leur date.
+  await d.update(echeancier).set({ statut: "PAYE", payeLe: new Date() }).where(and(eq(echeancier.dossierId, dossierId), eq(echeancier.rang, 1), eq(echeancier.statut, "EN_ATTENTE")));
   const [dos] = await d
     .update(dossiers)
     .set({ statut: "PAYE", majLe: new Date() })

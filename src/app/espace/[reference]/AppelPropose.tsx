@@ -5,14 +5,17 @@ import { useRouter } from "next/navigation";
 import PaiementIntegre from "@/app/depot/PaiementIntegre";
 import { useLangue, useT } from "@/i18n/client";
 import { formatEuros } from "@/lib/procedures";
+import { dateCourte, type Echeance } from "@/lib/echeancier";
 
-export function AppelPropose({ reference, total, troisFois, resume, texte, horsUE }: { reference: string; total: number; troisFois: boolean; resume: string[]; texte: string; horsUE?: boolean }) {
+export function AppelPropose({ reference, total, echeancier, resume, texte, horsUE }: { reference: string; total: number; echeancier: Echeance[] | null; resume: string[]; texte: string; horsUE?: boolean }) {
   const t = useT();
   const langue = useLangue();
   const router = useRouter();
   const [caseConvention, setCaseConvention] = useState(false);
   const [caseExecution, setCaseExecution] = useState(false);
   const [renonce, setRenonce] = useState(false);
+  const [troisFois, setTroisFois] = useState(false);
+  const enTroisFois = !!echeancier && troisFois;
   const [erreur, setErreur] = useState<string | null>(null);
 
   async function renoncer() {
@@ -50,15 +53,39 @@ export function AppelPropose({ reference, total, troisFois, resume, texte, horsU
         <input type="checkbox" checked={caseExecution} onChange={(e) => setCaseExecution(e.target.checked)} />
         {t("Je demande que l'avocat commence sans attendre la fin de mon délai de rétractation de 14 jours.")}
       </label>
+      {echeancier && (
+        <>
+          <div className="p1-seg" role="group" aria-label={t("Mode de règlement")}>
+            <button className={!troisFois ? "on" : ""} onClick={() => setTroisFois(false)}>
+              {t("En une fois")}
+              <small>{formatEuros(total)}</small>
+            </button>
+            <button className={troisFois ? "on" : ""} onClick={() => setTroisFois(true)}>
+              {t("En 3 fois sans frais")}
+              <small>{t("{montant} aujourd'hui", { montant: formatEuros(echeancier[0].montant) })}</small>
+            </button>
+          </div>
+          {troisFois && (
+            <p className="p1-ech">
+              {t("Puis {m2} le {d2} et {m3} le {d3}, prélevés sur la même carte.", {
+                m2: formatEuros(echeancier[1].montant),
+                d2: dateCourte(echeancier[1].le),
+                m3: formatEuros(echeancier[2].montant),
+                d3: dateCourte(echeancier[2].le),
+              })}
+            </p>
+          )}
+        </>
+      )}
       <PaiementIntegre
-        total={total}
-        moyens={troisFois ? "CARTE_KLARNA" : "CARTE"}
+        total={enTroisFois ? echeancier![0].montant : total}
+        moyens={enTroisFois ? "ECHEANCIER" : "CARTE"}
         verifier={() => (!caseConvention || !caseExecution ? t("Cochez les deux cases ci-dessus pour payer.") : null)}
-        ouvrir={async (moyens) => {
+        ouvrir={async (moyens, moyenId) => {
           const r = await fetch("/api/espace/appel", {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ reference, action: "payer", accepteConvention: true, executionImmediate: true, moyens }),
+            body: JSON.stringify({ reference, action: "payer", accepteConvention: true, executionImmediate: true, moyens, moyenId }),
           });
           const j = await r.json();
           if (!r.ok) throw new Error(j.erreur);

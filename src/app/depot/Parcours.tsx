@@ -11,7 +11,8 @@ import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
 import { adresseComplete, adresseEnLignes, nomPays, PAYS, tvaApplicable } from "@/lib/pays";
 import { useContenus } from "../composants/Contenus";
-import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, troisFois, type CodeProcedure } from "@/lib/procedures";
+import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
 import type { ResultatTriage } from "@/lib/triage";
 import { ChoixLangue, useLangue, useT } from "@/i18n/client";
 import { fichiersEnAttente } from "./fichiers";
@@ -91,7 +92,7 @@ async function enBase64(f: File): Promise<{ mime: string; base64: string }> {
 
 export default function Parcours({ modePhoto, source, reprise }: { modePhoto: boolean; source?: string; reprise?: string }) {
   const t = useT();
-  const { tarifs, avocats } = useContenus();
+  const { tarifs, avocats, echeancier: reglesEch } = useContenus();
   // Avocats montrés au paiement : ceux du back office (photos comprises), pour inspirer confiance sans nommer l'avocat attribué.
   const EQUIPE = avocats.map((a) => ({
     nom: a.nom,
@@ -110,6 +111,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
   // Orientation et qualification
   const [triage, setTriage] = useState<ResultatTriage | null>(null);
+  // Vrai si la procédure vient de l'analyse par l'IA (récit libre ou décision), faux pour une situation courante choisie.
+  const [analyseIA, setAnalyseIA] = useState(false);
   const [procedure, setProcedure] = useState<CodeProcedure | null>(null);
   const [refus, setRefus] = useState<Refus | null>(null);
   const [situation, setSituation] = useState<SituationOQTF | null>(null);
@@ -274,8 +277,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const urgence = delai?.traitement === "URGENCE" && !avisPrealable;
   const offre = procedure ? composerOffre(procedure, { urgence, avisPrealable }, tarifs) : [];
   const total = offre.reduce((s, l) => s + l.montant, 0);
-  const fractionnable = total >= 10_000;
-  const echeances3 = troisFois(total);
+  // Paiement en trois fois sans frais, à partir du seuil fixé au back office : acompte, puis deux échéances.
+  const fractionnable = echelonnable(total, reglesEch);
+  const plan = planEcheances(total, reglesEch);
 
   /** Prochaine information manquante, dans l'ordre des écrans. */
   function prochaine(etat: {
@@ -377,7 +381,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   async function analyser(texte: string, liste: File[]) {
     setErreur(null);
     const direct = liste.length ? null : triageDirect(texte);
-    if (direct) return appliquerTriage(direct);
+    if (direct) {
+      setAnalyseIA(false);
+      return appliquerTriage(direct);
+    }
+    setAnalyseIA(true);
     setEtape("ANALYSE");
     try {
       const images: { mime: string; base64: string }[] = [];
@@ -486,6 +494,28 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     return PROCEDURES[procedure].libelle;
   })();
   const libelleOffre = avisPrealable ? "Avis écrit d'un avocat" : titreProcedure;
+  // Pré-analyse : la situation telle que la personne l'a décrite, en une ligne.
+  const situationTexte = (() => {
+    if (!procedure) return "";
+    const base: Record<string, string> = {
+      OQTF: "Obligation de quitter le territoire",
+      REFUS_TITRE: "Refus de titre de séjour",
+      REFUS_VISA: visaType === "LONG" ? "Refus de visa de long séjour" : visaType === "COURT" ? "Refus de visa de court séjour" : "Refus de visa",
+      NATURALISATION: natuIssue === "AJOURNEMENT" ? "Naturalisation ajournée" : "Naturalisation refusée",
+      REFUS_IMPLICITE: "Demande restée sans réponse de la préfecture",
+      BLOCAGE_EMPLOI: "Blocage en préfecture, emploi menacé",
+      BLOCAGE_SIMPLE: "Blocage en préfecture",
+      PROCEDURE_EN_COURS: "Recours déjà engagé devant le tribunal",
+      DIAGNOSTIC: "Situation à étudier",
+    };
+    const parts = [t(base[procedure] ?? titreProcedure)];
+    if (procedure === "OQTF" && situation) {
+      const s = { LIBRE: "Vous vivez à votre adresse", ASSIGNE: "Vous êtes assigné(e) à résidence", LIBRE_APRES_ASILE: "Après un rejet de votre demande d'asile", INCONNUE: "" }[situation as string];
+      if (s) parts.push(t(s));
+    }
+    if (dateRef) parts.push(t("décision reçue le {date}", { date: dateLongue(isoVersDate(dateRef)!) }));
+    return parts.join(" · ");
+  })();
   const demanderAlgerien =
     !!procedure && REGIME_ALGERIEN.includes(procedure) && (triage?.nationaliteAlgerienne ?? null) === null;
   const coordOk =
@@ -526,7 +556,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         procedureLibelle: libelleOffre,
         recoursPrealable: estRecoursPrealable(procedure) && !avisPrealable,
         lignes: offre,
-        troisFois: fractionnable,
+        echeancier: fractionnable ? plan : null,
+        regles: reglesEch,
         dateLimite: delai?.dateLimite ? dateLongue(delai.dateLimite) : undefined,
       }
     : null;
@@ -672,7 +703,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     {t("Qu'est-ce qui vous arrive ?")}
                   </label>
                   {etape === "RECIT" && (
-                    <p className="dep-intro">{t("Prenez le temps de nous le dire, avec vos mots. Nous vous indiquons la procédure adaptée et votre délai.")}</p>
+                    <p className="dep-intro">{t("Dites-le-nous avec vos mots. Nous vous indiquons la procédure adaptée et votre délai.")}</p>
                   )}
                   {etape !== "RECIT" && (recit || fichiers.length > 0) && (
                     <div className="thread">
@@ -778,11 +809,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       </div>
                       <div>
                         <b>{t("Votre dossier est confié à un avocat du cabinet.")}</b>
-                        <p>{t("Des avocats au barreau de Paris, docteurs en droit, prennent en charge chaque dossier sous 48 heures ouvrées.")}</p>
+                        <p>{t("Nous sommes avocats au barreau de Paris et docteurs en droit. Nous prenons chaque dossier en charge sous 48 heures ouvrées.")}</p>
                         <ul>
-                          <li>{t("Secret professionnel")}</li>
+                          <li>{t("Dans votre langue")}</li>
                           <li>{t("Honoraires présentés avant paiement")}</li>
-                          <li>{t("Paiement en une ou trois fois")}</li>
+                          <li>{t("Paiement en 3 fois sans frais")}</li>
                         </ul>
                       </div>
                     </div>
@@ -822,9 +853,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
             {procedure && etape !== "RECIT" && etape !== "ANALYSE" && etape !== "REFUS" && (
               <div className="triresult">
-                <div className="tr-head">
-                  <span className="pill ai">{t("Assistant IA")}</span>
-                </div>
+                {analyseIA && (
+                  <div className="tr-head">
+                    <span className="pill ai">{t("Assistant IA")}</span>
+                  </div>
+                )}
                 <p className="serif tr-msg">{t("Voici la procédure envisagée. Elle est confirmée à la prise en charge.")}</p>
                 <div className="tr-proc">
                   <b>{t(titreProcedure)}</b>
@@ -1008,7 +1041,29 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       </div>
                     ) : (
                       <>
-                        {blocDelai(false)}
+                        <div className="pa">
+                          <b className="pa-t">{t("Notre première analyse")}</b>
+                          <dl>
+                            <div>
+                              <dt>{t("Votre situation")}</dt>
+                              <dd>{situationTexte}</dd>
+                            </div>
+                            <div>
+                              <dt>{t(procedure === "PROCEDURE_EN_COURS" ? "Prochaine échéance" : "Délai restant")}</dt>
+                              <dd>
+                                {avecDelai
+                                  ? `${joursPourAgir(jours!, t)} · ${dateLongue(delai.dateLimite!)}`
+                                  : t(procedure === "DIAGNOSTIC" ? "Nous l'indiquons dans notre avis écrit" : "Nous le vérifions à la lecture de votre décision")}
+                              </dd>
+                            </div>
+                            <div>
+                              <dt>{t("La voie adaptée")}</dt>
+                              <dd>
+                                {t(titreProcedure)} · {t(contenu.instance)}
+                              </dd>
+                            </div>
+                          </dl>
+                        </div>
                         {avecDelai && <p className="fr-sub">{t("Estimation à confirmer à la lecture de la décision.")}</p>}
                         {situation === "INCONNUE" && (
                           <p className="note">{t("Sans précision sur votre situation, nous retenons par prudence le délai le plus court : 7 jours. Le délai exact sera vérifié.")}</p>
@@ -1093,7 +1148,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         {fractionnable && (
                           <>
                             <br />
-                            <b className="x3">{t("ou 3 paiements de {montant} avec Klarna", { montant: formatEuros(echeances3[1]) })}</b>
+                            <b className="x3">{t("ou en 3 fois sans frais, dont {montant} aujourd'hui", { montant: formatEuros(plan[0].montant) })}</b>
                           </>
                         )}
                       </span>
@@ -1262,10 +1317,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         ))}
                       </div>
                       <div>
-                        <b>{t("Un avocat du cabinet prend votre dossier et vous écrit.")}</b>
+                        <b>{t("Votre dossier est confié à un avocat du cabinet.")}</b>
                         <span>
-                          {t(urgence ? "Un avocat du cabinet prend votre dossier sous 10 heures ouvrées." : "Un avocat du cabinet prend votre dossier sous 48 heures ouvrées.")}{" "}
-                          {t("Avocats au barreau de Paris : {noms}.", { noms: EQUIPE.map((a) => a.nom).join(", ") })}
+                          {t(urgence ? "Nous le prenons en charge sous 10 heures ouvrées. Nous vous écrivons dans votre espace." : "Nous le prenons en charge sous 48 heures ouvrées. Nous vous écrivons dans votre espace.")}
                         </span>
                       </div>
                     </div>
@@ -1292,10 +1346,20 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                           <small>{formatEuros(total)}</small>
                         </button>
                         <button className={troisFoisChoisi ? "on" : ""} onClick={() => setTroisFoisChoisi(true)}>
-                          {t("En 3 fois")}
-                          <small>{t("3 × {montant} avec Klarna", { montant: formatEuros(echeances3[1]) })}</small>
+                          {t("En 3 fois sans frais")}
+                          <small>{t("{montant} aujourd'hui", { montant: formatEuros(plan[0].montant) })}</small>
                         </button>
                       </div>
+                    )}
+                    {fractionnable && troisFoisChoisi && (
+                      <p className="p1-ech">
+                        {t("Puis {m2} le {d2} et {m3} le {d3}, prélevés sur la même carte.", {
+                          m2: formatEuros(plan[1].montant),
+                          d2: dateCourte(plan[1].le),
+                          m3: formatEuros(plan[2].montant),
+                          d3: dateCourte(plan[2].le),
+                        })}
+                      </p>
                     )}
                     <div className="p1-conv">
                       <b>{t("Convention d'honoraires, en résumé")}</b>
@@ -1323,14 +1387,14 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       {t("Je demande que l'avocat commence sans attendre la fin de mon délai de rétractation de 14 jours.")}
                     </label>
                     <PaiementIntegre
-                      total={total}
-                      moyens={troisFoisChoisi ? "KLARNA" : "CARTE"}
+                      total={fractionnable && troisFoisChoisi ? plan[0].montant : total}
+                      moyens={fractionnable && troisFoisChoisi ? "ECHEANCIER" : "CARTE"}
                       verifier={() => (!caseConvention || !caseExecution ? t("Cochez les deux cases ci-dessus pour payer.") : null)}
-                      ouvrir={async (moyens) => {
+                      ouvrir={async (moyens, moyenId) => {
                         const r = await fetch("/api/paiement", {
                           method: "POST",
                           headers: { "content-type": "application/json" },
-                          body: JSON.stringify({ jeton, accepteConvention: true, executionImmediate: true, moyens }),
+                          body: JSON.stringify({ jeton, accepteConvention: true, executionImmediate: true, moyens, moyenId }),
                         });
                         const j = await r.json();
                         if (!r.ok) throw new Error(j.erreur);

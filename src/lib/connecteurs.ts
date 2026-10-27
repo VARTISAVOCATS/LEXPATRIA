@@ -24,7 +24,7 @@ export const CONNECTEURS: Connecteur[] = [
   {
     id: "stripe",
     nom: "Stripe — paiement en ligne",
-    usage: "Carte, Apple Pay, Google Pay et Klarna (paiement en trois fois).",
+    usage: "Carte, Apple Pay, Google Pay ; paiement en trois fois sans frais prélevé par le cabinet sur la carte du client.",
     ou: "Tableau de bord Stripe › Développeurs › Clés API ; Webhooks pour la clé de signature.",
     champs: [
       { nom: "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", libelle: "Clé publiable (pk_live_…)", secret: false, requis: true },

@@ -19,7 +19,7 @@ async function consultationPayee(email: string) {
   const x = (await charger(d, dos.id))!;
   await accepterConvention(d, x.dos, x.cli, "127.0.0.1");
   const i = await creerIntention(d, x.dos, x.cli, false);
-  if (i.simulation) await marquerPaye(d, dos.id, { paiementId: i.paiementId, moyen: "simulation" });
+  if ("simulation" in i && i.simulation) await marquerPaye(d, dos.id, { paiementId: i.paiementId, moyen: "simulation" });
   return relire(dos.id);
 }
 
@@ -39,7 +39,7 @@ describe("consultation en visio", () => {
     const [conv] = await d.select().from(schema.conventions).where(eq(schema.conventions.dossierId, dos.id));
     expect(conv.texte).toContain("entretien de trente minutes en visioconférence");
     expect(conv.texte).not.toContain("délai de recours était déjà expiré");
-    expect(texteConvention({ reference: "D1", procedureLibelle: "x", recoursPrealable: false, consultation: true, lignes: [], troisFois: false })).toContain("la consultation est due");
+    expect(texteConvention({ reference: "D1", procedureLibelle: "x", recoursPrealable: false, consultation: true, lignes: [] })).toContain("la consultation est due");
   });
 
   it("réserve un créneau simulé, puis refuse une seconde réservation", async () => {

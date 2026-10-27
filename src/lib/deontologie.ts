@@ -4,7 +4,8 @@
 const INTERDITS: { motif: string; re: RegExp }[] = [
   { motif: "gratuit", re: /\bgratuit(e|s|es|ement)?\b/i },
   { motif: "offert", re: /\boffert(e|s|es)?\b/i },
-  { motif: "sans frais", re: /\bsans\s+frais\b/i },
+  // « Paiement en trois fois sans frais » est admis : c'est une modalité de paiement, pas une prestation présentée comme gratuite.
+  { motif: "sans frais", re: /(?<!\b(?:3|trois)\s+fois\s+)\bsans\s+frais\b/i },
   { motif: "garanti", re: /\bgaranti(e|s|es)?\b/i },
   { motif: "100 %", re: /\b100\s?%/ },
   { motif: "spécialiste", re: /\bsp[ée]cialist(e|es)\b/i },

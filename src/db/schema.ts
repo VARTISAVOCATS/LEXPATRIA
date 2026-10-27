@@ -164,6 +164,26 @@ export const paiements = pgTable("paiements", {
   creeLe: cree(),
 });
 
+/** Paiement en trois fois géré par le cabinet : une ligne par échéance. La première est réglée à la commande,
+ *  les suivantes sont prélevées sur la carte enregistrée (tentatives, régularisation, pénalité forfaitaire). */
+export const echeancier = pgTable("echeancier", {
+  id: id(),
+  dossierId: text("dossier_id").notNull().references(() => dossiers.id),
+  rang: integer("rang").notNull(), // 1, 2, 3
+  montant: integer("montant").notNull(), // centimes, hors pénalité
+  le: text("le").notNull(), // date d'échéance AAAA-MM-JJ
+  statut: text("statut").notNull().default("A_VENIR"), // EN_ATTENTE (1re, paiement en cours) | A_VENIR | PAYE | ECHEC | ANNULE
+  penalite: integer("penalite").notNull().default(0),
+  tentatives: integer("tentatives").notNull().default(0),
+  prochaineTentative: timestamp("prochaine_tentative", { withTimezone: true }),
+  rejeteLe: timestamp("rejete_le", { withTimezone: true }),
+  payeLe: timestamp("paye_le", { withTimezone: true }),
+  intentId: text("intent_id"),
+  stripeClientId: text("stripe_client_id"),
+  stripeMoyenId: text("stripe_moyen_id"),
+  creeLe: cree(),
+});
+
 export const conventions = pgTable("conventions_acceptees", {
   id: id(),
   dossierId: text("dossier_id").notNull().references(() => dossiers.id),

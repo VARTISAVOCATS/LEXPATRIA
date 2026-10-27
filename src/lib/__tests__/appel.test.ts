@@ -62,8 +62,8 @@ describe("espace appel", () => {
     expect(conv.texte).toContain(parent.reference);
 
     const i = await creerIntention(d, c.dos, c.cli, false);
-    expect(i.simulation).toBe(true);
-    if (i.simulation) await marquerPaye(d, a.id, { paiementId: i.paiementId, moyen: "simulation" });
+    expect("simulation" in i && i.simulation).toBe(true);
+    if ("simulation" in i && i.simulation) await marquerPaye(d, a.id, { paiementId: i.paiementId, moyen: "simulation" });
     a = await relire(a.id);
     expect(a.statut).toBe("PAYE");
     expect(a.avocatId).toBe(kachi.id); // pas de réattribution

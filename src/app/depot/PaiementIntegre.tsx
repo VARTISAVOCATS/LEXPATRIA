@@ -1,8 +1,8 @@
 "use client";
 
-// Paiement intégré à l'écran (cahier des charges, 4.8 et 4.12). Deux moyens seulement, pour ne pas disperser :
-// la carte (avec Apple Pay / Google Pay) quand le client paie en une fois, Klarna quand il a choisi trois fois. Le prospect ne quitte jamais le site,
-// sauf le temps de l'authentification Klarna si elle l'exige.
+// Paiement intégré à l'écran (cahier des charges, 4.8 et 4.12), par carte seulement pour ne pas disperser :
+// en une fois (avec Apple Pay / Google Pay) ou en trois fois sans frais, échelonné par le cabinet sur la carte du client.
+// Le prospect ne quitte jamais le site, sauf le temps de l'authentification 3-D Secure si sa banque l'exige.
 // Sans clé publique Stripe (développement) : bouton de paiement simulé.
 
 import { Elements, ExpressCheckoutElement, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
@@ -27,17 +27,17 @@ function allerVers(url: string) {
   else window.location.href = url;
 }
 
-/** Moyens affichés : carte seule, Klarna seul (trois fois), ou les deux quand le client n'a pas encore choisi. */
-export type Moyens = "CARTE" | "KLARNA" | "CARTE_KLARNA";
-const TYPES: Record<Moyens, string[]> = { CARTE: ["card"], KLARNA: ["klarna"], CARTE_KLARNA: ["card", "klarna"] };
+/** Mode de règlement : en une fois (carte, Apple Pay, Google Pay) ou en trois fois sans frais (carte seule, enregistrée). */
+export type Moyens = "CARTE" | "ECHEANCIER";
 
 export interface ProprietesPaiement {
+  /** Montant réglé maintenant (en trois fois : la première échéance). */
   total: number;
   moyens?: Moyens;
   /** Vérifie les préalables (cases cochées) ; renvoie un message d'erreur ou null. */
   verifier: () => string | null;
-  /** Ouvre le paiement côté serveur avec les moyens affichés : { clientSecret } ou { simulation: true }. */
-  ouvrir: (moyens: Moyens) => Promise<{ clientSecret?: string; simulation?: boolean; reference: string }>;
+  /** Ouvre le paiement côté serveur : { clientSecret } ou { simulation: true }. En trois fois, avec la carte saisie. */
+  ouvrir: (moyens: Moyens, moyenId?: string) => Promise<{ clientSecret?: string; simulation?: boolean; reference: string }>;
   urlRetour: (reference: string) => string;
   libelle?: string;
 }
@@ -47,15 +47,18 @@ export default function PaiementIntegre(p: ProprietesPaiement) {
   const cle = useContenus().config.stripePublique;
   if (!cle) return <PaiementSimule {...p} />;
   const moyens = p.moyens ?? "CARTE";
+  const echeancier = moyens === "ECHEANCIER";
   return (
     <Elements
-      key={moyens}
+      key={`${moyens}-${p.total}`}
       stripe={stripeJs(cle, langue)}
       options={{
         mode: "payment",
         amount: p.total,
         currency: "eur",
-        paymentMethodTypes: TYPES[moyens],
+        paymentMethodTypes: ["card"],
+        // En trois fois : carte enregistrée pour les échéances suivantes, et vérifiée (expiration) avant tout paiement.
+        ...(echeancier ? { setupFutureUsage: "off_session" as const, paymentMethodCreation: "manual" as const } : {}),
         appearance: {
           theme: "stripe",
           variables: { colorPrimary: "#0f1e3d", colorDanger: "#c73a2f", borderRadius: "10px", fontSizeBase: "16px" },
@@ -73,6 +76,7 @@ function FormulaireStripe(p: ProprietesPaiement) {
   const elements = useElements();
   const [erreur, setErreur] = useState<string | null>(null);
   const [envoi, setEnvoi] = useState(false);
+  const echeancier = p.moyens === "ECHEANCIER";
 
   async function confirmer() {
     if (!stripe || !elements) return;
@@ -86,25 +90,37 @@ function FormulaireStripe(p: ProprietesPaiement) {
       return setEnvoi(false);
     }
     try {
-      const o = await p.ouvrir(p.moyens ?? "CARTE");
-      if (o.simulation) return allerVers(p.urlRetour(o.reference));
-      const { error } = await stripe.confirmPayment({
-        elements,
-        clientSecret: o.clientSecret!,
-        confirmParams: { return_url: p.urlRetour(o.reference) },
-      });
-      // On n'arrive ici qu'en cas d'erreur : sinon Stripe redirige vers la page de retour.
-      setErreur(error?.message ?? t("Le paiement n'a pas abouti. Votre dossier est conservé."));
+      if (echeancier) {
+        // La carte est d'abord créée, pour que le serveur vérifie qu'elle couvre la dernière échéance.
+        const { paymentMethod, error: errCarte } = await stripe.createPaymentMethod({ elements });
+        if (errCarte || !paymentMethod) throw new Error(errCarte?.message ?? t("Vérifiez vos informations de paiement."));
+        const o = await p.ouvrir("ECHEANCIER", paymentMethod.id);
+        if (o.simulation) return allerVers(p.urlRetour(o.reference));
+        const { error } = await stripe.confirmPayment({
+          clientSecret: o.clientSecret!,
+          confirmParams: { payment_method: paymentMethod.id, return_url: p.urlRetour(o.reference) },
+        });
+        setErreur(error?.message ?? t("Le paiement n'a pas abouti. Votre dossier est conservé."));
+      } else {
+        const o = await p.ouvrir("CARTE");
+        if (o.simulation) return allerVers(p.urlRetour(o.reference));
+        const { error } = await stripe.confirmPayment({
+          elements,
+          clientSecret: o.clientSecret!,
+          confirmParams: { return_url: p.urlRetour(o.reference) },
+        });
+        // On n'arrive ici qu'en cas d'erreur : sinon Stripe redirige vers la page de retour.
+        setErreur(error?.message ?? t("Le paiement n'a pas abouti. Votre dossier est conservé."));
+      }
     } catch (x) {
       setErreur(x instanceof Error ? x.message : t("Le paiement n'a pas abouti. Votre dossier est conservé."));
     }
     setEnvoi(false);
   }
 
-  const carte = (p.moyens ?? "CARTE") !== "KLARNA";
   return (
     <div className="paiement-integre">
-      {carte && (
+      {!echeancier && (
         <>
           <ExpressCheckoutElement
             options={{ buttonHeight: 52, paymentMethods: { applePay: "always", googlePay: "always", link: "never", paypal: "never", amazonPay: "never" } }}
@@ -118,13 +134,7 @@ function FormulaireStripe(p: ProprietesPaiement) {
           <p className="ou">{t("ou")}</p>
         </>
       )}
-      <PaymentElement
-        options={{
-          layout: "tabs",
-          wallets: { applePay: "never", googlePay: "never" },
-          paymentMethodOrder: ["card", "klarna"],
-        }}
-      />
+      <PaymentElement options={{ layout: "tabs", wallets: { applePay: "never", googlePay: "never" } }} />
       {erreur && <p className="erreur">{erreur}</p>}
       <button className="btn btn-action large" disabled={envoi || !stripe} onClick={confirmer}>
         {envoi ? t("Paiement en cours…") : (p.libelle ?? t("Payer {montant}", { montant: formatEuros(p.total) }))}

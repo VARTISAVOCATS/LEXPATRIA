@@ -11,10 +11,11 @@ import { accepterConvention, charger, creerIntention, marquerPaye } from "@/lib/
 
 export const runtime = "nodejs";
 
-const MoyensSchema = z.enum(["CARTE", "KLARNA", "CARTE_KLARNA"]).default("CARTE");
+const MoyensSchema = z.enum(["CARTE", "ECHEANCIER"]).default("CARTE");
+const MoyenId = z.string().max(80).optional();
 const Corps = z.union([
-  z.object({ jeton: z.string(), accepteConvention: z.literal(true), executionImmediate: z.literal(true), moyens: MoyensSchema }),
-  z.object({ jetonProche: z.string(), moyens: MoyensSchema }),
+  z.object({ jeton: z.string(), accepteConvention: z.literal(true), executionImmediate: z.literal(true), moyens: MoyensSchema, moyenId: MoyenId }),
+  z.object({ jetonProche: z.string() }),
 ]);
 
 export async function POST(req: Request) {
@@ -37,7 +38,9 @@ export async function POST(req: Request) {
     const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";
     await accepterConvention(d, c.dos, c.cli, ip);
   }
-  const r = await creerIntention(d, c.dos, c.cli, proche, corps.moyens);
+  // Le paiement en trois fois est réservé au client lui-même (carte enregistrée à son nom) ; un proche règle en une fois.
+  const r = "jeton" in corps ? await creerIntention(d, c.dos, c.cli, false, corps.moyens, corps.moyenId) : await creerIntention(d, c.dos, c.cli, true);
+  if ("erreur" in r) return NextResponse.json({ erreur: r.erreur }, { status: 422 });
 
   if (r.simulation) {
     // Développement sans clé Stripe : paiement simulé, confirmé immédiatement.

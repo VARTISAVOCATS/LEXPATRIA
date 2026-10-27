@@ -17,11 +17,11 @@ export default async function Cabinet() {
         <Bandeau
           surtitre={t("Le cabinet")}
           titre={t("Des avocats à vos côtés, du premier mot à la décision du juge")}
-          chapo={t("Lexpatria Avocats réunit des avocats au barreau de Paris qui consacrent leur pratique au contentieux du droit des étrangers. Ils défendent chaque jour des personnes confrontées à une OQTF, à un refus de titre, de visa ou de naturalisation.")}
+          chapo={t("Nous sommes avocats au barreau de Paris. Nous consacrons notre pratique au contentieux du droit des étrangers. Chaque jour nous défendons des personnes confrontées à une OQTF ou à un refus de titre, de visa ou de naturalisation.")}
           aside={
             <MotCabinet
               avocats={AVOCATS}
-              texte={t("Derrière chaque dossier, il y a une vie, une famille, un travail. Nous prenons le temps de comprendre la vôtre avant d'agir.")}
+              texte={t("Derrière chaque dossier il y a une vie. Une famille, un travail. Nous prenons le temps de comprendre la vôtre avant d'agir.")}
               signature={t("Les avocats du cabinet")}
             />
           }
@@ -32,7 +32,7 @@ export default async function Cabinet() {
             <p className="acc-eye">{t("Vos avocats")}</p>
             <h2>{t("Une équipe que vous connaissez")}</h2>
             <p className="acc-lead">
-              {t("Docteurs en droit, ils allient la rigueur de la recherche à la pratique quotidienne des préfectures et des tribunaux administratifs. Votre dossier est confié à l'un d'eux, qui l'étudie, rédige, relit et dépose personnellement chaque acte.")}
+              {t("Tous docteurs en droit, nous allions la rigueur de la recherche à la pratique des préfectures et des tribunaux. Votre dossier est confié à l'un de nous. Il l'étudie puis rédige et dépose chaque acte.")}
             </p>
             <CartesAvocats avocats={AVOCATS} t={t} />
           </section>
@@ -43,25 +43,25 @@ export default async function Cabinet() {
             <div className="acc-etapes pg-valeurs">
               <div>
                 <b>{t("L'écoute")}</b>
-                <span>{t("Vous vous exprimez dans votre langue, à votre rythme. Rien de ce que vous dites n'est jugé.")}</span>
+                <span>{t("Vous vous exprimez dans votre langue et à votre rythme. Nous ne jugeons rien de ce que vous dites.")}</span>
               </div>
               <div>
                 <b>{t("La clarté")}</b>
-                <span>{t("Vous savez ce que permet votre décision, ce que nous allons faire et ce que cela coûte, avant de vous engager.")}</span>
+                <span>{t("Avant tout engagement vous savez ce que permet votre décision. Vous savez ce que nous allons faire et ce que cela coûte.")}</span>
               </div>
               <div>
                 <b>{t("La rigueur des délais")}</b>
-                <span>{t("En droit des étrangers, les délais sont courts. Votre dossier est pris en charge sous 48 heures ouvrées.")}</span>
+                <span>{t("Les délais sont courts en droit des étrangers. Nous prenons votre dossier en charge sous 48 heures ouvrées.")}</span>
               </div>
             </div>
           </section>
 
           <section className="acc-sec pg-duo">
             <div className="pg-carte">
-              <p className="acc-eye">{t("Secret professionnel")}</p>
-              <h3>{t("Intelligence artificielle, sous le contrôle de l'avocat")}</h3>
+              <p className="acc-eye">{t("Notre méthode")}</p>
+              <h3>{t("L'intelligence artificielle, sous notre contrôle")}</h3>
               <p>
-                {t("Des outils d'intelligence artificielle assistent l'avocat pour lire les décisions et préparer les projets d'actes. L'avocat relit, modifie et valide personnellement chaque acte ; aucune décision n'est prise de manière automatisée. Votre dossier est couvert par le secret professionnel et la plateforme est hébergée en France.")}
+                {t("Des outils d'intelligence artificielle nous aident à lire les décisions et à préparer les projets d'actes. Chaque acte est relu et validé par l'un de nous. Aucune décision n'est prise de manière automatisée. La plateforme est hébergée en France.")}
               </p>
             </div>
             <div className="pg-carte">
@@ -72,7 +72,7 @@ export default async function Cabinet() {
             </div>
           </section>
 
-          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Un avocat du cabinet prend le relais.")} />
+          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Nous prenons le relais.")} />
           <PiedSite />
         </div>
       </main>

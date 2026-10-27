@@ -22,10 +22,10 @@ export const FAQ = [
   },
   {
     q: "Acceptez-vous l'aide juridictionnelle ?",
-    r: "Non. Le cabinet n'intervient pas au titre de l'aide juridictionnelle ; les dossiers sont traités aux honoraires annoncés.",
+    r: "Non. Nous n'intervenons pas au titre de l'aide juridictionnelle. Les dossiers sont traités aux honoraires annoncés.",
   },
   {
     q: "Mes informations sont-elles protégées ?",
-    r: "Oui. Votre dossier est couvert par le secret professionnel de l'avocat, et vos données sont hébergées en France.",
+    r: "Oui. Vos données sont hébergées en France. Elles servent uniquement au traitement de votre dossier.",
   },
 ];

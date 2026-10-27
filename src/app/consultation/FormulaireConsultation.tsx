@@ -45,7 +45,6 @@ export default function FormulaireConsultation({ source }: { source?: string }) 
     recoursPrealable: false,
     consultation: true,
     lignes: [{ diligence: "CONSULTATION" as const, libelle: LIBELLES_DILIGENCE.CONSULTATION, montant: prix }],
-    troisFois: false,
   };
 
   async function continuer() {

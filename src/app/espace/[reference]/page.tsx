@@ -1,5 +1,7 @@
 // Lot 2 : dossier dans l'espace client — suivi, échanges, pièces, documents, paiements.
 import Link from "next/link";
+import { echeancesDossier, lienEcheance } from "@/lib/serveur/echeancier";
+import type { Echeance } from "@/lib/echeancier";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/db";
 import { tServeur } from "@/i18n/serveur";
@@ -50,13 +52,14 @@ export default async function DossierClient({ params, searchParams }: { params: 
   const avis = await avisDuClient(d, dos);
   const consultation = dos.avisPrealable || dos.procedure === "DIAGNOSTIC";
   const [parent, appel] = await Promise.all([premiereInstance(d, dos), dos.dossierParentId ? Promise.resolve(null) : appelDe(d, dos.id)]);
-  let proposition: { total: number; troisFois: boolean; resume: string[]; texte: string; horsUE: boolean } | null = null;
+  let proposition: { total: number; echeancier: Echeance[] | null; resume: string[]; texte: string; horsUE: boolean } | null = null;
   if (dos.statut === "APPEL_PROPOSE") {
     const c = (await charger(d, dos.id))!;
     const dc = await donneesConvention(d, dos, c.cli);
-    proposition = { total: (await offre(d, dos)).total, troisFois: dc.troisFois, resume: resumeConvention(dc), texte: texteConvention(dc), horsUE: !!dc.horsUE };
+    proposition = { total: (await offre(d, dos)).total, echeancier: dc.echeancier ?? null, resume: resumeConvention(dc), texte: texteConvention(dc), horsUE: !!dc.horsUE };
   }
   const { t } = await tServeur();
+  const echeances = await echeancesDossier(d, dos.id);
   const statut = dos.statut as Statut;
   const nomAvocat = x.avocat ? `${x.avocat.prenom} ${x.avocat.nom}` : null;
   const nonLus = onglet === "echanges" ? 0 : x.messages.filter((m) => m.auteur !== "CLIENT" && !m.luLe).length;
@@ -179,7 +182,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
           {onglet === "echanges" && (
             <section className="card">
               <h2>{t("Échanges avec votre avocat")}</h2>
-              <p className="note">{t("Vos échanges sont couverts par le secret professionnel. Vous êtes prévenu(e) par e-mail de chaque nouveau message, sans son contenu.")}</p>
+              <p className="note">{t("Vous êtes prévenu(e) par e-mail de chaque nouveau message, sans son contenu.")}</p>
               <div className="fil">
                 {x.messages.length === 0 && <p className="vide">{t("Aucun message pour le moment.")}</p>}
                 {x.messages.map((m) => (
@@ -273,7 +276,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
                 {x.paiements.map((p) => (
                   <li key={p.id}>
                     <span>
-                      {frDateHeure(p.creeLe).split(" ")[0]} · {p.moyen === "klarna" ? t("Klarna, en 3 fois") : p.moyen ? t("Carte bancaire") : ""}
+                      {frDateHeure(p.creeLe).split(" ")[0]} · {p.moyen ? t("Carte bancaire") : ""}
                       {p.parTiers ? ` · ${t("réglé par un proche")}` : ""}
                     </span>
                     <b>
@@ -285,6 +288,31 @@ export default async function DossierClient({ params, searchParams }: { params: 
                   </li>
                 ))}
               </ul>
+              {echeances.length > 0 && (
+                <>
+                  <h3>{t("Paiement en 3 fois sans frais")}</h3>
+                  <ul className="esp-lignes">
+                    {echeances.map((e) => (
+                      <li key={e.id}>
+                        <span>
+                          {t("Échéance {rang}/3", { rang: e.rang })} · {e.le.split("-").reverse().join("/")}
+                          {e.penalite ? ` · ${t("pénalité incluse")}` : ""}
+                        </span>
+                        <b>
+                          {formatEuros(e.montant + e.penalite)}{" "}
+                          {e.statut === "ECHEC" ? (
+                            <a className="btn sm cta" href={lienEcheance(e.id)}>
+                              {t("Régler")}
+                            </a>
+                          ) : (
+                            <span className={`pill ${e.statut === "PAYE" ? "ok" : "n"}`}>{t(e.statut === "PAYE" ? "Payé" : "À venir")}</span>
+                          )}
+                        </b>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
               <p className="note">{t("Le reçu de chaque paiement vous a été envoyé par e-mail. La facture est établie par la SELARL VARTIS Avocats.")}</p>
             </section>
           )}

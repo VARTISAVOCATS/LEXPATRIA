@@ -200,6 +200,61 @@ export function EditeurRemuneration({ valeur }: { valeur: { acteHT: number } }) 
   );
 }
 
+export function EditeurEcheancier({ valeur }: { valeur: { seuil: number; parts: [number, number, number]; intervalleJours: number; penalite: number; regularisationJours: number; tentativesMax: number } }) {
+  const [v, setV] = useState({
+    seuil: String(valeur.seuil / 100),
+    p1: String(valeur.parts[0]),
+    p2: String(valeur.parts[1]),
+    p3: String(valeur.parts[2]),
+    intervalle: String(valeur.intervalleJours),
+    penalite: String(valeur.penalite / 100).replace(".", ","),
+    regularisation: String(valeur.regularisationJours),
+    tentatives: String(valeur.tentativesMax),
+  });
+  const e = useEnregistrer();
+  const n = (x: string) => Number(x.replace(",", "."));
+  const champ = (k: keyof typeof v, libelle: string) => (
+    <label className="af-c" key={k}>
+      <span>{libelle}</span>
+      <input className="champ" inputMode="decimal" value={v[k]} onChange={(x) => setV({ ...v, [k]: x.target.value })} />
+    </label>
+  );
+  return (
+    <form
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        e.enregistrer({
+          action: "parametre",
+          cle: "echeancier",
+          valeur: {
+            seuil: Math.round(n(v.seuil) * 100),
+            parts: [n(v.p1), n(v.p2), n(v.p3)],
+            intervalleJours: n(v.intervalle),
+            penalite: Math.round(n(v.penalite) * 100),
+            regularisationJours: n(v.regularisation),
+            tentativesMax: n(v.tentatives),
+          },
+        });
+      }}
+    >
+      <div className="bo-tarifs">
+        {champ("seuil", "Proposé à partir de (€ TTC)")}
+        {champ("p1", "1re échéance, à la commande (%)")}
+        {champ("p2", "2e échéance (%)")}
+        {champ("p3", "3e échéance (%)")}
+        {champ("intervalle", "Jours entre deux échéances")}
+        {champ("penalite", "Pénalité par échéance non régularisée (€)")}
+        {champ("regularisation", "Délai de régularisation (jours)")}
+        {champ("tentatives", "Tentatives de prélèvement")}
+      </div>
+      <p className="note">
+        Exemple pour 990 € : {Math.round((990 * n(v.p1)) / 100)} € à la commande, puis {Math.floor((990 * n(v.p2)) / 100)} € à {n(v.intervalle)} jours et {Math.floor((990 * n(v.p3)) / 100)} € à {2 * n(v.intervalle)} jours.
+      </p>
+      <Pied {...e} />
+    </form>
+  );
+}
+
 export function Assistant() {
   const [demande, setDemande] = useState("");
   const e = useEnregistrer();

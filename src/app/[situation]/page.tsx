@@ -98,7 +98,7 @@ export default async function Situation({ params }: { params: Promise<{ situatio
         </div>
 
         <div className="wrap">
-          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Un avocat du cabinet prend le relais.")} />
+          <BandeFin titre={t("Vous n'êtes pas seul face à cette décision")} texte={t("Exposez votre situation en quelques minutes. Nous prenons le relais.")} />
           <PiedSite />
         </div>
       </main>

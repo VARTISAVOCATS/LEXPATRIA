@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { AVOCATS, FAQ } from "./accueil";
+import { ECHEANCIER_DEFAUT, type ReglesEcheancier } from "./echeancier";
 import { LIBELLES_DILIGENCE, TARIFS_DEFAUT, type Diligence } from "./procedures";
 
 const DILIGENCES = Object.keys(TARIFS_DEFAUT) as Diligence[];
@@ -29,6 +30,16 @@ const schemaAccueil = z.object({
   titre: z.string().trim().min(5).max(160),
   sousTitre: z.string().trim().min(5).max(400),
 });
+const schemaEcheancier = z
+  .object({
+    seuil: z.number().int().min(0).max(1_000_000),
+    parts: z.tuple([z.number().int().min(10).max(80), z.number().int().min(10).max(80), z.number().int().min(10).max(80)]),
+    intervalleJours: z.number().int().min(7).max(45),
+    penalite: z.number().int().min(0).max(10_000),
+    regularisationJours: z.number().int().min(1).max(30),
+    tentativesMax: z.number().int().min(1).max(5),
+  })
+  .refine((v) => v.parts[0] + v.parts[1] + v.parts[2] === 100, { message: "Les trois parts doivent totaliser 100 %." });
 const schemaDelais = z.object({
   acceptationNormaleH: z.number().int().min(1).max(48),
   acceptationUrgenceH: z.number().int().min(1).max(24),
@@ -41,7 +52,7 @@ const schemaRemuneration = z.object({
 export const ACCUEIL_DEFAUT = {
   titre: "Vous avez reçu une OQTF ou un refus de la préfecture ?",
   sousTitre:
-    "Des avocats au barreau de Paris étudient votre situation et forment votre recours, devant l'administration ou le tribunal.",
+    "Nous sommes avocats au barreau de Paris. Nous étudions votre situation et formons votre recours, devant l'administration ou le tribunal.",
 };
 
 export const PARAMETRES = {
@@ -80,6 +91,13 @@ export const PARAMETRES = {
     defaut: { acceptationNormaleH: 2, acceptationUrgenceH: 1 },
     public: false,
   },
+  echeancier: {
+    libelle: "Paiement en trois fois",
+    aide: "Proposé à partir du seuil indiqué. Acompte à la commande, puis deux prélèvements sur la carte du client. Pénalité si une échéance rejetée n'est pas régularisée dans le délai.",
+    schema: schemaEcheancier,
+    defaut: ECHEANCIER_DEFAUT,
+    public: true,
+  },
   remuneration: {
     libelle: "Rémunération à l'acte (HT)",
     aide: "Montant versé à l'avocat rémunéré à l'acte pour chaque acte attesté. Un acte compte une fois, même s'il est modifié et attesté à nouveau ; les avis écrits ne sont pas comptés.",
@@ -110,6 +128,7 @@ export interface ContenusPublics {
   faq: { q: string; r: string }[];
   avocats: { nom: string; titre: string; photo: string | null }[];
   accueil: { titre: string; sousTitre: string };
+  echeancier: ReglesEcheancier;
 }
 
 export const CONTENUS_DEFAUT: ContenusPublics = {
@@ -122,6 +141,7 @@ export const CONTENUS_DEFAUT: ContenusPublics = {
   faq: FAQ,
   avocats: AVOCATS,
   accueil: ACCUEIL_DEFAUT,
+  echeancier: ECHEANCIER_DEFAUT,
 };
 
 /** Tous les textes d'une valeur (pour le filtre déontologique). */

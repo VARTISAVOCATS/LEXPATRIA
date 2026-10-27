@@ -39,7 +39,7 @@ const GROUPES: { titre: string; lignes: [Diligence, string][] }[] = [
 
 export default async function Honoraires() {
   const { t } = await tServeur();
-  const { tarifs: TARIFS, avocats } = await contenusPublics(await db());
+  const { tarifs: TARIFS, avocats, echeancier } = await contenusPublics(await db());
   return (
     <>
       <EnteteSite />
@@ -47,12 +47,12 @@ export default async function Honoraires() {
         <Bandeau
           surtitre={t("Honoraires")}
           titre={t("Des honoraires clairs, connus avant de vous engager")}
-          chapo={t("Forfaits fermes, toutes taxes comprises, identiques pour tous les clients. Le prix de votre recours vous est indiqué dès que la procédure adaptée est identifiée, avant tout paiement.")}
+          chapo={t("Nos forfaits sont fermes et toutes taxes comprises. Ils sont les mêmes pour tous. Nous vous indiquons le prix de votre recours dès que la procédure est identifiée, avant tout paiement.")}
         >
           <ul className="acc-eng">
-            <li>{t("Forfait ferme, annoncé à l'avance")}</li>
-            <li>{t("Paiement en une fois ou en trois fois")}</li>
-            <li>{t("Convention d'honoraires acceptée en ligne, en quelques clics")}</li>
+            <li>{t("Forfait ferme, toutes taxes comprises")}</li>
+            <li>{t("Paiement en 3 fois sans frais à partir de {seuil}", { seuil: formatEuros(echeancier.seuil) })}</li>
+            <li>{t("Convention d'honoraires acceptée en ligne")}</li>
           </ul>
         </Bandeau>
 
@@ -98,7 +98,7 @@ export default async function Honoraires() {
             </div>
           </section>
 
-          <BandeFin titre={t("Connaître le prix de votre recours")} texte={t("Exposez votre situation : la procédure, votre délai et le forfait vous sont indiqués avant tout paiement.")} />
+          <BandeFin titre={t("Connaître le prix de votre recours")} texte={t("Exposez votre situation. Nous vous indiquons la procédure, votre délai et notre forfait avant tout paiement.")} />
           <PiedSite />
         </div>
       </main>

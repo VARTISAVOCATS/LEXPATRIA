@@ -11,7 +11,7 @@ import { clientConnecte } from "@/lib/serveur/session";
 export const runtime = "nodejs";
 
 const Corps = z.union([
-  z.object({ reference: z.string().max(20), action: z.literal("payer"), accepteConvention: z.literal(true), executionImmediate: z.literal(true), moyens: z.enum(["CARTE", "KLARNA", "CARTE_KLARNA"]).default("CARTE") }),
+  z.object({ reference: z.string().max(20), action: z.literal("payer"), accepteConvention: z.literal(true), executionImmediate: z.literal(true), moyens: z.enum(["CARTE", "ECHEANCIER"]).default("CARTE"), moyenId: z.string().max(80).optional() }),
   z.object({ reference: z.string().max(20), action: z.literal("renoncer") }),
 ]);
 
@@ -34,7 +34,8 @@ export async function POST(req: Request) {
   if (!adresseComplete(x.cli)) return NextResponse.json({ erreur: "Votre adresse postale est incomplète : écrivez à votre avocat pour la compléter." }, { status: 409 });
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";
   await accepterConvention(d, x.dos, x.cli, ip);
-  const r = await creerIntention(d, x.dos, x.cli, false, "moyens" in c.data ? c.data.moyens : "CARTE");
+  const r = "moyens" in c.data ? await creerIntention(d, x.dos, x.cli, false, c.data.moyens, c.data.moyenId) : await creerIntention(d, x.dos, x.cli, false);
+  if ("erreur" in r) return NextResponse.json({ erreur: r.erreur }, { status: 422 });
   if (r.simulation) {
     if (process.env.NODE_ENV === "production" && !process.env.AUTORISER_SIMULATION) return NextResponse.json({ erreur: "Paiement indisponible." }, { status: 503 });
     await marquerPaye(d, dos.id, { paiementId: r.paiementId, moyen: "simulation" });

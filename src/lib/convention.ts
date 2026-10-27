@@ -4,14 +4,26 @@
 // Les informations manquantes sont marquées XXX : la vue d'ensemble du back office les signale avant la mise en ligne.
 
 import { MENTION_TVA_HORS_UE } from "./pays";
+import { dateCourte, type Echeance, type ReglesEcheancier } from "./echeancier";
 import { formatEuros, type Diligence } from "./procedures";
 
-export const VERSION_CONVENTION = "2026-10-22.1";
+export const VERSION_CONVENTION = "2026-10-26.1";
 
 export interface LigneHonoraires {
   diligence: Diligence;
   libelle: string;
   montant: number; // centimes TTC
+}
+
+/** Clause du paiement en trois fois sans frais, géré par le Cabinet. */
+function clauseEcheancier(d: { echeancier?: Echeance[] | null; regles?: ReglesEcheancier }): string {
+  const e = d.echeancier;
+  if (!e || !d.regles) return "";
+  return (
+    `, en une fois ou, au choix du Client, en trois fois sans frais : ${formatEuros(e[0].montant)} à la commande, puis ${formatEuros(e[1].montant)} le ${dateCourte(e[1].le)} et ${formatEuros(e[2].montant)} le ${dateCourte(e[2].le)}. ` +
+    `En choisissant le paiement en trois fois, le Client autorise le Cabinet à prélever les deux dernières échéances, à leur date, sur la carte utilisée pour le premier paiement. ` +
+    `Une échéance rejetée peut être présentée à nouveau. Si elle n'est pas régularisée dans un délai de ${d.regles.regularisationJours} jours, une pénalité forfaitaire de ${formatEuros(d.regles.penalite)} est due, ainsi que des intérêts au taux légal sur la somme restant due`
+  );
 }
 
 export interface DonneesConvention {
@@ -23,7 +35,9 @@ export interface DonneesConvention {
   procedureLibelle: string;
   recoursPrealable: boolean; // visa, naturalisation : mission jusqu'à la réponse de l'administration
   lignes: LigneHonoraires[];
-  troisFois: boolean;
+  /** Paiement en trois fois proposé : échéances calculées au jour de l'acceptation, et règles de rejet. */
+  echeancier?: Echeance[] | null;
+  regles?: ReglesEcheancier;
   dateLimite?: string; // JJ/MM/AAAA
   /** Client résidant hors de l'Union européenne : même prix, sans TVA (article 259 B du CGI). */
   horsUE?: boolean;
@@ -86,7 +100,7 @@ ${d.consultation ? "Si le Client ne se présente pas au rendez-vous sans l'avoir
 Les sommes que la juridiction pourrait mettre à la charge de l'administration au titre de l'article L. 761-1 du code de justice administrative reviennent au Client. Le Cabinet n'en assure pas le recouvrement mais indique au Client la marche à suivre pour les obtenir.
 
 ARTICLE 3 — FRAIS ET MODALITÉS DE RÈGLEMENT
-Les frais d'envoi des courriers recommandés sont compris dans le forfait. Les honoraires sont réglés en ligne, par carte bancaire${d.troisFois ? " ou, au choix du Client, en trois fois par l'intermédiaire de Klarna, qui règle le Cabinet en totalité et recouvre seul les échéances auprès du Client" : ""}. Une note d'honoraires est émise à chaque paiement.
+Les frais d'envoi des courriers recommandés sont compris dans le forfait. Les honoraires sont réglés en ligne, par carte bancaire${clauseEcheancier(d)}. Une note d'honoraires est émise à chaque paiement.
 
 ARTICLE 4 — DURÉE, RÉTRACTATION ET DESSAISISSEMENT
 La convention prend effet à son acceptation. Le Client dispose d'un délai de rétractation de quatorze jours. En demandant l'exécution immédiate de la mission, il reconnaît que, si le délai de recours l'exige, le Cabinet commencera son intervention avant l'expiration de ce délai, et qu'en cas de rétractation les diligences déjà accomplies resteront dues.

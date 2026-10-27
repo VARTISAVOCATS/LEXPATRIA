@@ -1,5 +1,6 @@
 // Lot 5 : intégrations. Les services externes sont simulés (fetch remplacé) : on vérifie ce que la plateforme envoie.
 import JSZip from "jszip";
+import { ECHEANCIER_DEFAUT } from "@/lib/echeancier";
 import { PDFDocument } from "pdf-lib";
 import { eq } from "drizzle-orm";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -48,7 +49,7 @@ describe("adresse postale", () => {
     expect(adresseComplete({ adresse: "", ville: "Oran", pays: "DZ" })).toBe(false);
     expect(adresseEnLignes({ adresse: "Cité 500 logements", codePostal: "31000", ville: "Oran", pays: "DZ" })).toEqual(["Cité 500 logements", "31000 Oran", "ALGÉRIE"]);
     expect([tvaApplicable("FR"), tvaApplicable("RE"), tvaApplicable("GP"), tvaApplicable("BE"), tvaApplicable("DZ"), tvaApplicable("MA")]).toEqual([true, true, true, true, false, false]);
-    const base = { reference: "D1", procedureLibelle: "Requête", recoursPrealable: false, lignes: [{ diligence: "REQUETE" as const, libelle: "Requête", montant: 99_000 }], troisFois: true };
+    const base = { reference: "D1", procedureLibelle: "Requête", recoursPrealable: false, lignes: [{ diligence: "REQUETE" as const, libelle: "Requête", montant: 99_000 }], echeancier: [{ rang: 1 as const, montant: 49_500, le: "2026-10-26" }, { rang: 2 as const, montant: 24_700, le: "2026-11-20" }, { rang: 3 as const, montant: 24_800, le: "2026-12-15" }], regles: ECHEANCIER_DEFAUT };
     expect(texteConvention(base)).toMatch(/Total : 990\s€ TTC\./);
     expect(texteConvention({ ...base, horsUE: true })).toMatch(/Total : 990\s€ \(TVA non applicable, article 259 B du code général des impôts\)\./);
   });

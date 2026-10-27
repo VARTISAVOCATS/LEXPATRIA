@@ -1810,3 +1810,12 @@ main.acc { padding-top: 0; }
 .bo-ref-l small { color: var(--ink-3); font-size: 12.5px; overflow-wrap: anywhere; }
 .bo-ref-b { display: flex; gap: 6px; flex-wrap: wrap; }
 @media (max-width: 760px) { .bo-eq-m { grid-template-columns: minmax(0, 1fr); } .bo-eq-act { justify-content: flex-start; } }
+.p1-ech { margin: 8px 0 4px; font-size: 14px; color: var(--ink-2); }
+/* Parcours : pré-analyse avant le prix */
+.pa { margin: 6px 0 16px; padding: 16px 18px; border: 1px solid var(--rule); border-left: 3px solid var(--gold); border-radius: 12px; background: var(--white); }
+.pa-t { display: block; font-family: var(--display); font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+.pa dl { margin: 0; display: grid; gap: 10px; }
+.pa dl > div { display: grid; grid-template-columns: minmax(0, 130px) minmax(0, 1fr); gap: 12px; }
+.pa dt { font-size: 13px; color: var(--ink-3); letter-spacing: .02em; }
+.pa dd { margin: 0; font-size: 15px; color: var(--ink); line-height: 1.45; }
+@media (max-width: 480px) { .pa dl > div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }

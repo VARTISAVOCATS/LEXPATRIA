@@ -120,9 +120,9 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
 /** Ce qui se passe après le paiement, identique pour toutes les procédures. */
 export function apresPaiement(urgence: boolean): string[] {
   return [
-    `Un avocat du cabinet prend votre dossier sous ${urgence ? "10" : "48"} heures ouvrées.`,
-    "Vous transmettez vos documents en photo, depuis votre téléphone.",
-    "Votre recours est déposé avant la date limite. Vous suivez chaque étape dans votre espace.",
+    `Nous prenons votre dossier en charge sous ${urgence ? "10" : "48"} heures ouvrées.`,
+    "Vous nous transmettez vos documents en photo, depuis votre téléphone.",
+    "Nous déposons votre recours avant la date limite. Vous suivez chaque étape dans votre espace.",
   ];
 }
 

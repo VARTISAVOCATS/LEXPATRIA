@@ -36,13 +36,14 @@ export async function lireParametre<K extends CleParametre>(d: Base, cle: K): Pr
 }
 
 export async function contenusPublics(d: Base): Promise<ContenusPublics> {
-  const [tarifs, faq, avocats, accueil] = await Promise.all([
+  const [tarifs, faq, avocats, accueil, echeancier] = await Promise.all([
     lireParametre(d, "tarifs"),
     lireParametre(d, "faq"),
     lireParametre(d, "avocats"),
     lireParametre(d, "accueil"),
+    lireParametre(d, "echeancier"),
   ]);
-  return { config: await configPublique(), tarifs, faq, avocats, accueil };
+  return { config: await configPublique(), tarifs, faq, avocats, accueil, echeancier: echeancier as ContenusPublics["echeancier"] };
 }
 
 export interface ControleEcriture {
