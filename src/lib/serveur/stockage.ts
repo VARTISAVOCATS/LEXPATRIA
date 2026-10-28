@@ -71,9 +71,16 @@ export async function enregistrer(dossierRef: string, nom: string, mime: string,
 
 export async function lire(cle: string): Promise<Buffer> {
   if (await enS3()) {
-    const { client, bucket, GetObjectCommand } = await s3();
-    const r = await client.send(new GetObjectCommand({ Bucket: bucket, Key: cle }));
-    return Buffer.from(await r.Body!.transformToByteArray());
+    try {
+      const { client, bucket, GetObjectCommand } = await s3();
+      const r = await client.send(new GetObjectCommand({ Bucket: bucket, Key: cle }));
+      return Buffer.from(await r.Body!.transformToByteArray());
+    } catch (e) {
+      // Pièce déposée avant la configuration du stockage objet et pas encore copiée : lue sur le serveur.
+      const local = await readFile(path.join(dossierLocal(), cle)).catch(() => null);
+      if (local) return local;
+      throw e;
+    }
   }
   return readFile(path.join(dossierLocal(), cle));
 }
@@ -82,7 +89,7 @@ export async function supprimer(cle: string): Promise<void> {
   if (await enS3()) {
     const { client, bucket, DeleteObjectCommand } = await s3();
     await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: cle }));
-  } else {
-    await rm(path.join(dossierLocal(), cle), { force: true });
   }
+  // Copie éventuellement restée sur le serveur (pièce déposée avant la configuration du stockage objet).
+  await rm(path.join(dossierLocal(), cle), { force: true });
 }

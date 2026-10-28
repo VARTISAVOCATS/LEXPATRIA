@@ -6,7 +6,7 @@ RUN npm ci
 
 FROM node:22-alpine AS outils
 WORKDIR /outils
-RUN echo '{"private":true,"type":"module"}' > package.json && npm install --omit=dev drizzle-orm@0.44.5 pg@8.16.3
+RUN echo '{"private":true,"type":"module"}' > package.json && npm install --omit=dev drizzle-orm@0.44.5 pg@8.16.3 @aws-sdk/client-s3@3.893.0
 
 FROM node:22-alpine AS build
 WORKDIR /app
@@ -33,7 +33,7 @@ COPY --from=build --chown=lex:lex /app/public ./public
 COPY --from=build --chown=lex:lex /app/drizzle ./drizzle
 # Scripts de migration et d'équipe, avec leurs seuls pilotes (dossier séparé de l'application).
 COPY --from=outils --chown=lex:lex /outils ./outils
-COPY --from=build --chown=lex:lex /app/scripts/migrer.mjs /app/scripts/equipe.mjs /app/scripts/code-secours.mjs ./outils/
+COPY --from=build --chown=lex:lex /app/scripts/migrer.mjs /app/scripts/equipe.mjs /app/scripts/code-secours.mjs /app/scripts/sauvegarde-externe.mjs ./outils/
 # Pièces stockées sur le serveur tant que le stockage objet n'est pas configuré (volume persistant, voir compose.yaml).
 RUN mkdir -p /app/.stockage && chown lex:lex /app/.stockage
 USER lex
