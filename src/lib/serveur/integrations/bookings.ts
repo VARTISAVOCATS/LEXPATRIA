@@ -35,10 +35,41 @@ const OUVERTURE = 9 * 60;
 const FERMETURE = 19 * 60;
 const DELAI_MIN_H = 4; // pas de créneau dans les 4 prochaines heures
 
+// Service « Consultation » retrouvé automatiquement quand son identifiant n'est pas saisi au back office.
+let serviceTrouve: { entreprise: string; id: string } | null = null;
+
+async function serviceConsultation(entreprise: string): Promise<{ id: string; nom: string } | null> {
+  const r = await graph<{ value: { id: string; displayName: string }[] }>(`/solutions/bookingBusinesses/${encodeURIComponent(entreprise)}/services`);
+  const s = r.value.find((x) => /consultation/i.test(x.displayName)) ?? (r.value.length === 1 ? r.value[0] : null);
+  return s ? { id: s.id, nom: s.displayName } : null;
+}
+
 async function config() {
-  const [entreprise, service] = await Promise.all([valeur("BOOKINGS_ENTREPRISE"), valeur("BOOKINGS_SERVICE")]);
-  if (!entreprise || !service || !(await graphConfigure())) return null;
+  const [entreprise, saisi] = await Promise.all([valeur("BOOKINGS_ENTREPRISE"), valeur("BOOKINGS_SERVICE")]);
+  if (!entreprise || !(await graphConfigure())) return null;
+  let service = saisi;
+  if (!service) {
+    if (serviceTrouve?.entreprise !== entreprise) {
+      const s = await serviceConsultation(entreprise).catch(() => null);
+      serviceTrouve = s ? { entreprise, id: s.id } : null;
+    }
+    service = serviceTrouve?.id;
+  }
+  if (!service) return null;
   return { entreprise: encodeURIComponent(entreprise), service };
+}
+
+/** Vérification affichée au back office (bouton « Tester » de Microsoft 365). */
+export async function diagnosticBookings(): Promise<string> {
+  const entreprise = await valeur("BOOKINGS_ENTREPRISE");
+  if (!entreprise) return "Bookings : adresse de la page non saisie.";
+  const e = encodeURIComponent(entreprise);
+  const [staff, s] = await Promise.all([
+    graph<{ value: { displayName: string }[] }>(`/solutions/bookingBusinesses/${e}/staffMembers`),
+    serviceConsultation(entreprise),
+  ]);
+  if (!s) return `Bookings : page trouvée, mais aucun service « Consultation ».`;
+  return `Bookings : page trouvée, service « ${s.nom} », ${staff.value.length} membre(s) de l'équipe. La consultation en visio est ouverte sur le site.`;
 }
 
 export const bookingsConfigure = async () => !!(await config());

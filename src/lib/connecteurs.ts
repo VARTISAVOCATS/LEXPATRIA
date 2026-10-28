@@ -95,7 +95,7 @@ export const CONNECTEURS: Connecteur[] = [
       { nom: "MS_CLIENT_SECRET", libelle: "Secret client", secret: true, requis: true },
       { nom: "SHAREPOINT_SITE", libelle: "Site SharePoint (adresse, ex. https://vartis.sharepoint.com/sites/Lexpatria)", secret: false },
       { nom: "BOOKINGS_ENTREPRISE", libelle: "Microsoft Bookings : adresse de la page de réservation (ex. LexpatriaConsultations@vartis.law)", secret: false },
-      { nom: "BOOKINGS_SERVICE", libelle: "Microsoft Bookings : identifiant du service « Consultation en visio »", secret: false },
+      { nom: "BOOKINGS_SERVICE", libelle: "Microsoft Bookings : identifiant du service (facultatif : le service dont le nom contient « Consultation » est retrouvé seul)", secret: false },
     ],
     test: true,
   },

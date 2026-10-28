@@ -205,7 +205,13 @@ export async function testerConnexion(d: Base, service: string, par: string): Pr
           headers: { "content-type": "application/x-www-form-urlencoded" },
           body: new URLSearchParams({ client_id: id, client_secret: secret, grant_type: "client_credentials", scope: "https://graph.microsoft.com/.default" }),
         });
-        res = r.ok ? { ok: true, message: "Application reconnue par Microsoft 365." } : { ok: false, message: `Microsoft refuse les identifiants (code ${r.status}).` };
+        if (!r.ok) {
+          res = { ok: false, message: `Microsoft refuse les identifiants (code ${r.status}).` };
+          break;
+        }
+        const { diagnosticBookings } = await import("./integrations/bookings");
+        const b = await diagnosticBookings().catch((e) => `Bookings inaccessible : ${e instanceof Error ? e.message.slice(0, 160) : "erreur"}. Vérifiez les autorisations Bookings et le consentement administrateur.`);
+        res = { ok: !b.startsWith("Bookings inaccessible") && !b.includes("aucun service"), message: `Application reconnue par Microsoft 365. ${b}` };
         break;
       }
       case "pennylane": {
