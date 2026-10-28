@@ -12,7 +12,7 @@ const SECTIONS: SectionJuridique[] = [
     titre: "Responsable du traitement",
     paragraphes: [
       "La SELARL VARTIS Avocats, 222 boulevard Saint-Germain, 75007 Paris, exerçant sous le nom commercial LEXPATRIA Avocats, est responsable des traitements de données réalisés sur la plateforme.",
-      "Pour toute question relative à vos données : XXX (adresse e-mail).",
+      "Pour toute question relative à vos données : contact@lexpatria.fr.",
     ],
   },
   {
@@ -57,7 +57,7 @@ const SECTIONS: SectionJuridique[] = [
         "Brevo (France) : envoi des e-mails.",
         "Anthropic (États-Unis) : outils d'intelligence artificielle.",
         "Microsoft (Union européenne) : prise de rendez-vous et visioconférence pour les consultations.",
-        "XXX : facturation, le cas échéant.",
+        "Pennylane (France) : facturation.",
       ],
       "Vos données ne sont ni vendues ni cédées.",
     ],
@@ -84,7 +84,7 @@ const SECTIONS: SectionJuridique[] = [
     titre: "Vos droits",
     paragraphes: [
       "Vous disposez d'un droit d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données, ainsi que du droit de définir des directives relatives à leur sort après votre décès. Vous pouvez retirer à tout moment votre consentement aux cookies par le lien « Gérer les cookies » en bas de page.",
-      "Pour exercer ces droits : XXX (adresse e-mail), ou par courrier au siège du cabinet. Certaines données doivent être conservées malgré une demande d'effacement lorsque la loi l'impose.",
+      "Pour exercer ces droits : contact@lexpatria.fr, ou par courrier au siège du cabinet. Certaines données doivent être conservées malgré une demande d'effacement lorsque la loi l'impose.",
       "Vous pouvez adresser une réclamation à la Commission nationale de l'informatique et des libertés (CNIL), 3 place de Fontenoy, 75007 Paris, cnil.fr.",
     ],
   },

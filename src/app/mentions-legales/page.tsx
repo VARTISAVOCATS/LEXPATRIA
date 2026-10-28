@@ -7,11 +7,11 @@ const SECTIONS: SectionJuridique[] = [
   {
     titre: "Éditeur du site",
     paragraphes: [
-      "Le site lexpatria.fr est édité par la SELARL VARTIS Avocats, société d'exercice libéral à responsabilité limitée d'avocats au barreau de Paris, au capital de XXX euros, immatriculée au registre du commerce et des sociétés de Paris sous le numéro 937 773 885.",
+      "Le site lexpatria.fr est édité par la SELARL VARTIS Avocats, société d'exercice libéral à responsabilité limitée d'avocats au barreau de Paris, au capital de 5 000 euros, immatriculée au registre du commerce et des sociétés de Paris sous le numéro 937 773 885.",
       "Siège social : 222 boulevard Saint-Germain, 75007 Paris. Numéro de TVA intracommunautaire : FR15937773885.",
       "LEXPATRIA Avocats est le nom commercial de la SELARL VARTIS Avocats.",
-      "Contact : XXX (adresse e-mail) · XXX (téléphone).",
-      "Directeur de la publication : XXX, en qualité de représentant légal de la SELARL VARTIS Avocats.",
+      "Contact : contact@lexpatria.fr · 01 83 81 51 23.",
+      "Directeur de la publication : Maître Rafik Rabia, en qualité de représentant légal de la SELARL VARTIS Avocats.",
     ],
   },
   {
@@ -23,7 +23,7 @@ const SECTIONS: SectionJuridique[] = [
     paragraphes: [
       "Les avocats du cabinet sont inscrits au barreau de Paris. Le titre d'avocat a été obtenu en France.",
       "La profession est régie par la loi n° 71-1130 du 31 décembre 1971, le décret n° 91-1197 du 27 novembre 1991, le décret n° 2005-790 du 12 juillet 2005 relatif aux règles de déontologie, le règlement intérieur national de la profession d'avocat et le règlement intérieur du barreau de Paris. Ces textes sont consultables sur les sites du Conseil national des barreaux et de l'Ordre des avocats de Paris.",
-      "Assurance de responsabilité civile professionnelle : contrat collectif souscrit par l'Ordre des avocats de Paris auprès de XXX, couvrant l'activité exercée en France.",
+      "Assurance de responsabilité civile professionnelle : contrat collectif souscrit par l'Ordre des avocats de Paris auprès de MMA, par l'intermédiaire du courtier AON, couvrant l'activité exercée en France.",
     ],
   },
   {
