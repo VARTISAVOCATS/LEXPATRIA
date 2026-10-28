@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { MISE_A_JOUR, parSlug, RELUE_LE, SITUATIONS, type Bloc } from "@/lib/situations";
 import { db } from "@/db";
 import { tServeur } from "@/i18n/serveur";
+import { BASE, ld, meta } from "@/lib/seo";
 import { contenusPublics } from "@/lib/serveur/parametres";
 import { EnteteSite } from "../composants/Entete";
 import PiedSite from "../composants/PiedSite";
@@ -13,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ situation: string }> }) {
   const p = parSlug((await params).situation);
-  return p ? { title: `${p.titre} — LEXPATRIA Avocats`, description: p.description } : {};
+  return p ? meta(`${p.titre} — LEXPATRIA Avocats`, p.description, `/${p.slug}`) : {};
 }
 
 const dateFr = (iso: string) =>
@@ -50,8 +51,30 @@ export default async function Situation({ params }: { params: Promise<{ situatio
   if (!p) notFound();
   const { t } = await tServeur();
   const { avocats } = await contenusPublics(await db());
+  const donnees = {
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": `${BASE}/${p.slug}`,
+        url: `${BASE}/${p.slug}`,
+        name: p.titre,
+        description: p.description,
+        inLanguage: "fr-FR",
+        dateModified: MISE_A_JOUR,
+        publisher: { "@id": `${BASE}/#cabinet` },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Accueil", item: BASE },
+          { "@type": "ListItem", position: 2, name: p.nav, item: `${BASE}/${p.slug}` },
+        ],
+      },
+    ],
+  };
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(donnees) }} />
       <EnteteSite />
       <main className="acc">
         <section className="acc-hero pg-hero">
@@ -89,7 +112,7 @@ export default async function Situation({ params }: { params: Promise<{ situatio
             <div className="pg-carte">
               <Visages avocats={avocats} petit />
               <h3>Chaque situation est particulière</h3>
-              <p>Exposez la vôtre : la procédure applicable et votre date limite vous sont indiquées, puis un avocat du cabinet étudie votre dossier.</p>
+              <p>Exposez la vôtre pour connaître la procédure applicable et votre date limite.</p>
               <Link className="btn cta" href="/depot">
                 Exposer ma situation
               </Link>
@@ -98,7 +121,7 @@ export default async function Situation({ params }: { params: Promise<{ situatio
         </div>
 
         <div className="wrap">
-          <BandeFin titre={t("Votre décision appelle une réponse dans un délai court")} texte={t("Exposez votre situation en quelques minutes : un avocat du cabinet prend ensuite votre dossier en charge.")} />
+          <BandeFin titre={t("Votre décision appelle une réponse dans un délai court")} texte={t("Exposez votre situation en quelques minutes.")} />
           <PiedSite />
         </div>
       </main>

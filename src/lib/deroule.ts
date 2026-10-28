@@ -8,28 +8,28 @@ const PRISE_EN_CHARGE = "Un avocat du cabinet prend votre dossier en charge sous
 const SUIVI = "Vous suivez chaque étape dans votre espace et pouvez y écrire à votre avocat à tout moment.";
 
 const TRIBUNAL = [
-  "Le tribunal enregistre la requête et la communique à la préfecture, qui présente sa défense ; votre avocat y répond si nécessaire.",
-  "Le tribunal fixe ensuite une audience, dont la date vous est communiquée ; votre présence n'est pas obligatoire.",
+  "Le tribunal communique la requête à la préfecture. Votre avocat répond à sa défense si nécessaire.",
+  "La date de l'audience vous est communiquée. Votre présence n'est pas obligatoire.",
   "Une fois le jugement rendu, votre avocat vous l'adresse et vous en explique la portée.",
 ];
 
 export const DEROULE: Partial<Record<CodeProcedure, string[]>> = {
   OQTF: [
     PRISE_EN_CHARGE,
-    "Vous transmettez depuis votre espace la décision, l'enveloppe ou la preuve de notification, puis vos autres pièces.",
-    "Votre avocat dépose la requête au tribunal administratif avant la date limite. Formé dans le délai, ce recours suspend en principe l'exécution de l'éloignement jusqu'au jugement.",
+    "Vous transmettez depuis votre espace l'enveloppe ou la preuve de notification puis vos autres pièces.",
+    "Votre avocat dépose la requête au tribunal administratif avant la date limite. Ce recours suspend en principe l'éloignement jusqu'au jugement.",
     ...TRIBUNAL,
   ],
   REFUS_TITRE: [
     PRISE_EN_CHARGE,
-    "Vous transmettez depuis votre espace la décision, l'enveloppe ou la preuve de notification, puis vos autres pièces.",
+    "Vous transmettez depuis votre espace l'enveloppe ou la preuve de notification puis vos autres pièces.",
     "Votre avocat dépose la requête au tribunal administratif avant la date limite.",
     ...TRIBUNAL,
   ],
   REFUS_IMPLICITE: [
     PRISE_EN_CHARGE,
     "Vous transmettez depuis votre espace la preuve du dépôt de votre demande et vos autres documents.",
-    "Votre avocat demande à la préfecture la communication des motifs du refus ; elle dispose d'un mois pour y répondre.",
+    "Votre avocat demande à la préfecture les motifs du refus. Elle dispose d'un mois pour les communiquer.",
     "Il dépose ensuite la requête au tribunal administratif, dans le délai de recours.",
     ...TRIBUNAL,
   ],
@@ -37,21 +37,21 @@ export const DEROULE: Partial<Record<CodeProcedure, string[]>> = {
     PRISE_EN_CHARGE,
     "Vous transmettez depuis votre espace la décision de refus et les pièces de votre demande de visa.",
     "Votre avocat adresse le recours préalable à l'autorité compétente, en recommandé avec accusé de réception.",
-    "L'administration dispose de deux mois pour répondre ; à défaut de réponse dans ce délai, le recours est réputé rejeté.",
-    "La réponse vous est transmise. En cas de rejet, un recours devant le tribunal administratif de Nantes reste possible ; il fait l'objet d'une offre distincte.",
+    "Sans réponse de l'administration dans les deux mois, le recours est réputé rejeté.",
+    "La réponse vous est transmise. En cas de rejet, le tribunal administratif de Nantes peut être saisi dans le cadre d'une offre distincte.",
   ],
   NATURALISATION: [
     PRISE_EN_CHARGE,
     "Vous transmettez depuis votre espace la décision et les pièces de votre demande de naturalisation.",
     "Votre avocat adresse le recours au ministre de l'Intérieur, en recommandé avec accusé de réception.",
-    "Le ministre dispose de quatre mois pour répondre ; à défaut de réponse dans ce délai, le recours est réputé rejeté.",
-    "La réponse vous est transmise. En cas de rejet, un recours devant le tribunal administratif de Nantes reste possible ; il fait l'objet d'une offre distincte.",
+    "Sans réponse du ministre dans les quatre mois, le recours est réputé rejeté.",
+    "La réponse vous est transmise. En cas de rejet, le tribunal administratif de Nantes peut être saisi dans le cadre d'une offre distincte.",
   ],
   BLOCAGE_EMPLOI: [
     PRISE_EN_CHARGE,
     "Vous transmettez depuis votre espace votre récépissé ou la preuve de vos démarches, ainsi qu'un document de votre employeur.",
     "Votre avocat dépose le référé au tribunal administratif.",
-    "Le juge des référés examine la demande en urgence ; si une audience est fixée, vous en êtes informé sans délai.",
+    "Le juge des référés examine la demande en urgence. Vous êtes informé sans délai de toute audience.",
     "Sa décision vous est transmise, avec la suite à donner auprès de la préfecture.",
   ],
   BLOCAGE_SIMPLE: [
@@ -59,7 +59,7 @@ export const DEROULE: Partial<Record<CodeProcedure, string[]>> = {
     "Vous transmettez depuis votre espace votre récépissé ou la preuve de vos démarches auprès de la préfecture.",
     "Votre avocat adresse la mise en demeure à la préfecture, en recommandé avec accusé de réception.",
     "Il suit la réponse de la préfecture et vous la transmet.",
-    "Si la mise en demeure reste sans effet, un référé peut vous être proposé ; il fait l'objet d'une offre distincte.",
+    "Si la mise en demeure reste sans effet, un référé peut vous être proposé dans le cadre d'une offre distincte.",
   ],
   PROCEDURE_EN_COURS: [
     PRISE_EN_CHARGE,

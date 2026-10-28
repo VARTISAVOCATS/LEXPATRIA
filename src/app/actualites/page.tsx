@@ -12,6 +12,7 @@ export const metadata = {
   title: "Actualités du droit des étrangers — LEXPATRIA Avocats",
   description: "OQTF, titre de séjour, visa, naturalisation : les articles du cabinet pour comprendre vos droits et les délais pour agir.",
   alternates: { canonical: "/actualites" },
+  openGraph: { title: "Actualités du droit des étrangers — LEXPATRIA Avocats", url: "/actualites", type: "website", images: [{ url: "/opengraph-image", width: 1200, height: 630 }] },
 };
 
 export default async function Actualites() {
@@ -23,7 +24,7 @@ export default async function Actualites() {
         <Bandeau
           surtitre="Actualités"
           titre="Comprendre vos droits"
-          chapo="Des réponses claires aux questions que posent une OQTF, un refus de titre ou de visa, une préfecture qui ne répond pas."
+          chapo="OQTF, refus de titre ou de visa, préfecture sans réponse : délais et recours."
         />
         <div className="wrap art">
           {liste.length === 0 ? (

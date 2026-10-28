@@ -28,7 +28,15 @@ export default function PiedSite() {
         </Link>
         {" · "}
         <Link className="link" href="/honoraires">
-          {t("Convention d'honoraires et conditions")}
+          {t("Honoraires")}
+        </Link>
+        {" · "}
+        <Link className="link" href="/mentions-legales">
+          {t("Mentions légales")}
+        </Link>
+        {" · "}
+        <Link className="link" href="/confidentialite">
+          {t("Confidentialité")}
         </Link>
       </span>
       <span>{t("Contestation des honoraires : Bâtonnier de l'Ordre des avocats de Paris.")}</span>

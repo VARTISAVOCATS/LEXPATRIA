@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: `${a.titre} — LEXPATRIA Avocats`,
     description: a.chapo,
     alternates: { canonical: `/actualites/${a.slug}` },
-    openGraph: { title: a.titre, description: a.chapo, type: "article", url: `${base}/actualites/${a.slug}`, publishedTime: a.publieLe?.toISOString() },
+    openGraph: { title: a.titre, description: a.chapo, type: "article", url: `${base}/actualites/${a.slug}`, publishedTime: a.publieLe?.toISOString(), images: [{ url: "/opengraph-image", width: 1200, height: 630 }] },
   };
 }
 

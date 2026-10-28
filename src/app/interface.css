@@ -1823,3 +1823,7 @@ main.acc { padding-top: 0; }
 .dec-dem { display: grid; gap: 12px; }
 .dec-dem .dec-btn { justify-self: start; }
 .dec-dem .link { justify-self: start; }
+
+/* Pages juridiques */
+.pg-juridique { grid-template-columns: minmax(0, 1fr); }
+.jur-xxx { background: #fff1a8; color: inherit; padding: 0 2px; }

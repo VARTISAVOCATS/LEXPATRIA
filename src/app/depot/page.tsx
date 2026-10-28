@@ -1,6 +1,6 @@
 import Parcours from "./Parcours";
 
-export const metadata = { title: "Déposer mon dossier — LEXPATRIA Avocats" };
+export const metadata = { title: "Déposer mon dossier — LEXPATRIA Avocats", robots: { index: false, follow: false } };
 
 export default async function Depot({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const p = await searchParams;

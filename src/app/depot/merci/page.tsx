@@ -13,7 +13,7 @@ import type { CodeProcedure } from "@/lib/procedures";
 import type { Reponses } from "@/lib/questionnaire";
 import Collecte from "./Collecte";
 
-export const metadata = { title: "Paiement validé — LEXPATRIA Avocats" };
+export const metadata = { title: "Paiement validé — LEXPATRIA Avocats", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function Merci({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {

@@ -12,15 +12,22 @@ import { FournisseurLangue } from "@/i18n/client";
 import { langueServeur } from "@/i18n/serveur";
 import { db } from "@/db";
 import { contenusPublics } from "@/lib/serveur/parametres";
+import { BASE, NOM } from "@/lib/seo";
 import { FournisseurContenus } from "./composants/Contenus";
 import Consentement from "./Consentement";
 import "./interface.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "LEXPATRIA Avocats — Déposer votre recours en ligne",
+  metadataBase: new URL(BASE),
+  title: "Recours OQTF, titre de séjour, visa — LEXPATRIA Avocats",
   description:
-    "OQTF, refus de titre de séjour, refus de visa, naturalisation, préfecture sans réponse : déposez votre dossier en ligne, un avocat du cabinet le prend en charge sous 48 heures ouvrées.",
+    "Avocats au barreau de Paris : recours contre une OQTF, un refus de titre de séjour, de visa ou de naturalisation. Prix indiqué avant tout paiement.",
+  applicationName: NOM,
+  openGraph: { siteName: NOM, locale: "fr_FR", type: "website" },
+  twitter: { card: "summary_large_image" },
+  robots: { index: true, follow: true },
+  formatDetection: { telephone: false },
 };
 
 // Les contenus (tarifs, FAQ…) sont lus au back office à chaque requête (cache de 30 secondes).

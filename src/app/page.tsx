@@ -5,6 +5,7 @@ import { publies } from "@/lib/serveur/blog";
 import { formatEuros } from "@/lib/procedures";
 import { SITUATIONS } from "@/lib/situations";
 import { tServeur } from "@/i18n/serveur";
+import { BASE, cabinetLd, ld, meta, NOM } from "@/lib/seo";
 import BoutonsAccueil from "./BoutonsAccueil";
 import { EnteteSite } from "./composants/Entete";
 import PiedSite from "./composants/PiedSite";
@@ -20,6 +21,12 @@ const initiales = (nom: string) =>
     .join("")
     .slice(0, 2);
 
+export const metadata = meta(
+  "Recours OQTF, titre de séjour, visa — LEXPATRIA Avocats",
+  "Avocats au barreau de Paris : recours contre une OQTF, un refus de titre de séjour, de visa ou de naturalisation. Prix indiqué avant tout paiement.",
+  "/",
+);
+
 export default async function Accueil() {
   const { t } = await tServeur();
   const d = await db();
@@ -34,12 +41,24 @@ export default async function Accueil() {
       <span>{initiales(nom)}</span>
     );
 
+  const donnees = {
+    "@graph": [
+      cabinetLd(AVOCATS),
+      { "@type": "WebSite", "@id": `${BASE}/#site`, url: BASE, name: NOM, inLanguage: "fr-FR", publisher: { "@id": `${BASE}/#cabinet` } },
+      {
+        "@type": "FAQPage",
+        mainEntity: FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.r } })),
+      },
+    ],
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ld(donnees) }} />
       <EnteteSite />
       <main className="acc">
         <section className="acc-hero">
-          <div className="wrap acc-hero-g">
+          <div className="wrap pg-hero-s">
             <div className="acc-hero-t">
               <p className="acc-eye">{t("Avocats au barreau de Paris · Droit des étrangers")}</p>
               <h1>{t(accueil.titre)}</h1>
@@ -53,20 +72,6 @@ export default async function Accueil() {
                 <li>{t("Paiement en 3 fois sans frais")}</li>
               </ul>
             </div>
-            <aside className="acc-mot">
-              <div className="acc-visages" aria-hidden>
-                {AVOCATS.map((a) => (
-                  <span key={a.nom} className="acc-v">
-                    <Visage nom={a.nom} photo={a.photo} />
-                  </span>
-                ))}
-              </div>
-              <blockquote>
-                {t(
-                  "Un avocat du cabinet analyse votre décision, identifie le recours ouvert et agit avant l'expiration du délai.",
-                )}
-              </blockquote>
-            </aside>
           </div>
         </section>
 
@@ -104,7 +109,7 @@ export default async function Accueil() {
             <ol className="acc-etapes">
               <li>
                 <b>{t("Vous exposez votre situation")}</b>
-                <span>{t("Par écrit, à la voix ou en photographiant votre décision, dans la langue de votre choix.")}</span>
+                <span>{t("Par écrit ou à la voix, dans votre langue.")}</span>
               </li>
               <li>
                 <b>{t("La procédure et votre délai vous sont indiqués")}</b>
@@ -112,7 +117,7 @@ export default async function Accueil() {
               </li>
               <li>
                 <b>{t("Un avocat forme votre recours")}</b>
-                <span>{t("Il prend contact avec vous sous 48 heures ouvrées ; vous suivez ensuite chaque étape depuis votre espace.")}</span>
+                <span>{t("Il prend contact avec vous sous 48 heures ouvrées.")}</span>
               </li>
             </ol>
           </section>
@@ -130,7 +135,7 @@ export default async function Accueil() {
             </div>
             <p className="acc-visio">
               <Link className="link" href="/consultation">
-                {t("Vous souhaitez vous entretenir avec un avocat ? Une consultation de 30 minutes en visio vous est proposée pour {prix}.", { prix: formatEuros(tarifs.CONSULTATION) })}
+                {t("Consulter un avocat en visio : 30 minutes, {prix}.", { prix: formatEuros(tarifs.CONSULTATION) })}
               </Link>
             </p>
           </section>
@@ -163,7 +168,7 @@ export default async function Accueil() {
 
           <section className="acc-fin">
             <h2>{t("Votre décision appelle une réponse dans un délai court")}</h2>
-            <p>{t("Exposez votre situation en quelques minutes : un avocat du cabinet prend ensuite votre dossier en charge.")}</p>
+            <p>{t("Exposez votre situation en quelques minutes.")}</p>
             <div className="h-cta ph-cta">
               <BoutonsAccueil />
             </div>

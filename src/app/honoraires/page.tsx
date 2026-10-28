@@ -1,4 +1,5 @@
 import { tServeur } from "@/i18n/serveur";
+import { meta } from "@/lib/seo";
 import { db } from "@/db";
 import { formatEuros, type Diligence } from "@/lib/procedures";
 import { contenusPublics } from "@/lib/serveur/parametres";
@@ -6,7 +7,7 @@ import { EnteteSite } from "../composants/Entete";
 import PiedSite from "../composants/PiedSite";
 import { BandeFin, Bandeau, Visages } from "../composants/Vitrine";
 
-export const metadata = { title: "Honoraires — LEXPATRIA Avocats" };
+export const metadata = meta("Honoraires des recours en droit des étrangers — LEXPATRIA Avocats", "Forfaits fermes toutes taxes comprises pour chaque recours : requête au tribunal administratif, référé, recours préalable, appel. Paiement en 3 fois sans frais.", "/honoraires");
 
 const GROUPES: { titre: string; lignes: [Diligence, string][] }[] = [
   {
@@ -46,8 +47,8 @@ export default async function Honoraires() {
       <main className="acc">
         <Bandeau
           surtitre={t("Honoraires")}
-          titre={t("Des honoraires clairs, connus avant de vous engager")}
-          chapo={t("Les forfaits du cabinet sont fermes, toutes taxes comprises et identiques pour tous. Le prix de votre recours vous est indiqué dès que la procédure est identifiée, avant tout paiement.")}
+          titre={t("Des forfaits fermes, toutes taxes comprises")}
+          chapo={t("Le prix de votre recours vous est indiqué avant tout paiement.")}
         >
           <ul className="acc-eng">
             <li>{t("Forfait ferme, toutes taxes comprises")}</li>
@@ -76,7 +77,7 @@ export default async function Honoraires() {
               ))}
             </div>
             <p className="acc-lead pg-note">
-              {t("Hors Île-de-France, seuls les frais de déplacement font l'objet d'un avenant, soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet ; l'avis écrit ne l'est pas.")}
+              {t("Hors Île-de-France, les frais de déplacement font l'objet d'un avenant soumis à votre accord. Le diagnostic écrit est déduit si vous confiez ensuite le dossier au cabinet. L'avis écrit ne l'est pas.")}
             </p>
             <p className="note warn">{t("Aide juridictionnelle non acceptée.")}</p>
           </section>

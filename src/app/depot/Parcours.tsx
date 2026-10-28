@@ -552,11 +552,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     const pref = prefecture ? t("la préfecture de {p}", { p: prefecture.replace(/\s*\(.*\)$/, "") }) : t("la préfecture");
     const demarche = typeDemande === "RENOUVELLEMENT" ? t("renouvellement de titre") : typeDemande === "CHANGEMENT" ? t("changement de statut") : t("demande de titre");
     if (AVEC_DECISION.includes(procedure))
-      return t("Votre avocat vérifiera, à la lecture de votre décision, le délai et la voie de recours.");
+      return t("Votre avocat vérifiera le délai et la voie de recours à la lecture de votre décision.");
     if (procedure === "REFUS_IMPLICITE")
       return dateDemande
-        ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat en demandera d'abord les motifs à la préfecture, puis contestera ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
-        : t("Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat en demandera d'abord les motifs, puis contestera ce refus devant le tribunal administratif.");
+        ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
+        : t("Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.");
     if (procedure === "BLOCAGE_EMPLOI")
       return t("Votre dossier ({d}) est bloqué auprès de {p} et votre emploi est menacé. Le juge des référés peut ordonner rapidement à la préfecture de vous donner un rendez-vous ou de vous délivrer un récépissé.", { d: demarche, p: pref });
     if (procedure === "BLOCAGE_SIMPLE")
@@ -1048,7 +1048,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       </>
                     )}
                     <span className="fr-sub">
-                      {t("La décision est indispensable : sans elle, ni le délai ni la voie de recours ne peuvent être vérifiés. Vous pourrez reprendre votre dossier dès que vous l'aurez.")}
+                      {t("Sans la décision, le délai et la voie de recours ne peuvent pas être vérifiés.")}
                     </span>
                   </div>
                 )}
@@ -1232,7 +1232,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                         </div>
                         {avecDelai && !decisionLue && <p className="fr-sub">{t("Estimation à confirmer à la lecture de la décision.")}</p>}
                         {situation === "INCONNUE" && (
-                          <p className="note">{t("Faute de précision sur votre situation, le délai le plus court, soit 7 jours, est retenu par prudence ; le délai exact sera vérifié.")}</p>
+                          <p className="note">{t("Par prudence, le délai le plus court de 7 jours est retenu jusqu'à vérification.")}</p>
                         )}
                         {delai.dateInconnue && procedure !== "PROCEDURE_EN_COURS" && (
                           <p className="note">{t("Sans date de réception, la date limite est vérifiée en priorité.")}</p>
@@ -1705,7 +1705,7 @@ function EcranProche({ lien, reference, total, prenom }: { lien: string; referen
       <h1>{t("Envoyez le lien à votre proche")}</h1>
       <p className="aide">
         {t(
-          "Votre dossier {reference} reste à votre nom. Votre proche voit uniquement la référence, la procédure, le montant et votre nom ; il n'a accès ni à votre récit ni à vos documents. Vous êtes prévenu dès le règlement.",
+          "Votre proche voit seulement la référence, la procédure, le montant et votre nom. Vous êtes prévenu dès le règlement.",
           { reference },
         )}
         {prenom ? "" : ""}

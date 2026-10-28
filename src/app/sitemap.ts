@@ -1,20 +1,24 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/db";
 import { publies } from "@/lib/serveur/blog";
-import { SITUATIONS } from "@/lib/situations";
+import { BASE } from "@/lib/seo";
+import { MISE_A_JOUR, SITUATIONS } from "@/lib/situations";
 
 // Lu à chaque demande : un article publié apparaît aussitôt dans le plan du site.
 export const dynamic = "force-dynamic";
 
-const base = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const articles = await publies(await db()).catch(() => []);
+  const maj = new Date(MISE_A_JOUR);
   return [
-    { url: base },
-    { url: `${base}/consultation` },
-    { url: `${base}/actualites` },
-    ...SITUATIONS.map((s) => ({ url: `${base}/${s.slug}` })),
-    ...articles.map((a) => ({ url: `${base}/actualites/${a.slug}`, lastModified: a.majLe })),
+    { url: BASE, lastModified: maj, changeFrequency: "weekly", priority: 1 },
+    ...SITUATIONS.map((s) => ({ url: `${BASE}/${s.slug}`, lastModified: maj, changeFrequency: "monthly" as const, priority: 0.9 })),
+    { url: `${BASE}/honoraires`, lastModified: maj, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/cabinet`, lastModified: maj, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/consultation`, lastModified: maj, changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/actualites`, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${BASE}/mentions-legales`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${BASE}/confidentialite`, changeFrequency: "yearly", priority: 0.2 },
+    ...articles.map((a) => ({ url: `${BASE}/actualites/${a.slug}`, lastModified: a.majLe, changeFrequency: "monthly" as const, priority: 0.5 })),
   ];
 }
