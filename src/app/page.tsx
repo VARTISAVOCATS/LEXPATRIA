@@ -2,6 +2,7 @@ import Link from "next/link";
 import { db } from "@/db";
 import { contenusPublics } from "@/lib/serveur/parametres";
 import { publies } from "@/lib/serveur/blog";
+import { consultationOuverte } from "@/lib/serveur/integrations/bookings";
 import { formatEuros } from "@/lib/procedures";
 import { SITUATIONS } from "@/lib/situations";
 import { tServeur } from "@/i18n/serveur";
@@ -32,6 +33,7 @@ export default async function Accueil() {
   const d = await db();
   const { avocats: AVOCATS, faq: FAQ, accueil, tarifs } = await contenusPublics(d);
   const articles = (await publies(d).catch(() => [])).slice(0, 3);
+  const visio = await consultationOuverte();
 
   const Visage = ({ nom, photo }: { nom: string; photo: string | null }) =>
     photo ? (
@@ -133,11 +135,13 @@ export default async function Accueil() {
                 </Link>
               ))}
             </div>
-            <p className="acc-visio">
-              <Link className="link" href="/consultation">
-                {t("Consulter un avocat en visio : 30 minutes, {prix}.", { prix: formatEuros(tarifs.CONSULTATION) })}
-              </Link>
-            </p>
+            {visio && (
+              <p className="acc-visio">
+                <Link className="link" href="/consultation">
+                  {t("Consulter un avocat en visio : 30 minutes, {prix}.", { prix: formatEuros(tarifs.CONSULTATION) })}
+                </Link>
+              </p>
+            )}
           </section>
 
           {articles.length > 0 && (

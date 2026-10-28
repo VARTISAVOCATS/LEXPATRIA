@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { db } from "@/db";
+import { consultationOuverte } from "@/lib/serveur/integrations/bookings";
 import { tServeur } from "@/i18n/serveur";
 import { meta } from "@/lib/seo";
 import { contenusPublics } from "@/lib/serveur/parametres";
@@ -13,6 +15,7 @@ export const metadata = meta(
 );
 
 export default async function Consultation({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  if (!(await consultationOuverte())) redirect("/depot");
   const p = await searchParams;
   const { t } = await tServeur();
   const { avocats } = await contenusPublics(await db());

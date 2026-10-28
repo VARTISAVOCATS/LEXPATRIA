@@ -43,6 +43,9 @@ async function config() {
 
 export const bookingsConfigure = async () => !!(await config());
 
+/** L'offre de consultation n'est proposée en production qu'une fois Microsoft Bookings configuré (sinon, rendez-vous fictif). */
+export const consultationOuverte = async () => process.env.NODE_ENV !== "production" || (await bookingsConfigure());
+
 /** Heure de Paris « AAAA-MM-JJTHH:MM:SS » → instant UTC. */
 function depuisParis(local: string): Date {
   const [j, h] = local.split("T");

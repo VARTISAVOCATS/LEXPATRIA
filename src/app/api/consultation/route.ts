@@ -5,6 +5,7 @@ import { db, prochainCodeClient, prochaineReference, schema } from "@/db";
 import { signer } from "@/lib/jeton";
 import { journaliser } from "@/lib/journal";
 import { adresseComplete } from "@/lib/pays";
+import { consultationOuverte } from "@/lib/serveur/integrations/bookings";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,7 @@ const Corps = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!(await consultationOuverte())) return NextResponse.json({ erreur: "La consultation en visio n'est pas encore ouverte." }, { status: 503 });
   const p = Corps.safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ erreur: "Vérifiez les informations saisies." }, { status: 400 });
   const c = p.data;
