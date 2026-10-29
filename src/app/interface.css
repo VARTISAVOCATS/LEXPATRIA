@@ -1827,3 +1827,4 @@ main.acc { padding-top: 0; }
 /* Pages juridiques */
 .pg-juridique { grid-template-columns: minmax(0, 1fr); }
 .jur-xxx { background: #fff1a8; color: inherit; padding: 0 2px; }
+
