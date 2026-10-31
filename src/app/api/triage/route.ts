@@ -35,8 +35,12 @@ export async function POST(req: Request) {
 
   const TARIFS = await lireParametre(await db(), "tarifs");
 
-  // Sans clé Anthropic (développement) : orientation simulée par mots-clés.
+  // Sans clé Anthropic : orientation simulée par mots-clés en développement seulement ; jamais en production.
   const cleIA = await valeur("ANTHROPIC_API_KEY");
+  if (!cleIA && process.env.NODE_ENV === "production" && !process.env.AUTORISER_SIMULATION) {
+    console.error("Orientation IA impossible : aucune clé Anthropic (back office › Connexions › Anthropic).");
+    return NextResponse.json({ erreur: "L'analyse est momentanément indisponible. Réessayez dans quelques instants." }, { status: 503 });
+  }
   let t;
   try {
     t = cleIA

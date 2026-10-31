@@ -3,7 +3,7 @@
 #   sudo bash /opt/lexpatria/deploiement/mettre-a-jour.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
-./deploiement/sauvegarde-base.sh
+sh ./deploiement/sauvegarde-base.sh
 # Fichiers suivis modifiés directement sur le serveur : copie conservée dans sauvegardes/, puis retour à la version de GitHub.
 if ! git diff --quiet; then
   git diff > "sauvegardes/modifs-serveur-$(date +%Y%m%d-%H%M).patch"
