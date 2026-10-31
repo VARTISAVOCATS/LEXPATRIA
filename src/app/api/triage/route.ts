@@ -8,6 +8,7 @@ import { valeur } from "@/lib/serveur/connexions";
 import { PROCEDURES } from "@/lib/procedures";
 import { lireParametre } from "@/lib/serveur/parametres";
 import { trier, trierSimule } from "@/lib/triage";
+import { envoyer } from "@/lib/serveur/notifications";
 
 export const runtime = "nodejs";
 
@@ -20,6 +21,26 @@ const Corps = z.object({
   pdfs: z.array(z.object({ base64: z.string() })).max(3).optional(),
   procedure: z.enum(["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"]).optional(),
 });
+
+// Alerte au cabinet quand l'analyse par l'IA est indisponible : au plus une par heure, sans aucune donnée du client.
+let derniereAlerte = 0;
+async function alerterIndisponibilite(cause: string) {
+  console.error("Orientation IA impossible :", cause);
+  if (Date.now() - derniereAlerte < 3600_000) return;
+  derniereAlerte = Date.now();
+  const dest = (await valeur("EMAIL_EXPEDITEUR")) ?? "contact@lexpatria.fr";
+  await envoyer({
+    canal: "EMAIL",
+    destinataire: dest,
+    sujet: "LEXPATRIA : analyse par l'IA indisponible",
+    texte:
+      "L'analyse automatique des situations est indisponible sur lexpatria.fr. Les visiteurs choisissent eux-mêmes leur situation dans une liste et poursuivent leur dépôt.\n\n" +
+      `Cause : ${cause}\n\nVérifiez Back office › Connexions › Anthropic (clé, crédit) puis cliquez sur « Tester ».`,
+  }).catch(() => undefined);
+}
+
+// Réponse de secours : l'écran propose la liste des situations, le dépôt continue.
+const SECOURS = { erreur: "", secours: true };
 
 function parseDate(s: string | null): Date | undefined {
   if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
@@ -35,11 +56,13 @@ export async function POST(req: Request) {
 
   const TARIFS = await lireParametre(await db(), "tarifs");
 
-  // Sans clé Anthropic : orientation simulée par mots-clés en développement seulement ; jamais en production.
+  // Sans clé Anthropic ou en cas d'échec de l'IA : en production, jamais d'orientation par mots-clés ;
+  // le visiteur choisit sa situation dans une liste et poursuit son dépôt, le cabinet est alerté.
   const cleIA = await valeur("ANTHROPIC_API_KEY");
-  if (!cleIA && process.env.NODE_ENV === "production" && !process.env.AUTORISER_SIMULATION) {
-    console.error("Orientation IA impossible : aucune clé Anthropic (back office › Connexions › Anthropic).");
-    return NextResponse.json({ erreur: "L'analyse est momentanément indisponible. Réessayez dans quelques instants." }, { status: 503 });
+  const simulation = process.env.NODE_ENV !== "production" || !!process.env.AUTORISER_SIMULATION;
+  if (!cleIA && !simulation) {
+    await alerterIndisponibilite("aucune clé Anthropic enregistrée");
+    return NextResponse.json(SECOURS, { status: 503 });
   }
   let t;
   try {
@@ -47,9 +70,9 @@ export async function POST(req: Request) {
       ? await trier(corps.data, new Anthropic({ apiKey: cleIA }), (await valeur("ANTHROPIC_MODEL_TRIAGE")) ?? (await valeur("ANTHROPIC_MODEL")))
       : trierSimule(corps.data.recit ?? "");
   } catch (e) {
-    // Cause consignée dans les journaux du serveur (jamais le récit du client) ; message sobre à l'écran.
-    console.error("Orientation IA impossible :", e instanceof Error ? e.message.slice(0, 500) : e);
-    return NextResponse.json({ erreur: "L'analyse est momentanément indisponible. Réessayez dans quelques instants." }, { status: 503 });
+    // Cause consignée (jamais le récit du client).
+    await alerterIndisponibilite(e instanceof Error ? e.message.slice(0, 500) : String(e));
+    return NextResponse.json(SECOURS, { status: 503 });
   }
   const aujourdhui = versJour(new Date());
 

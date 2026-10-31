@@ -26,6 +26,7 @@ import { ConfirmationFaits, DepotPieces, QuestionnaireEcrans } from "./Questionn
 type Etape =
   | "RECIT"
   | "ANALYSE"
+  | "CHOIX"
   | "REFUS"
   | "Q_SITUATION"
   | "Q_VISA"
@@ -355,7 +356,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   function triageDirect(texte: string): ResultatTriage | null {
     const cle = SUGGESTIONS.find((s) => t(s) === texte.trim() || s === texte.trim());
     const p = cle ? SUGGESTION_PROCEDURE[cle] : undefined;
-    if (!p) return null;
+    return p ? triageManuel(p) : null;
+  }
+
+  /** Procédure choisie par la personne elle-même (suggestion, ou liste de secours si l'IA est indisponible). */
+  function triageManuel(p: ResultatTriage["procedure"]): ResultatTriage {
     return {
       procedure: p,
       horsPerimetreMotif: null,
@@ -438,6 +443,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         }),
       });
       const j = await r.json().catch(() => ({}));
+      if (!r.ok && r.status !== 400) return secours(procedureIndiquee, liste.length > 0);
       if (!r.ok) throw new Error(j.erreur ?? t("Analyse impossible"));
       const tri: ResultatTriage = j.triage;
       if (j.refus) {
@@ -448,9 +454,18 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       if (liste.length) setDecisionLue(true);
       appliquerTriage(tri, liste.length > 0);
     } catch (e) {
+      // Erreur réseau : même secours ; seule une demande invalide (400) renvoie au récit.
+      if (e instanceof TypeError) return secours(procedureIndiquee, liste.length > 0);
       setErreur(e instanceof Error ? e.message : t("Analyse impossible"));
       setEtape(procedureIndiquee && AVEC_DECISION.includes(procedureIndiquee) ? "DECISION" : "RECIT");
     }
+  }
+
+  /** Analyse indisponible : le dépôt continue sans l'IA. La décision transmise est jointe au dossier et lue par l'avocat. */
+  function secours(procedureIndiquee: CodeProcedure | null | undefined, decisionJointe: boolean) {
+    setAnalyseIA(false);
+    if (procedureIndiquee) return appliquerTriage(triageManuel(procedureIndiquee as ResultatTriage["procedure"]), decisionJointe);
+    setEtape("CHOIX");
   }
 
   async function creerPreDossier() {
@@ -647,7 +662,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       : null;
 
   // ---- Présentation : interface validée (démonstration « Encre ») ----
-  const orientation = ["RECIT", "ANALYSE", "REFUS", "Q_SITUATION", "Q_VISA", "Q_NATU", "Q_EMPLOI", "Q_ECHEANCE", "Q_DIAG", "DECISION", "Q_DEMANDE", "Q_PREFECTURE", "DATE", "RESULTAT"].includes(etape);
+  const orientation = ["RECIT", "ANALYSE", "CHOIX", "REFUS", "Q_SITUATION", "Q_VISA", "Q_NATU", "Q_EMPLOI", "Q_ECHEANCE", "Q_DIAG", "DECISION", "Q_DEMANDE", "Q_PREFECTURE", "DATE", "RESULTAT"].includes(etape);
   useEffect(() => {
     document.body.classList.toggle("pay1", etape === "PAIEMENT");
     return () => document.body.classList.remove("pay1");
@@ -912,6 +927,17 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                   <span className="spin" />
                   {fichiers.length ? t("Lecture de votre décision…") : t("Analyse de votre situation…")}
                 </div>
+              </div>
+            )}
+
+            {etape === "CHOIX" && (
+              <div className="triresult">
+                {question1(
+                  "Quelle situation correspond à la vôtre ?",
+                  "Votre avocat vérifiera ensuite votre dossier et votre décision.",
+                  SUGGESTIONS.map((x) => ({ v: x, l: x })),
+                  (v) => appliquerTriage(triageManuel(SUGGESTION_PROCEDURE[v]), fichiers.length > 0),
+                )}
               </div>
             )}
 

@@ -63,6 +63,8 @@ for (const f of ["src/lib/accueil.ts", "src/app/depot/Parcours.tsx"]) {
   "69 € non déduits si la procédure est engagée ensuite",
   "L'avis d'un avocat",
   "Votre diagnostic",
+  "Quelle situation correspond à la vôtre ?",
+  "Votre avocat vérifiera ensuite votre dossier et votre décision.",
   "Votre recours",
   "Date limite estimée",
   "Engager la procédure",
