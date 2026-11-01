@@ -64,7 +64,7 @@ describe("référentiel des cas", () => {
   it("une naturalisation sans suite n'est jamais orientée vers un recours contre un refus", async () => {
     const recit = "J'ai déposé sur l'ANEF une demande de naturalisation le 1er août 2025 ; plus d'un an après, le dossier est toujours « dossier envoyé ».";
     const parDefaut = await trier({ recit }, client({ ...base, procedure: "DIAGNOSTIC" }));
-    expect(parDefaut.procedure).toBe("DIAGNOSTIC");
+    expect(parDefaut.cas).toBe("NATURALISATION_SANS_SUITE");
     const r = await trier({ recit }, client({ ...base, procedure: "NATURALISATION", cas: "NATURALISATION_SANS_SUITE", confiance: "HAUTE" }));
     expect(r.procedure).toBe("BLOCAGE_SIMPLE");
     expect(r.emploiMenace).toBe(false);
@@ -101,5 +101,12 @@ describe("référentiel des cas", () => {
     const precisions = [{ question: "a ?", reponse: "Oui" }, { question: "b ?", reponse: "Non" }];
     const r2 = await trier({ recit: "Problème de papiers", precisions }, client({ ...base, procedure: "DIAGNOSTIC", question }));
     expect(r2.question).toBeNull();
+  });
+
+  it("une naturalisation n'est jamais orientée vers le refus implicite d'un titre de séjour", async () => {
+    const recit = "J'ai déposé ma demande de naturalisation sur ANEF depuis le 1er août 2025. Le statut est encore « dossier envoyé ».";
+    const r = await trier({ recit }, client({ ...base, procedure: "REFUS_IMPLICITE", cas: null }));
+    expect(r.cas).toBe("NATURALISATION_SANS_SUITE");
+    expect(r.procedure).toBe("BLOCAGE_SIMPLE");
   });
 });

@@ -92,7 +92,7 @@ Tu lis le récit d'une personne (dans n'importe quelle langue) et, le cas éché
 - REFUS_TITRE : refus de titre de séjour ou de certificat de résidence algérien, sans OQTF.
 - REFUS_VISA : refus de visa (court ou long séjour).
 - NATURALISATION : refus ou ajournement de naturalisation.
-- REFUS_IMPLICITE : la préfecture ne répond pas à une demande de titre déposée.
+- REFUS_IMPLICITE : la préfecture ne répond pas à une demande de TITRE DE SÉJOUR déposée (jamais pour une naturalisation ni un visa, qui ont leurs propres cas).
 - BLOCAGE_EMPLOI : impossible d'obtenir un rendez-vous ou récépissé expiré, ET emploi menacé.
 - BLOCAGE_SIMPLE : impossible d'obtenir un rendez-vous ou récépissé expiré, sans emploi menacé.
 - PROCEDURE_EN_COURS : un recours a déjà été déposé devant le tribunal.
@@ -178,6 +178,18 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     const decisionNommee = /refus|rejet|ajourn|oqtf|quitter le territoire/i.test(entree.recit);
     const exigeDecision = ["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"].includes(motsCles);
     if (motsCles !== "DIAGNOSTIC" && (!exigeDecision || decisionNommee)) res.procedure = motsCles;
+  }
+
+  // Garde-fou de matière : une demande de naturalisation ne relève jamais des procédures propres aux titres de séjour.
+  // Sans décision défavorable nommée, c'est une demande restée sans suite (la fiche rappelle à l'avocat de vérifier un rejet implicite).
+  if (!res.cas && !res.casLibre && entree.recit && /naturali|nationalit/i.test(entree.recit) && res.procedure !== "HORS_PERIMETRE" && res.procedure !== "NATURALISATION") {
+    const decision = /refus|rejet|ajourn|irrecevab/i.test(entree.recit);
+    const code = decision ? "NATURALISATION_REFUS" : "NATURALISATION_SANS_SUITE";
+    if (trouverCas(referentiel, code)) {
+      res.cas = code;
+      res.confiance = "FAIBLE";
+      if (res.qualification) res.qualification.aVerifier.push("Orientation rectifiée vers la naturalisation : vérifier la qualification.");
+    }
   }
 
   // Cohérence avec le référentiel : le cas reconnu fixe la procédure et les éléments qu'il détermine.
