@@ -20,6 +20,7 @@ import { valeur } from "./connexions";
 import { facturer } from "./integrations/pennylane";
 import { envoyer } from "./notifications";
 import { lireParametre } from "./parametres";
+import { trouverCas } from "@/lib/cas";
 
 export async function charger(d: Base, dossierId: string) {
   const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
@@ -28,13 +29,20 @@ export async function charger(d: Base, dossierId: string) {
   return { dos, cli };
 }
 
+/** Diligences ajoutées par le cas reconnu à l'orientation, relues dans le référentiel du serveur (jamais celles envoyées par le navigateur). */
+async function complementsDuCas(d: Base, dos: typeof dossiers.$inferSelect) {
+  const code = (dos.triage as { cas?: string | null } | null)?.cas;
+  const cas = trouverCas(await lireParametre(d, "cas"), code);
+  return cas && cas.procedure === dos.procedure ? cas.complements : [];
+}
+
 export async function offre(d: Base, dos: typeof dossiers.$inferSelect) {
   const code = dos.procedure as CodeProcedure;
   const tarifs = await lireParametre(d, "tarifs");
   // Appel : forfait d'appel seul, sans majoration d'urgence.
   const lignes = dos.dossierParentId
     ? [{ diligence: "APPEL" as const, libelle: LIBELLES_DILIGENCE.APPEL, montant: tarifs.APPEL }]
-    : composerOffre(code, { urgence: dos.traitement === "URGENCE", avisPrealable: dos.avisPrealable }, tarifs);
+    : composerOffre(code, { urgence: dos.traitement === "URGENCE", avisPrealable: dos.avisPrealable, complements: await complementsDuCas(d, dos) }, tarifs);
   return { code, lignes, total: lignes.reduce((s, l) => s + l.montant, 0) };
 }
 

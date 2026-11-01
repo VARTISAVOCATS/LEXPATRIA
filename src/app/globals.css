@@ -151,6 +151,12 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .fil-ariane { font-size: 13px; color: var(--ink-3); margin: 0 0 10px; }
 .fil-ariane a { color: var(--ink-2); }
 .cab-actions { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: flex-end; }
+.qualif { display: flex; flex-direction: column; gap: 10px; }
+.qualif h3 { margin: 4px 0 0; font-size: 16px; }
+.qualif ul { margin: 0; padding-left: 18px; }
+.qualif-dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 8px 18px; margin: 0; }
+.qualif-dl dt { font-size: 12.5px; color: var(--ink-3); }
+.qualif-dl dd { margin: 0; }
 .af { display: flex; flex-direction: column; gap: 6px; }
 .af.af-l { flex-direction: row; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
 .af-c { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
@@ -170,6 +176,10 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .bo-euros .champ { max-width: 120px; }
 .bo-item { border: 1px solid var(--rule); border-radius: 7px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }
 .bo-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.bo-cas-t { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+.bo-cas-t:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: 2px; }
+.bo-inactif { opacity: .6; }
+.bo-compl { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
 .bo-item-b { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .bo-pied { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .bo-demande { font-style: italic; color: var(--ink-2); margin: 0; }

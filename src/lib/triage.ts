@@ -8,6 +8,7 @@
 import { extraireJson } from "@/lib/ia";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import { CAS_DEFAUT, trouverCas, type Cas } from "./cas";
 import { controlerTexte } from "./deontologie";
 
 export const ResultatTriage = z.object({
@@ -38,10 +39,27 @@ export const ResultatTriage = z.object({
   langue: z.string(),
   faits: z.array(z.string()).max(8), // faits qui comptent, tirés du récit, à confirmer par le client
   ceQueLeRecoursPeutObtenir: z.string(), // information générale, ni argument ni pronostic
+  // Cas du référentiel reconnu (code), ou null si aucun ne correspond ; procédure alors la plus proche.
+  cas: z.string().nullable().default(null),
+  confiance: z.enum(["HAUTE", "MOYENNE", "FAIBLE"]).default("MOYENNE"),
+  // Qualification pour l'avocat : ce que la décision ou le récit établit, et ce qui reste à vérifier.
+  qualification: z
+    .object({
+      decision: z.string(), // nature exacte de la décision ou de la difficulté
+      autorite: z.string().nullable(),
+      mesures: z.array(z.string()).max(8), // OQTF, délai de départ, pays de renvoi, IRTF, assignation…
+      motif: z.string().nullable(), // motif principal tel qu'il est écrit
+      aVerifier: z.array(z.string()).max(6), // points incertains que l'avocat doit vérifier
+    })
+    .nullable()
+    .default(null),
   // Pré-analyse personnalisée de la décision jointe (2 à 4 phrases), vide sans décision.
   preAnalyse: z.string().default(""),
   // Pour l'affichage : faits et information générale traduits dans la langue du récit, si ce n'est pas le français.
-  traduction: z.object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string(), preAnalyse: z.string().optional() }).nullable().optional(),
+  traduction: z
+    .object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string(), preAnalyse: z.string().optional(), cas: z.string().optional(), voie: z.string().optional() })
+    .nullable()
+    .optional(),
 });
 export type ResultatTriage = z.infer<typeof ResultatTriage>;
 
@@ -57,7 +75,12 @@ export function minimiser(texte: string): string {
   return MASQUES.reduce((t, [re, rempl]) => t.replace(re, rempl), texte);
 }
 
-const CONSIGNE = `Tu es l'outil d'orientation de LEXPATRIA Avocats, plateforme de dépôt de dossier en ligne d'un cabinet d'avocats au barreau de Paris, en contentieux du droit des étrangers.
+function consigne(referentiel: Cas[]): string {
+  const cas = referentiel
+    .filter((c) => c.actif)
+    .map((c) => `- ${c.code} [procédure ${c.procedure}] : ${c.libelle}. Signes : ${c.signes}`)
+    .join("\n");
+  return `Tu es l'outil d'orientation de LEXPATRIA Avocats, plateforme de dépôt de dossier en ligne d'un cabinet d'avocats au barreau de Paris, en contentieux du droit des étrangers.
 Tu lis le récit d'une personne (dans n'importe quelle langue) et, le cas échéant, la photo de la décision qu'elle a reçue. Tu identifies la procédure adaptée parmi :
 - OQTF : obligation de quitter le territoire français (avec ou sans refus de titre).
 - REFUS_TITRE : refus de titre de séjour ou de certificat de résidence algérien, sans OQTF.
@@ -69,6 +92,15 @@ Tu lis le récit d'une personne (dans n'importe quelle langue) et, le cas éché
 - PROCEDURE_EN_COURS : un recours a déjà été déposé devant le tribunal.
 - DIAGNOSTIC : uniquement si l'on ne peut pas savoir quel type de décision ou de difficulté la personne rencontre.
 - HORS_PERIMETRE : asile (ASILE), admission exceptionnelle au séjour (AES), juge judiciaire (JUDICIAIRE), autre (AUTRE).
+CAS DU RÉFÉRENTIEL DU CABINET (rattache la situation à l'un d'eux) :
+${cas}
+Règles de qualification :
+- Lis la décision jointe en entier (en-tête, visas, motifs, dispositif, articles, mention des voies et délais) avant de conclure : l'article cité (par exemple L. 611-1, 3° ou 4° du CESEDA), l'autorité, les mesures et le motif déterminent le cas.
+- "cas" : le code du cas qui correspond EXACTEMENT à la situation. La "procedure" est alors celle indiquée entre crochets pour ce cas. Si aucun cas ne correspond, "cas" vaut null et "procedure" est la procédure la plus proche ; "confiance" vaut alors "FAIBLE" et "qualification.aVerifier" explique pourquoi.
+- "confiance" : HAUTE si la décision jointe ou un récit précis établit le cas ; MOYENNE si le récit l'indique sans décision ; FAIBLE si plusieurs cas restent possibles.
+- Distingue avec soin : refus de titre AVEC OQTF (cas OQTF) / refus SANS OQTF ; première demande / renouvellement / changement de statut / retrait ; refus de regroupement familial par le préfet / refus de visa famille par le consulat ; visa court / long séjour ; naturalisation par décret (administratif) / déclaration de nationalité (juge judiciaire, hors périmètre) ; recours déjà déposé / jugement déjà rendu.
+- Une demande d'asile, un transfert « Dublin » ou un recours devant l'OFPRA ou la CNDA est HORS_PERIMETRE (ASILE). Le souhait de DÉPOSER une demande de régularisation est HORS_PERIMETRE (AES) ; en revanche, le REFUS d'une demande de régularisation se conteste (cas de refus de titre ou d'OQTF).
+- "qualification" : toujours remplie (sauf HORS_PERIMETRE) ; "decision" en une phrase précise (ex. « Arrêté du préfet du Val-de-Marne refusant le renouvellement d'un titre de séjour salarié, portant OQTF dans un délai de trente jours »), "autorite" (préfet de…, consulat de…, ministre…), "mesures" (OQTF, délai de départ volontaire, pays de renvoi, interdiction de retour et sa durée, assignation à résidence), "motif" tel qu'il est écrit, "aVerifier" les points que l'avocat doit contrôler (date de notification absente, page manquante, fondement incertain…). En français, style d'avocat, sans pronostic.
 Règles :
 - Dès que le type de décision ou de difficulté est identifiable (ex. « j'ai reçu une OQTF », « refus de visa », « la préfecture ne répond pas »), choisis la procédure correspondante, même si la date, la situation ou les autres détails manquent : ils seront demandés ensuite à la personne. Ne choisis jamais DIAGNOSTIC pour un simple manque de détails.
 - Si la personne est en prison, en détention ou en centre de rétention (CRA), mets detentionOuRetention à true.
@@ -83,7 +115,9 @@ Règles :
 - "naturalisationIssue" : REFUS ou AJOURNEMENT si le récit le dit, sinon null.
 - "emploiMenace" : true seulement si le récit dit que l'emploi ou le contrat de travail est menacé, false s'il dit le contraire, sinon null.
 - "dateEcheance" : pour une procédure en cours, la prochaine date fixée par le tribunal (mémoire à produire, audience), sinon null.
+- "traduction" comprend aussi, si la langue du récit n'est pas le français, "cas" (le libellé du cas reconnu, traduit) et "voie" (sa voie de recours, traduite).
 Réponds UNIQUEMENT par un objet JSON conforme à ce schéma : ${JSON.stringify(Object.keys(ResultatTriage.shape))}.`;
+}
 
 export interface EntreeTriage {
   recit?: string;
@@ -93,7 +127,7 @@ export interface EntreeTriage {
   pdfs?: { base64: string }[];
 }
 
-export async function trier(entree: EntreeTriage, client = new Anthropic(), modele?: string): Promise<ResultatTriage> {
+export async function trier(entree: EntreeTriage, client = new Anthropic(), modele?: string, referentiel: Cas[] = CAS_DEFAUT): Promise<ResultatTriage> {
   const contenu: Anthropic.Messages.ContentBlockParam[] = [];
   for (const img of entree.images ?? []) {
     contenu.push({ type: "image", source: { type: "base64", media_type: img.mime, data: img.base64 } });
@@ -110,8 +144,8 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
 
   const rep = await client.messages.create({
     model: modele ?? process.env.ANTHROPIC_MODEL_TRIAGE ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
-    max_tokens: 2000,
-    system: CONSIGNE,
+    max_tokens: 4000,
+    system: consigne(referentiel),
     messages: [
       { role: "user", content: contenu },
     ],
@@ -122,6 +156,19 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   if (res.procedure === "DIAGNOSTIC" && entree.recit) {
     const motsCles = trierSimule(entree.recit).procedure;
     if (motsCles !== "DIAGNOSTIC") res.procedure = motsCles;
+  }
+
+  // Cohérence avec le référentiel : le cas reconnu fixe la procédure et les éléments qu'il détermine.
+  const cas = trouverCas(referentiel, res.cas);
+  if (res.cas && !cas) {
+    res.cas = null;
+    res.confiance = "FAIBLE";
+  }
+  if (cas && res.procedure !== "HORS_PERIMETRE") {
+    res.procedure = cas.procedure;
+    if (cas.situationOQTF) res.situationOQTF = cas.situationOQTF;
+    if (cas.visaType) res.visaType = cas.visaType;
+    if (cas.naturalisationIssue) res.naturalisationIssue = cas.naturalisationIssue;
   }
 
   // Filet déontologique sur le seul texte destiné au public.
@@ -173,6 +220,9 @@ export function trierSimule(recit: string): ResultatTriage {
     langue: "fr",
     faits: [],
     ceQueLeRecoursPeutObtenir: "",
+    cas: null,
+    confiance: "FAIBLE",
+    qualification: null,
     preAnalyse: "",
   };
 }

@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db, schema } from "@/db";
 import { verifier } from "@/lib/jeton";
+import { trouverCas } from "@/lib/cas";
+import { lireParametre } from "@/lib/serveur/parametres";
 
 export const runtime = "nodejs";
 
@@ -15,6 +17,7 @@ export async function GET(req: Request) {
   if (!dos || dos.statut !== "PRE_DOSSIER") return NextResponse.json({ erreur: "Ce dossier n'est plus en attente." }, { status: 409 });
   const [cli] = await d.select().from(schema.clients).where(eq(schema.clients.id, dos.clientId));
   const q = (dos.qualification ?? {}) as Record<string, unknown>;
+  const cas = trouverCas(await lireParametre(d, "cas"), (dos.triage as { cas?: string } | null)?.cas);
   return NextResponse.json({
     jeton,
     reference: dos.reference,
@@ -25,6 +28,7 @@ export async function GET(req: Request) {
     dateEcheance: q.dateEcheance ?? null,
     avisPrealable: dos.avisPrealable,
     triage: dos.triage,
+    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements } : null,
     qualification: q,
     etapeAtteinte: dos.etapeAtteinte,
     coordonnees: { civilite: cli.civilite ?? "", prenom: cli.prenom ?? "", nom: cli.nom ?? "", email: cli.email ?? "", telephone: cli.telephone ?? "", adresse: cli.adresse ?? "", codePostal: cli.codePostal ?? "", ville: cli.ville ?? "", pays: cli.pays ?? "FR" },

@@ -12,7 +12,7 @@ import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
 import { adresseComplete, adresseEnLignes, nomPays, PAYS, tvaApplicable } from "@/lib/pays";
 import { useContenus } from "../composants/Contenus";
-import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, type CodeProcedure, type Diligence } from "@/lib/procedures";
 import { dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
 import type { ResultatTriage } from "@/lib/triage";
 import { ChoixLangue, useLangue, useT } from "@/i18n/client";
@@ -49,6 +49,14 @@ type Etape =
   | "PROCHE";
 
 type Refus = "DETENTION" | "RETENTION" | "HORS_PERIMETRE";
+
+interface CasReconnu {
+  code: string;
+  procedure: string;
+  libelle: string;
+  voie: string;
+  complements: Diligence[];
+}
 
 const SITUATIONS: { v: SituationOQTF; l: string }[] = [
   { v: "LIBRE", l: "Je vis à mon adresse, sans obligation de pointer" },
@@ -126,6 +134,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
   // Orientation et qualification
   const [triage, setTriage] = useState<ResultatTriage | null>(null);
+  /** Cas du référentiel reconnu par l'IA : libellé et voie affichés, diligences ajoutées au devis. */
+  const [casReconnu, setCasReconnu] = useState<CasReconnu | null>(null);
   // Vrai si la procédure vient de l'analyse par l'IA (récit libre ou décision), faux pour une situation courante choisie.
   const [analyseIA, setAnalyseIA] = useState(false);
   const [procedure, setProcedure] = useState<CodeProcedure | null>(null);
@@ -205,6 +215,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       setEcheance(j.dateEcheance ?? null);
       setAvisPrealable(j.avisPrealable);
       setTriage(j.triage);
+      setCasReconnu(j.cas ?? null);
       setCoord({ adresse: "", codePostal: "", ville: "", pays: "FR", ...j.coordonnees });
       setAlgerien(j.algerien);
       const q = j.qualification ?? {};
@@ -295,7 +306,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   }, [procedure, situation, dateRef, dateDemande, echeance, apresRecours, aujourdhui]);
 
   const urgence = delai?.traitement === "URGENCE" && !avisPrealable;
-  const offre = procedure ? composerOffre(procedure, { urgence, avisPrealable }, tarifs) : [];
+  const casActuel = casReconnu && casReconnu.procedure === procedure ? casReconnu : null;
+  const offre = procedure ? composerOffre(procedure, { urgence, avisPrealable, complements: casActuel?.complements }, tarifs) : [];
   const total = offre.reduce((s, l) => s + l.montant, 0);
   // Paiement en trois fois sans frais, à partir du seuil fixé au back office : acompte, puis deux échéances.
   const fractionnable = echelonnable(total, reglesEch);
@@ -361,7 +373,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
   /** Procédure choisie par la personne elle-même (suggestion, ou liste de secours si l'IA est indisponible). */
   function triageManuel(p: ResultatTriage["procedure"]): ResultatTriage {
+    setCasReconnu(null);
     return {
+      cas: null,
+      confiance: "FAIBLE",
+      qualification: null,
       procedure: p,
       horsPerimetreMotif: null,
       situationOQTF: null,
@@ -452,6 +468,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         return setEtape("REFUS");
       }
       if (liste.length) setDecisionLue(true);
+      setCasReconnu(j.cas ?? null);
       appliquerTriage(tri, liste.length > 0);
     } catch (e) {
       // Erreur réseau : même secours ; seule une demande invalide (400) renvoie au récit.
@@ -597,7 +614,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       PROCEDURE_EN_COURS: "Recours déjà engagé devant le tribunal",
       DIAGNOSTIC: "Situation à étudier",
     };
-    const parts = [t(base[procedure] ?? titreProcedure)];
+    const libelleCas = casActuel ? (langueEcran === "fr" ? casActuel.libelle : (triage?.traduction?.langue === langueEcran ? triage.traduction.cas : undefined)) : undefined;
+    const parts = [libelleCas || t(base[procedure] ?? titreProcedure)];
     if (procedure === "OQTF" && situation) {
       const s = { LIBRE: "Vous vivez à votre adresse", ASSIGNE: "Vous êtes assigné(e) à résidence", LIBRE_APRES_ASILE: "Après un rejet de votre demande d'asile", INCONNUE: "" }[situation as string];
       if (s) parts.push(t(s));
@@ -961,7 +979,14 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                 )}
                 <p className="serif tr-msg">{t("Voici la procédure envisagée ; elle sera confirmée lors de la prise en charge.")}</p>
                 <div className="tr-proc">
-                  <b>{t(titreProcedure)}</b>
+                  {casActuel ? (
+                    <>
+                      <b>{langueEcran === "fr" ? casActuel.libelle : (traductionIA?.cas ?? casActuel.libelle)}</b>
+                      <span className="tr-voie">{langueEcran === "fr" ? casActuel.voie : (traductionIA?.voie ?? casActuel.voie)}</span>
+                    </>
+                  ) : (
+                    <b>{t(titreProcedure)}</b>
+                  )}
                 </div>
 
                 {dateRef && etape === "RESULTAT" && (
@@ -1251,7 +1276,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             <div>
                               <dt>{t("La voie adaptée")}</dt>
                               <dd>
-                                {t(titreProcedure)} · {t(contenu.instance)}
+                                {casActuel ? (langueEcran === "fr" ? casActuel.voie : (traductionIA?.voie ?? casActuel.voie)) : `${t(titreProcedure)} · ${t(contenu.instance)}`}
                               </dd>
                             </div>
                           </dl>
@@ -1353,8 +1378,16 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       ).map((c) => (
                         <li key={c}>✓ {t(c)}</li>
                       ))}
+                      {!avisPrealable &&
+                        offre
+                          .filter((l) => casActuel?.complements.includes(l.diligence))
+                          .map((l) => (
+                            <li key={l.diligence}>
+                              ✓ {t(l.libelle)} ({formatEuros(l.montant)})
+                            </li>
+                          ))}
                     </ul>
-                    {!avisPrealable && contenu.nonCompris && <p className="note">{t(contenu.nonCompris)}</p>}
+                    {!avisPrealable && contenu.nonCompris && !casActuel?.complements.length && <p className="note">{t(contenu.nonCompris)}</p>}
                     <div className="box">
                       <h4>{t("Après votre paiement")}</h4>
                       <ol className="apres">

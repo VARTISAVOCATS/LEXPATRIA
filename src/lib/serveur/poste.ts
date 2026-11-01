@@ -27,6 +27,8 @@ import { adresseEnLignes } from "@/lib/pays";
 import { rang } from "@/lib/statuts";
 import { minimiser } from "@/lib/triage";
 import { referencesPour } from "./actes-reference";
+import { trouverCas } from "@/lib/cas";
+import { lireParametre } from "./parametres";
 import { valeur } from "./connexions";
 import { modeleActif } from "./modeles-cabinet";
 import type { Dossier } from "./dossiers";
@@ -142,6 +144,36 @@ function analyseSimulee(dos: Dossier, x: DonneesActe): Omit<Analyse, "vigilance"
   };
 }
 
+/** Qualification du dossier : cas validé par l'avocat, à défaut cas reconnu par l'IA, et lecture de la décision. */
+export async function qualificationDossier(d: Base, dos: Dossier) {
+  const t = (dos.triage ?? {}) as { cas?: string | null; confiance?: string; qualification?: unknown; validation?: { cas: string } | null };
+  const referentiel = await lireParametre(d, "cas");
+  const cas = trouverCas(referentiel, t.validation?.cas) ?? trouverCas(referentiel, t.cas);
+  return {
+    cas: cas ?? null,
+    validee: !!t.validation?.cas,
+    pourIA: cas
+      ? {
+          cas: cas.libelle,
+          validePar: t.validation?.cas ? "avocat" : "IA, non encore validé",
+          voie: cas.voieClient,
+          juridiction: cas.juridiction,
+          delai: cas.delai,
+          vigilance: cas.vigilance,
+          lectureDecision: t.qualification ?? null,
+        }
+      : { lectureDecision: t.qualification ?? null },
+  };
+}
+
+/** Modèles proposés : celui du cas qualifié en premier. */
+export async function modelesDuDossier(d: Base, dos: Dossier): Promise<CodeModele[]> {
+  const base = modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId);
+  if (dos.avisPrealable || dos.dossierParentId) return base;
+  const { cas } = await qualificationDossier(d, dos);
+  return cas ? [cas.modele, ...base.filter((m) => m !== cas.modele)] : base;
+}
+
 export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Resultat> {
   if (!peutTravailler(m, dos)) return refus("Dossier attribué à un autre avocat.");
   const x = await donneesActe(d, dos);
@@ -153,6 +185,7 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
     // Données minimisées : ni nom, ni coordonnées, ni numéro d'identification.
     const contexte = {
       procedure: procedureLibelle(dos.procedure),
+      qualification: (await qualificationDossier(d, dos)).pourIA,
       recit: dos.recit ? minimiser(dos.recit) : null,
       faitsConfirmes: dos.faitsExtraits,
       reponses: x.reponses,
@@ -210,7 +243,7 @@ export async function dernierActe(d: Base, dossierId: string) {
 
 export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: CodeModele): Promise<Resultat> {
   if (!peutTravailler(m, dos)) return refus("Dossier attribué à un autre avocat.");
-  if (!modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId).includes(modele)) return refus("Modèle non prévu pour cette procédure.");
+  if (!(await modelesDuDossier(d, dos)).includes(modele)) return refus("Modèle non prévu pour cette procédure.");
   const x = await donneesActe(d, dos);
   // Modèle du cabinet (back office) s'il existe, sinon modèle intégré.
   const duCabinet = await modeleActif(d, modele);
@@ -232,7 +265,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
         {
           role: "user",
           content:
-            `MODÈLE :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, analyse: dos.analyse })}` +
+            `MODÈLE :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, analyse: dos.analyse })}` +
             references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join(""),
         },
       ],
@@ -380,7 +413,7 @@ export async function questionAssistant(d: Base, m: Membre, dos: Dossier, questi
       messages: [
         {
           role: "user",
-          content: `DOSSIER (minimisé) : ${JSON.stringify({ procedure: procedureLibelle(dos.procedure), recit: dos.recit ? minimiser(dos.recit) : null, reponses: x.reponses, analyse: dos.analyse, pieces: x.pieces })}\n\nPROJET D'ACTE ACTUEL :\n${acte?.contenu.slice(0, 30_000) ?? "(aucun)"}\n\nQUESTION : ${q}`,
+          content: `DOSSIER (minimisé) : ${JSON.stringify({ procedure: procedureLibelle(dos.procedure), qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, reponses: x.reponses, analyse: dos.analyse, pieces: x.pieces })}\n\nPROJET D'ACTE ACTUEL :\n${acte?.contenu.slice(0, 30_000) ?? "(aucun)"}\n\nQUESTION : ${q}`,
         },
       ],
     });

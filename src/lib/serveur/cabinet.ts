@@ -4,6 +4,8 @@ import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, dossiers, echeances, indisponibilites, journal, messages, pieces, utilisateurs } from "@/db/schema";
 import { journaliser } from "@/lib/journal";
+import { trouverCas } from "@/lib/cas";
+import { lireParametre } from "./parametres";
 import { libelleClient, STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
 import { ajouterMessage, voitTout, type Dossier } from "./dossiers";
 import { envoyer } from "./notifications";
@@ -62,6 +64,18 @@ export async function fixerDateLimite(d: Base, m: Membre, dos: Dossier, date: st
   await d.delete(echeances).where(and(eq(echeances.dossierId, dos.id), eq(echeances.type, "DATE_LIMITE")));
   await d.insert(echeances).values({ dossierId: dos.id, type: "DATE_LIMITE", date });
   await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "DATE_LIMITE_VERIFIEE", details: { estimee: dos.dateLimite, retenue: date } });
+  return { ok: true };
+}
+
+/** Validation (ou requalification) par l'avocat du cas reconnu par l'IA à l'orientation. */
+export async function validerQualification(d: Base, m: Membre, dos: Dossier, code: string): Promise<Resultat> {
+  if (m.role !== "ASSOCIE" && m.role !== "AVOCAT") return refus("Seul un avocat valide la qualification.");
+  const cas = trouverCas(await lireParametre(d, "cas"), code);
+  if (!cas) return refus("Cas inconnu ou désactivé dans le référentiel.");
+  const triage = (dos.triage ?? {}) as Record<string, unknown>;
+  const validation = { cas: cas.code, par: m.id, le: new Date().toISOString(), casIA: triage.cas ?? null };
+  await d.update(dossiers).set({ triage: { ...triage, validation }, majLe: new Date() }).where(eq(dossiers.id, dos.id));
+  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "QUALIFICATION_VALIDEE", details: { cas: cas.code, casIA: triage.cas ?? null } });
   return { ok: true };
 }
 

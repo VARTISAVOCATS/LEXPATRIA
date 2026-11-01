@@ -2,6 +2,9 @@
 // Éditeurs des contenus du back office. Chaque enregistrement passe par le filtre déontologique et l'historique.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { CAS_DEFAUT, DILIGENCES_COMPLEMENTAIRES, MODELES_CAS, PROCEDURES_CAS, type Cas } from "@/lib/cas";
+import { LIBELLES_MODELE } from "@/lib/modeles";
+import { LIBELLES_DILIGENCE, PROCEDURES } from "@/lib/procedures";
 
 function useEnregistrer() {
   const router = useRouter();
@@ -280,6 +283,173 @@ export function Assistant() {
         required
       />
       <Pied envoi={e.envoi} erreur={e.erreur} ok={false} libelle={e.envoi ? "Préparation…" : "Préparer la proposition"} />
+    </form>
+  );
+}
+
+// ——— Référentiel des cas (orientation par l'IA) ———
+
+const lignes = (l: string[]) => l.join("\n");
+const versListe = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
+
+export function EditeurCas({ valeur }: { valeur: Cas[] }) {
+  const [v, setV] = useState(valeur);
+  const [ouvert, setOuvert] = useState<number | null>(null);
+  const e = useEnregistrer();
+  const maj = (i: number, champ: Partial<Cas>) => setV(v.map((c, j) => (j === i ? { ...c, ...champ } : c)));
+  return (
+    <form
+      onSubmit={(ev) => {
+        ev.preventDefault();
+        e.enregistrer({ action: "parametre", cle: "cas", valeur: v.map((c) => ({ ...c, pieces: versListe(c.pieces.join("\n")), vigilance: versListe(c.vigilance.join("\n")) })) });
+      }}
+    >
+      {v.map((c, i) => (
+        <div key={i} className={`bo-item bo-cas ${c.actif ? "" : "bo-inactif"}`}>
+          <button type="button" className="bo-cas-t" onClick={() => setOuvert(ouvert === i ? null : i)} aria-expanded={ouvert === i}>
+            <b>{c.libelle || "Nouveau cas"}</b>
+            <span className="note">
+              {c.code} · {PROCEDURES[c.procedure].libelle}
+              {c.actif ? "" : " · désactivé"}
+            </span>
+          </button>
+          {ouvert === i && (
+            <>
+              <div className="bo-3">
+                <label className="af-c">
+                  <span>Code</span>
+                  <input className="champ" value={c.code} onChange={(x) => maj(i, { code: x.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, "_") })} />
+                </label>
+                <label className="af-c">
+                  <span>Procédure</span>
+                  <select className="champ" value={c.procedure} onChange={(x) => maj(i, { procedure: x.target.value as Cas["procedure"] })}>
+                    {PROCEDURES_CAS.map((p) => (
+                      <option key={p} value={p}>
+                        {PROCEDURES[p].libelle}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="af-c">
+                  <span>Modèle d&apos;acte</span>
+                  <select className="champ" value={c.modele} onChange={(x) => maj(i, { modele: x.target.value as Cas["modele"] })}>
+                    {MODELES_CAS.map((m) => (
+                      <option key={m} value={m}>
+                        {LIBELLES_MODELE[m]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="af-c">
+                <span>Libellé affiché au client</span>
+                <input className="champ" value={c.libelle} onChange={(x) => maj(i, { libelle: x.target.value })} />
+              </label>
+              <label className="af-c">
+                <span>Voie de recours affichée au client</span>
+                <input className="champ" value={c.voieClient} onChange={(x) => maj(i, { voieClient: x.target.value })} />
+              </label>
+              <label className="af-c">
+                <span>Signes de reconnaissance (pour l&apos;IA)</span>
+                <textarea className="champ" rows={4} value={c.signes} onChange={(x) => maj(i, { signes: x.target.value })} />
+              </label>
+              <div className="bo-3">
+                <label className="af-c">
+                  <span>Juridiction</span>
+                  <textarea className="champ" rows={2} value={c.juridiction} onChange={(x) => maj(i, { juridiction: x.target.value })} />
+                </label>
+                <label className="af-c">
+                  <span>Délai</span>
+                  <textarea className="champ" rows={2} value={c.delai} onChange={(x) => maj(i, { delai: x.target.value })} />
+                </label>
+              </div>
+              <div className="bo-3">
+                {c.procedure === "OQTF" && (
+                  <label className="af-c">
+                    <span>Situation fixée par le cas</span>
+                    <select className="champ" value={c.situationOQTF ?? ""} onChange={(x) => maj(i, { situationOQTF: (x.target.value || null) as Cas["situationOQTF"] })}>
+                      <option value="">Demandée au client</option>
+                      <option value="LIBRE">Libre</option>
+                      <option value="ASSIGNE">Assigné à résidence</option>
+                      <option value="LIBRE_APRES_ASILE">Après rejet de l&apos;asile</option>
+                    </select>
+                  </label>
+                )}
+                {c.procedure === "REFUS_VISA" && (
+                  <label className="af-c">
+                    <span>Type de visa</span>
+                    <select className="champ" value={c.visaType ?? ""} onChange={(x) => maj(i, { visaType: (x.target.value || null) as Cas["visaType"] })}>
+                      <option value="">Demandé au client</option>
+                      <option value="COURT">Court séjour</option>
+                      <option value="LONG">Long séjour</option>
+                    </select>
+                  </label>
+                )}
+                {c.procedure === "NATURALISATION" && (
+                  <label className="af-c">
+                    <span>Issue</span>
+                    <select className="champ" value={c.naturalisationIssue ?? ""} onChange={(x) => maj(i, { naturalisationIssue: (x.target.value || null) as Cas["naturalisationIssue"] })}>
+                      <option value="">Demandée au client</option>
+                      <option value="REFUS">Refus</option>
+                      <option value="AJOURNEMENT">Ajournement</option>
+                    </select>
+                  </label>
+                )}
+                <fieldset className="af-c bo-compl">
+                  <span>Ajouté au devis</span>
+                  {DILIGENCES_COMPLEMENTAIRES.map((dl) => (
+                    <label key={dl}>
+                      <input
+                        type="checkbox"
+                        checked={c.complements.includes(dl)}
+                        onChange={(x) => maj(i, { complements: x.target.checked ? [...c.complements, dl] : c.complements.filter((y) => y !== dl) })}
+                      />{" "}
+                      {LIBELLES_DILIGENCE[dl]}
+                    </label>
+                  ))}
+                </fieldset>
+              </div>
+              <div className="bo-3">
+                <label className="af-c">
+                  <span>Pièces à réunir (une par ligne)</span>
+                  <textarea className="champ" rows={4} value={lignes(c.pieces)} onChange={(x) => maj(i, { pieces: x.target.value.split("\n") })} />
+                </label>
+                <label className="af-c">
+                  <span>Points de vigilance pour l&apos;avocat (un par ligne)</span>
+                  <textarea className="champ" rows={4} value={lignes(c.vigilance)} onChange={(x) => maj(i, { vigilance: x.target.value.split("\n") })} />
+                </label>
+              </div>
+              <div className="bo-item-b">
+                <label>
+                  <input type="checkbox" checked={c.actif} onChange={(x) => maj(i, { actif: x.target.checked })} /> Actif
+                </label>
+                <button type="button" className="btn sm ghost" disabled={i === 0} onClick={() => setV(v.map((y, j) => (j === i - 1 ? v[i] : j === i ? v[i - 1] : y)))}>
+                  Monter
+                </button>
+                <button type="button" className="btn sm ghost" onClick={() => { setV(v.filter((_, j) => j !== i)); setOuvert(null); }}>
+                  Retirer
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      ))}
+      <div className="bo-item-b">
+        <button
+          type="button"
+          className="btn sm"
+          onClick={() => {
+            setV([...v, { ...CAS_DEFAUT[0], code: `NOUVEAU_CAS_${v.length + 1}`, libelle: "", voieClient: "", signes: "", pieces: [], vigilance: [], complements: [] }]);
+            setOuvert(v.length);
+          }}
+        >
+          Ajouter un cas
+        </button>
+        <button type="button" className="btn sm ghost" onClick={() => setV(CAS_DEFAUT)}>
+          Repartir du référentiel intégré
+        </button>
+      </div>
+      <Pied {...e} />
     </form>
   );
 }

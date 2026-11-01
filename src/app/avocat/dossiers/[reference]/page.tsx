@@ -3,7 +3,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { adresseEnLignes } from "@/lib/pays";
-import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { formatEuros, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { trouverCas, type Cas } from "@/lib/cas";
+import { lireParametre } from "@/lib/serveur/parametres";
 import { appelDe, premiereInstance } from "@/lib/serveur/appel";
 import { equipe, journalDossier, TYPES_ECHEANCE } from "@/lib/serveur/cabinet";
 import { accesEquipe, detailDossier, marquerLus } from "@/lib/serveur/dossiers";
@@ -60,6 +62,90 @@ function Valeur({ l, v }: { l: string; v?: string | null }) {
       <span>{l}</span>
       <b>{v}</b>
     </div>
+  );
+}
+
+interface TriageStocke {
+  cas?: string | null;
+  confiance?: "HAUTE" | "MOYENNE" | "FAIBLE";
+  qualification?: { decision: string; autorite: string | null; mesures: string[]; motif: string | null; aVerifier: string[] } | null;
+  validation?: { cas: string; le: string } | null;
+}
+
+const CONFIANCE: Record<string, [string, string]> = { HAUTE: ["ok", "confiance haute"], MOYENNE: ["warn", "confiance moyenne"], FAIBLE: ["bad", "confiance faible"] };
+
+/** Qualification proposée par l'IA à l'orientation : l'avocat la valide ou la corrige avant de rédiger. */
+function FicheQualification({ reference, triage, procedure, referentiel, peutValider }: { reference: string; triage: TriageStocke | null; procedure: string; referentiel: Cas[]; peutValider: boolean }) {
+  const valide = trouverCas(referentiel, triage?.validation?.cas);
+  const ia = trouverCas(referentiel, triage?.cas);
+  const cas = valide ?? ia;
+  const q = triage?.qualification;
+  const conf = CONFIANCE[triage?.confiance ?? ""];
+  const actifs = referentiel.filter((c) => c.actif);
+  return (
+    <section className="card qualif">
+      <h2>Qualification</h2>
+      <p className="esp-etat">
+        {valide ? (
+          <span className="pill ok">validée par l&apos;avocat le {frDateHeure(new Date(triage!.validation!.le))}</span>
+        ) : ia ? (
+          <span className="pill warn">proposée par l&apos;IA, à valider</span>
+        ) : (
+          <span className="pill warn">{triage?.qualification ? "aucun cas du référentiel reconnu par l'IA" : "situation choisie par le client, sans analyse de l'IA"}</span>
+        )}
+        {!valide && conf && <span className={`pill ${conf[0]}`}>{conf[1]}</span>}
+      </p>
+      {cas && (
+        <>
+          <h3>{cas.libelle}</h3>
+          {cas.procedure !== procedure && (
+            <p className="erreur">
+              Ce cas relève de la procédure « {PROCEDURES[cas.procedure as CodeProcedure].libelle} », différente de celle du dossier : un écart d&apos;honoraires se règle par avenant.
+            </p>
+          )}
+          <dl className="qualif-dl">
+            <div><dt>Voie de recours</dt><dd>{cas.voieClient}</dd></div>
+            <div><dt>Juridiction</dt><dd>{cas.juridiction}</dd></div>
+            <div><dt>Délai</dt><dd>{cas.delai}</dd></div>
+            <div><dt>Acte à rédiger</dt><dd>{LIBELLES_MODELE[cas.modele]}{cas.complements.length ? ` · ${cas.complements.map((c) => LIBELLES_DILIGENCE[c]).join(" · ")}` : ""}</dd></div>
+          </dl>
+        </>
+      )}
+      {q && (
+        <dl className="qualif-dl">
+          <div><dt>Décision</dt><dd>{q.decision}</dd></div>
+          {q.autorite && <div><dt>Autorité</dt><dd>{q.autorite}</dd></div>}
+          {q.mesures.length > 0 && <div><dt>Mesures</dt><dd>{q.mesures.join(" · ")}</dd></div>}
+          {q.motif && <div><dt>Motif</dt><dd>{q.motif}</dd></div>}
+        </dl>
+      )}
+      {((q?.aVerifier.length ?? 0) > 0 || (cas?.vigilance.length ?? 0) > 0) && (
+        <>
+          <h3>À vérifier</h3>
+          <ul>
+            {q?.aVerifier.map((v, i) => <li key={`a${i}`}>{v}</li>)}
+            {cas?.vigilance.map((v, i) => <li key={`v${i}`}>{v}</li>)}
+          </ul>
+        </>
+      )}
+      {cas && cas.pieces.length > 0 && (
+        <details>
+          <summary>Pièces utiles</summary>
+          <ul>{cas.pieces.map((p, i) => <li key={i}>{p}</li>)}</ul>
+        </details>
+      )}
+      {peutValider && actifs.length > 0 && (
+        <div className="cab-actions">
+          {cas && !valide && <ActionForm base={{ reference, action: "qualification", cas: cas.code }} libelle="Valider la qualification" classe="btn cta sm" />}
+          <ActionForm
+            base={{ reference, action: "qualification" }}
+            champs={[{ nom: "cas", type: "select", label: "Requalifier", defaut: cas?.code ?? actifs[0].code, options: actifs.map((c) => [c.code, c.libelle]) }]}
+            libelle={cas ? "Requalifier" : "Qualifier"}
+            classe="btn sm ghost"
+          />
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -215,6 +301,15 @@ export default async function FicheDossier({ params, searchParams }: { params: P
               ))}
             </nav>
 
+            {onglet === "travail" && (
+              <FicheQualification
+                reference={ref}
+                triage={dos.triage as TriageStocke | null}
+                procedure={dos.procedure}
+                referentiel={await lireParametre(d, "cas")}
+                peutValider={estAvocat}
+              />
+            )}
             {onglet === "travail" && poste && <PosteTravail {...poste} />}
             {onglet === "travail" && depot && <DepotEnvoi {...depot} />}
 

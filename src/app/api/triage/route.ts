@@ -8,6 +8,7 @@ import { valeur } from "@/lib/serveur/connexions";
 import { PROCEDURES } from "@/lib/procedures";
 import { lireParametre } from "@/lib/serveur/parametres";
 import { trier, trierSimule } from "@/lib/triage";
+import { trouverCas } from "@/lib/cas";
 import { envoyer } from "@/lib/serveur/notifications";
 
 export const runtime = "nodejs";
@@ -54,7 +55,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ erreur: "Décrivez votre situation ou transmettez votre décision." }, { status: 400 });
   }
 
-  const TARIFS = await lireParametre(await db(), "tarifs");
+  const base = await db();
+  const TARIFS = await lireParametre(base, "tarifs");
+  const referentiel = await lireParametre(base, "cas");
 
   // Sans clé Anthropic ou en cas d'échec de l'IA : en production, jamais d'orientation par mots-clés ;
   // le visiteur choisit sa situation dans une liste et poursuit son dépôt, le cabinet est alerté.
@@ -67,7 +70,7 @@ export async function POST(req: Request) {
   let t;
   try {
     t = cleIA
-      ? await trier(corps.data, new Anthropic({ apiKey: cleIA }), (await valeur("ANTHROPIC_MODEL_TRIAGE")) ?? (await valeur("ANTHROPIC_MODEL")))
+      ? await trier(corps.data, new Anthropic({ apiKey: cleIA }), (await valeur("ANTHROPIC_MODEL_TRIAGE")) ?? (await valeur("ANTHROPIC_MODEL")), referentiel)
       : trierSimule(corps.data.recit ?? "");
   } catch (e) {
     // Cause consignée (jamais le récit du client).
@@ -96,14 +99,18 @@ export async function POST(req: Request) {
         });
 
   const proc = PROCEDURES[t.procedure];
+  const cas = trouverCas(referentiel, t.cas);
   return NextResponse.json({
     triage: t,
     procedure: { code: proc.code, libelle: proc.libelle },
+    // Cas reconnu : libellé et voie affichés au client ; diligences ajoutées au devis.
+    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements } : null,
     delai,
     // Le prix n'est pas affiché à l'écran « Résultat » ; il est renvoyé pour l'écran « Votre recours ».
     prix: {
       principal: TARIFS[proc.diligence],
       majorationUrgence: delai?.traitement === "URGENCE" ? TARIFS.MAJORATION_URGENCE : 0,
+      complements: (cas?.complements ?? []).map((d) => ({ diligence: d, montant: TARIFS[d] })),
     },
   });
 }

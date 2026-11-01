@@ -152,12 +152,14 @@ export function libelleDiligence(d: Diligence): string {
 /** Lignes d'honoraires de l'offre « Votre recours » (ou de l'avis préalable). */
 export function composerOffre(
   code: CodeProcedure,
-  opts: { urgence: boolean; avisPrealable?: boolean },
+  opts: { urgence: boolean; avisPrealable?: boolean; complements?: readonly Diligence[] },
   tarifs: Record<Diligence, number> = TARIFS_DEFAUT,
 ): { diligence: Diligence; libelle: string; montant: number }[] {
   const ligne = (d: Diligence) => ({ diligence: d, libelle: LIBELLES_DILIGENCE[d], montant: tarifs[d] });
   if (opts.avisPrealable) return [ligne("AVIS_PREALABLE")];
   const lignes = [ligne(PROCEDURES[code].diligence)];
+  // Diligences ajoutées par le cas reconnu (référé-suspension avec la requête, par exemple).
+  for (const d of opts.complements ?? []) if (!lignes.some((l) => l.diligence === d)) lignes.push(ligne(d));
   if (opts.urgence && PROCEDURES[code].diligence !== "DIAGNOSTIC") lignes.push(ligne("MAJORATION_URGENCE"));
   return lignes;
 }

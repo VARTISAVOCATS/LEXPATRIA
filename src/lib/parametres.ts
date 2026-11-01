@@ -4,6 +4,7 @@
 
 import { z } from "zod";
 import { AVOCATS, FAQ } from "./accueil";
+import { CAS_DEFAUT, schemaReferentiel } from "./cas";
 import type { ModelesConvention } from "./convention";
 import { ECHEANCIER_DEFAUT, type ReglesEcheancier } from "./echeancier";
 import { LIBELLES_DILIGENCE, TARIFS_DEFAUT, type Diligence } from "./procedures";
@@ -98,6 +99,13 @@ export const PARAMETRES = {
     schema: schemaEcheancier,
     defaut: ECHEANCIER_DEFAUT,
     public: true,
+  },
+  cas: {
+    libelle: "Référentiel des cas (orientation par l'IA)",
+    aide: "Situations que l'IA reconnaît, avec la procédure, la voie de recours, le délai, les diligences du devis et le modèle d'acte. L'IA rattache chaque récit ou décision à l'un de ces cas.",
+    schema: schemaReferentiel,
+    defaut: CAS_DEFAUT,
+    public: false,
   },
   remuneration: {
     libelle: "Rémunération à l'acte (HT)",

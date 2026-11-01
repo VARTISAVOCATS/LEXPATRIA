@@ -2,9 +2,9 @@
 import { desc, eq } from "drizzle-orm";
 import type { Base } from "@/db";
 import { actes } from "@/db/schema";
-import { LIBELLES_MODELE, modelesPour, type CodeModele } from "@/lib/modeles";
+import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import type { Dossier } from "@/lib/serveur/dossiers";
-import { attestationValide, controleCroise, texteAttestation, type Analyse } from "@/lib/serveur/poste";
+import { attestationValide, controleCroise, modelesDuDossier, texteAttestation, type Analyse } from "@/lib/serveur/poste";
 import type { Membre } from "@/lib/serveur/session";
 import { frDateHeure } from "@/lib/statuts";
 import type { ProprietesPoste } from "./PosteTravail";
@@ -20,7 +20,7 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
     analyse: (dos.analyse as Analyse | null) ?? null,
     acte: acte ? { id: acte.id, type: acte.type, version: acte.version, contenu: acte.contenu, motsModifies: acte.motsModifies, tempsRevueS: acte.tempsRevueS } : null,
     versions: memeType.map((a) => ({ id: a.id, version: a.version, le: frDateHeure(a.creeLe), mots: a.motsModifies })),
-    modeles: modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId).map((c) => [c, LIBELLES_MODELE[c]]),
+    modeles: (await modelesDuDossier(d, dos)).map((c) => [c, LIBELLES_MODELE[c]]),
     libelleActe: acte ? (LIBELLES_MODELE[acte.type as CodeModele] ?? acte.type) : null,
     controle: await controleCroise(d, dos),
     attestation: att ? { le: frDateHeure(att.le), version: att.version } : null,
