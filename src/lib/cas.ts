@@ -631,7 +631,7 @@ export const CAS_DEFAUT: Cas[] = [
       "Demande de naturalisation par décret déposée (sur l'ANEF ou en préfecture) sans évolution : statut « dossier envoyé » ou « en attente » sans passage « en instruction », aucun récépissé de complétude, aucune convocation à l'entretien d'assimilation, ou aucune décision depuis de longs mois. Récit : « j'ai déposé ma naturalisation il y a un an et le dossier n'est toujours pas en instruction », « pas de convocation », « pas de nouvelles de ma demande de nationalité ». Aucune décision défavorable n'a été reçue.",
     juridiction: "Préfecture ou plateforme d'accès à la nationalité compétente ; juge des référés du tribunal administratif dans son ressort.",
     delai:
-      "Pas de délai de recours tant qu'aucune décision n'est née. L'autorité doit répondre dans les dix-huit mois suivant la remise d'un dossier complet, douze mois en cas de résidence habituelle en France depuis au moins dix ans (article 21-25-1 du code civil) ; au-delà, le silence vaut rejet et ouvre le recours préalable obligatoire auprès du ministre.",
+      "Aucun délai ne court : tant que le dossier reste au statut « dossier envoyé », aucun récépissé de complétude n'a été délivré et le délai de réponse de dix-huit mois (douze mois après dix ans de résidence, article 21-25-1 du code civil) n'a pas commencé ; aucune décision implicite de rejet ne peut naître.",
     refere: "MESURES_UTILES",
     demarche: false,
     demanderUrgence: false,
@@ -639,8 +639,8 @@ export const CAS_DEFAUT: Cas[] = [
     modele: "MISE_EN_DEMEURE",
     pieces: ["Attestation de dépôt ANEF et captures d'écran datées du suivi du dossier", "Récépissé de complétude, s'il a été délivré", "Échanges avec la plateforme de naturalisation", IDENTITE],
     vigilance: [
-      "Vérifier si un récépissé de complétude a été délivré : il fait courir le délai de dix-huit mois (douze mois après dix ans de résidence).",
-      "Si ce délai est expiré, une décision implicite de rejet est née : recours préalable obligatoire auprès du ministre, à proposer par avenant.",
+      "Statut « dossier envoyé » : pas de récépissé de complétude, donc pas de point de départ du délai de dix-huit ou douze mois et pas de rejet implicite. L'objet de la démarche est d'obtenir l'examen du dossier et la délivrance du récépissé.",
+      "Si un récépissé a été délivré (statut « en instruction » ou ultérieur) et que le délai est expiré, un rejet implicite est né : recours préalable obligatoire auprès du ministre, à proposer par avenant.",
       "Le référé mesures utiles suppose une urgence (concours, emploi réservé aux nationaux, situation familiale) : à défaut, s'en tenir à la mise en demeure.",
     ],
     actif: true,
