@@ -983,10 +983,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
 
             {etape === "ANALYSE" && (
               <div className="triresult">
-                <div className="think">
-                  <span className="spin" />
-                  {fichiers.length ? t("Lecture de votre décision…") : t("Analyse de votre situation…")}
-                </div>
+                <AttenteAnalyse decision={fichiers.length > 0} />
               </div>
             )}
 
@@ -1818,6 +1815,36 @@ function EcranRefus({ refus }: { refus: Refus | null }) {
         </p>
       )}
     </>
+  );
+}
+
+/** Attente pendant l'analyse : étapes qui s'enchaînent, la dernière reste active jusqu'à la réponse. */
+const ETAPES_ATTENTE = {
+  recit: ["Lecture de votre récit", "Identification de votre situation", "Recherche de la procédure adaptée", "Vérification des délais", "Rédaction de votre première analyse"],
+  decision: ["Lecture de votre décision", "Identification de l'autorité et des mesures", "Recherche de la procédure adaptée", "Vérification des délais", "Rédaction de votre première analyse"],
+};
+
+function AttenteAnalyse({ decision }: { decision: boolean }) {
+  const t = useT();
+  const etapes = decision ? ETAPES_ATTENTE.decision : ETAPES_ATTENTE.recit;
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((x) => Math.min(x + 1, etapes.length - 1)), 2800);
+    return () => clearInterval(id);
+  }, [etapes.length]);
+  return (
+    <div className="attente" role="status" aria-live="polite">
+      <div className="think">{t(decision ? "Lecture de votre décision…" : "Analyse de votre situation…")}</div>
+      <div className="barre" aria-hidden />
+      <ol>
+        {etapes.map((e, k) => (
+          <li key={e} className={k < i ? "fait" : k === i ? "encours" : ""}>
+            {k === i ? <span className="spin" /> : <span className="pt">{k < i ? "✓" : ""}</span>}
+            {t(e)}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }
 
