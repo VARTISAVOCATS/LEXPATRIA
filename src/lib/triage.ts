@@ -11,61 +11,73 @@ import { z } from "zod";
 import { CAS_DEFAUT, casDepuisLibre, schemaCasLibre, trouverCas, type Cas } from "./cas";
 import { controlerTexte } from "./deontologie";
 
+// Lecture tolérante de la réponse du modèle : un champ absent ou mal formé prend sa valeur par défaut au lieu de faire
+// échouer toute l'analyse (seule la procédure est indispensable, et elle se replie elle-même sur le diagnostic).
+const liste = (max: number) =>
+  z
+    .array(z.unknown())
+    .catch([])
+    .transform((a) => a.filter((x): x is string => typeof x === "string" && x.trim().length > 0).slice(0, max));
+const texteOuNul = z.string().nullable().catch(null);
+
 export const ResultatTriage = z.object({
-  procedure: z.enum([
-    "OQTF",
-    "REFUS_TITRE",
-    "REFUS_VISA",
-    "NATURALISATION",
-    "REFUS_IMPLICITE",
-    "BLOCAGE_EMPLOI",
-    "BLOCAGE_SIMPLE",
-    "PROCEDURE_EN_COURS",
-    "DIAGNOSTIC",
-    "HORS_PERIMETRE",
-  ]),
-  horsPerimetreMotif: z.enum(["ASILE", "AES", "JUDICIAIRE", "AUTRE"]).nullable(),
-  situationOQTF: z.enum(["LIBRE", "ASSIGNE", "DETENTION", "RETENTION", "LIBRE_APRES_ASILE"]).nullable(),
-  detentionOuRetention: z.boolean(),
-  dateDecision: z.string().nullable(), // AAAA-MM-JJ
-  dateNotification: z.string().nullable(),
-  dateDemande: z.string().nullable(), // refus implicite
-  dateEcheance: z.string().nullable(), // procédure en cours : prochaine échéance du tribunal
-  visaType: z.enum(["COURT", "LONG"]).nullable(),
-  naturalisationIssue: z.enum(["REFUS", "AJOURNEMENT"]).nullable(),
-  emploiMenace: z.boolean().nullable(),
-  prefecture: z.string().nullable(),
-  nationaliteAlgerienne: z.boolean().nullable(),
-  langue: z.string(),
-  faits: z.array(z.string()).max(8), // faits qui comptent, tirés du récit, à confirmer par le client
-  ceQueLeRecoursPeutObtenir: z.string(), // information générale, ni argument ni pronostic
+  procedure: z
+    .enum(["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION", "REFUS_IMPLICITE", "BLOCAGE_EMPLOI", "BLOCAGE_SIMPLE", "PROCEDURE_EN_COURS", "DIAGNOSTIC", "HORS_PERIMETRE"])
+    .catch("DIAGNOSTIC"),
+  horsPerimetreMotif: z.enum(["ASILE", "AES", "JUDICIAIRE", "AUTRE"]).nullable().catch(null),
+  situationOQTF: z.enum(["LIBRE", "ASSIGNE", "DETENTION", "RETENTION", "LIBRE_APRES_ASILE"]).nullable().catch(null),
+  detentionOuRetention: z.boolean().catch(false),
+  dateDecision: texteOuNul, // AAAA-MM-JJ
+  dateNotification: texteOuNul,
+  dateDemande: texteOuNul, // refus implicite
+  dateEcheance: texteOuNul, // procédure en cours : prochaine échéance du tribunal
+  visaType: z.enum(["COURT", "LONG"]).nullable().catch(null),
+  naturalisationIssue: z.enum(["REFUS", "AJOURNEMENT"]).nullable().catch(null),
+  emploiMenace: z.boolean().nullable().catch(null),
+  prefecture: texteOuNul,
+  nationaliteAlgerienne: z.boolean().nullable().catch(null),
+  langue: z.string().catch("fr"),
+  faits: liste(8), // faits qui comptent, tirés du récit, à confirmer par le client
+  ceQueLeRecoursPeutObtenir: z.string().catch(""), // information générale, ni argument ni pronostic
   // Cas du référentiel reconnu (code), ou null si aucun ne correspond ; procédure alors la plus proche.
-  cas: z.string().nullable().default(null),
-  confiance: z.enum(["HAUTE", "MOYENNE", "FAIBLE"]).default("MOYENNE"),
+  cas: texteOuNul,
+  confiance: z.enum(["HAUTE", "MOYENNE", "FAIBLE"]).catch("MOYENNE"),
   // Qualification pour l'avocat : ce que la décision ou le récit établit, et ce qui reste à vérifier.
   qualification: z
     .object({
-      decision: z.string(), // nature exacte de la décision ou de la difficulté
-      autorite: z.string().nullable(),
-      mesures: z.array(z.string()).max(8), // OQTF, délai de départ, pays de renvoi, IRTF, assignation…
-      motif: z.string().nullable(), // motif principal tel qu'il est écrit
-      aVerifier: z.array(z.string()).max(6), // points incertains que l'avocat doit vérifier
+      decision: z.string().catch(""), // nature exacte de la décision ou de la difficulté
+      autorite: texteOuNul,
+      mesures: liste(8), // OQTF, délai de départ, pays de renvoi, IRTF, assignation…
+      motif: texteOuNul, // motif principal tel qu'il est écrit
+      aVerifier: liste(8), // points incertains que l'avocat doit vérifier
     })
     .nullable()
-    .default(null),
+    .catch(null),
   // Note au client sur SA situation (2 ou 3 phrases), avec ou sans décision jointe.
-  noteClient: z.string().default(""),
+  noteClient: z.string().catch(""),
   // Qualification rédigée par l'IA quand aucun cas du référentiel ne correspond (validée ensuite contre le schéma).
-  casLibre: z.unknown().nullable().default(null),
+  casLibre: z.unknown().nullable().catch(null),
   // Question de précision, quand une seule réponse permet de trancher entre plusieurs cas.
-  question: z.object({ texte: z.string().min(5).max(300), options: z.array(z.string().min(1).max(120)).min(2).max(4) }).nullable().default(null),
+  question: z
+    .object({ texte: z.string().min(5).max(300), options: z.array(z.string().min(1).max(120)).min(2).max(4) })
+    .nullable()
+    .catch(null),
   // Pré-analyse personnalisée de la décision jointe (2 à 4 phrases), vide sans décision.
-  preAnalyse: z.string().default(""),
+  preAnalyse: z.string().catch(""),
   // Pour l'affichage : faits et information générale traduits dans la langue du récit, si ce n'est pas le français.
   traduction: z
-    .object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string(), preAnalyse: z.string().optional(), note: z.string().optional(), cas: z.string().optional(), voie: z.string().optional() })
+    .object({
+      langue: z.string(),
+      faits: liste(8),
+      obtenir: z.string().catch(""),
+      preAnalyse: z.string().optional().catch(undefined),
+      note: z.string().optional().catch(undefined),
+      cas: z.string().optional().catch(undefined),
+      voie: z.string().optional().catch(undefined),
+    })
     .nullable()
-    .optional(),
+    .optional()
+    .catch(null),
 });
 export type ResultatTriage = z.infer<typeof ResultatTriage>;
 
@@ -163,12 +175,13 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
 
   const rep = await client.messages.create({
     model: modele ?? process.env.ANTHROPIC_MODEL_TRIAGE ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
-    max_tokens: 4000,
+    max_tokens: 8000,
     system: consigne(referentiel),
     messages: [
       { role: "user", content: contenu },
     ],
   });
+  if (rep.stop_reason === "max_tokens") throw new Error("Réponse du modèle tronquée (max_tokens atteint)");
   const json = extraireJson(rep.content);
   const res = ResultatTriage.parse(json);
   // Filet : si le récit nomme clairement la décision (mots-clés français), on ne laisse pas l'orientation en diagnostic.

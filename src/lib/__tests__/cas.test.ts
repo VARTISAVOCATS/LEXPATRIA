@@ -109,4 +109,15 @@ describe("référentiel des cas", () => {
     expect(r.cas).toBe("NATURALISATION_SANS_SUITE");
     expect(r.procedure).toBe("BLOCAGE_SIMPLE");
   });
+
+  it("une réponse incomplète ou mal formée du modèle ne fait pas échouer l'analyse", async () => {
+    const r = await trier(
+      { recit: "J'ai reçu une OQTF" },
+      client({ procedure: "OQTF", cas: "OQTF_SEJOUR_IRREGULIER", faits: ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"], qualification: { decision: null, mesures: "OQTF" }, question: { texte: "?", options: [] } }),
+    );
+    expect(r.procedure).toBe("OQTF");
+    expect(r.faits).toHaveLength(8);
+    expect(r.question).toBeNull();
+    expect(r.horsPerimetreMotif).toBeNull();
+  });
 });
