@@ -28,7 +28,7 @@ export async function GET(req: Request) {
     dateEcheance: q.dateEcheance ?? null,
     avisPrealable: dos.avisPrealable,
     triage: dos.triage,
-    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements, refere: cas.refere, demarche: cas.demarche } : null,
+    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements, refere: cas.refere, demarche: cas.demarche, demanderUrgence: cas.demanderUrgence } : null,
     qualification: q,
     etapeAtteinte: dos.etapeAtteinte,
     coordonnees: { civilite: cli.civilite ?? "", prenom: cli.prenom ?? "", nom: cli.nom ?? "", email: cli.email ?? "", telephone: cli.telephone ?? "", adresse: cli.adresse ?? "", codePostal: cli.codePostal ?? "", ville: cli.ville ?? "", pays: cli.pays ?? "FR" },

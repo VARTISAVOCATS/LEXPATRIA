@@ -60,4 +60,13 @@ describe("référentiel des cas", () => {
     expect(r.emploiMenace).toBeNull();
     expect(composerOffre("BLOCAGE_EMPLOI", { urgence: false, refere: "MESURES_UTILES" }, TARIFS_DEFAUT)[0].diligence).toBe("REFERE_MESURES_UTILES");
   });
+
+  it("une naturalisation sans suite n'est jamais orientée vers un recours contre un refus", async () => {
+    const recit = "J'ai déposé sur l'ANEF une demande de naturalisation le 1er août 2025 ; plus d'un an après, le dossier est toujours « dossier envoyé ».";
+    const parDefaut = await trier({ recit }, client({ ...base, procedure: "DIAGNOSTIC" }));
+    expect(parDefaut.procedure).toBe("DIAGNOSTIC");
+    const r = await trier({ recit }, client({ ...base, procedure: "NATURALISATION", cas: "NATURALISATION_SANS_SUITE", confiance: "HAUTE" }));
+    expect(r.procedure).toBe("BLOCAGE_SIMPLE");
+    expect(r.emploiMenace).toBe(false);
+  });
 });

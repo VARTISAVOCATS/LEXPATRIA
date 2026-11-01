@@ -497,6 +497,7 @@ table.q tr { cursor: pointer; }
 .tr-proc { display: flex; flex-direction: column; gap: 2px; }
 .tr-proc b { font-family: var(--display); font-size: 18px; font-weight: 600; }
 .tr-proc .tr-voie { font-size: 14px; color: var(--ink-2); }
+.tr-note { font-size: 15px; line-height: 1.5; margin: 0; }
 .fr-sub { font-size: 12.5px; color: var(--ink-3); }
 .tr-prep ul { margin: 4px 0px 0px; padding-inline-start: 18px; display: flex; flex-direction: column; gap: 3px; }
 .tr-cta { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }

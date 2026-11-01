@@ -406,6 +406,11 @@ export function EditeurCas({ valeur }: { valeur: Cas[] }) {
                     <label>
                       <input type="checkbox" checked={c.demarche} onChange={(x) => maj(i, { demarche: x.target.checked })} /> Demander la démarche engagée en préfecture
                     </label>
+                    {c.refere === "MESURES_UTILES" && (
+                      <label>
+                        <input type="checkbox" checked={c.demanderUrgence} onChange={(x) => maj(i, { demanderUrgence: x.target.checked })} /> Demander au client si son emploi est menacé (sinon, mise en demeure d&apos;abord)
+                      </label>
+                    )}
                   </label>
                 )}
                 <fieldset className="af-c bo-compl">

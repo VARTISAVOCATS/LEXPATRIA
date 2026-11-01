@@ -100,6 +100,7 @@ Règles de qualification :
 - Lis la décision jointe en entier (en-tête, visas, motifs, dispositif, articles, mention des voies et délais) avant de conclure : l'article cité (par exemple L. 611-1, 3° ou 4° du CESEDA), l'autorité, les mesures et le motif déterminent le cas.
 - "cas" : le code du cas qui correspond EXACTEMENT à la situation. La "procedure" est alors celle indiquée entre crochets pour ce cas. Si aucun cas ne correspond, "cas" vaut null et "procedure" est la procédure la plus proche ; "confiance" vaut alors "FAIBLE" et "qualification.aVerifier" explique pourquoi.
 - "confiance" : HAUTE si la décision jointe ou un récit précis établit le cas ; MOYENNE si le récit l'indique sans décision ; FAIBLE si plusieurs cas restent possibles.
+- Une demande EN COURS sans décision (dossier déposé, en attente, non instruit, sans réponse) n'est jamais un refus : ne choisis un cas de refus (titre, visa, naturalisation) ou d'OQTF que si la personne a reçu une décision défavorable. Pour une demande restée sans suite, choisis le cas de silence ou de blocage qui correspond (titre de séjour, naturalisation, rendez-vous, récépissé).
 - Distingue avec soin : refus de titre AVEC OQTF (cas OQTF) / refus SANS OQTF ; première demande / renouvellement / changement de statut / retrait ; refus de regroupement familial par le préfet / refus de visa famille par le consulat ; visa court / long séjour ; naturalisation par décret (administratif) / déclaration de nationalité (juge judiciaire, hors périmètre) ; recours déjà déposé / jugement déjà rendu.
 - Blocages en préfecture : distingue (1) le blocage qui appelle un RÉFÉRÉ MESURES UTILES (rendez-vous impossible, demande non enregistrée, récépissé non délivré ou non renouvelé, titre accordé mais non remis : l'administration n'accomplit pas une démarche due, sans conséquence grave dans les tout prochains jours) et (2) celui qui appelle un RÉFÉRÉ-LIBERTÉ (documents retenus par l'administration, retour en France impossible, ou blocage qui entraîne dans les jours qui viennent une atteinte grave : licenciement imminent, perte du logement ou des ressources, séparation familiale, alors que la personne remplit manifestement les conditions). En cas de doute, retiens le référé mesures utiles et indique-le dans "aVerifier".
 - Une demande d'asile, un transfert « Dublin » ou un recours devant l'OFPRA ou la CNDA est HORS_PERIMETRE (ASILE). Le souhait de DÉPOSER une demande de régularisation est HORS_PERIMETRE (AES) ; en revanche, le REFUS d'une demande de régularisation se conteste (cas de refus de titre ou d'OQTF).
@@ -157,9 +158,12 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   const json = extraireJson(rep.content);
   const res = ResultatTriage.parse(json);
   // Filet : si le récit nomme clairement la décision (mots-clés français), on ne laisse pas l'orientation en diagnostic.
-  if (res.procedure === "DIAGNOSTIC" && entree.recit) {
+  // Une décision défavorable doit être nommée (refus, rejet, ajournement, OQTF) : une demande en cours n'est jamais un refus.
+  if (res.procedure === "DIAGNOSTIC" && !res.cas && entree.recit) {
     const motsCles = trierSimule(entree.recit).procedure;
-    if (motsCles !== "DIAGNOSTIC") res.procedure = motsCles;
+    const decisionNommee = /refus|rejet|ajourn|oqtf|quitter le territoire/i.test(entree.recit);
+    const exigeDecision = ["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"].includes(motsCles);
+    if (motsCles !== "DIAGNOSTIC" && (!exigeDecision || decisionNommee)) res.procedure = motsCles;
   }
 
   // Cohérence avec le référentiel : le cas reconnu fixe la procédure et les éléments qu'il détermine.
@@ -177,6 +181,10 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     if (cas.refere === "LIBERTE") {
       res.procedure = "BLOCAGE_EMPLOI";
       res.emploiMenace = true;
+    } else if (cas.refere === "MESURES_UTILES" && !cas.demanderUrgence) {
+      // Urgence rarement caractérisée (naturalisation, par exemple) : mise en demeure, l'avocat apprécie la suite.
+      res.procedure = "BLOCAGE_SIMPLE";
+      res.emploiMenace = false;
     }
   }
 

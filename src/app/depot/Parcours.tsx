@@ -58,6 +58,7 @@ interface CasReconnu {
   complements: Diligence[];
   refere: "MESURES_UTILES" | "LIBERTE" | null;
   demarche?: boolean;
+  demanderUrgence?: boolean;
 }
 
 const SITUATIONS: { v: SituationOQTF; l: string }[] = [
@@ -409,7 +410,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     };
   }
 
-  function appliquerTriage(tri: ResultatTriage, decisionJointe = false, urgenceAcquise = false, sansDemarche = false) {
+  function appliquerTriage(tri: ResultatTriage, decisionJointe = false, urgenceAcquise = false, sansDemarche = false, sansUrgence = false) {
     setTriage(tri);
     const p = tri.procedure as CodeProcedure;
     setProcedure(p);
@@ -421,7 +422,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     setNatuIssue(tri.naturalisationIssue);
     // L'emploi menacé est toujours demandé explicitement (jamais deviné), comme la situation pour une OQTF,
     // sauf pour un cas de référé-liberté reconnu, où l'urgence est inhérente à la situation.
-    const emp = urgenceAcquise ? true : null;
+    const emp = urgenceAcquise ? true : sansUrgence ? false : null;
     setEmploi(emp);
     if (sansDemarche) setTypeDemande(null);
     setEcheance(tri.dateEcheance ?? undefined);
@@ -482,7 +483,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       }
       if (liste.length) setDecisionLue(true);
       setCasReconnu(j.cas ?? null);
-      appliquerTriage(tri, liste.length > 0, j.cas?.refere === "LIBERTE", j.cas?.demarche === false);
+      appliquerTriage(tri, liste.length > 0, j.cas?.refere === "LIBERTE", j.cas?.demarche === false, j.cas?.refere === "MESURES_UTILES" && j.cas?.demanderUrgence === false);
     } catch (e) {
       // Erreur réseau : même secours ; seule une demande invalide (400) renvoie au récit.
       if (e instanceof TypeError) return secours(procedureIndiquee, liste.length > 0);
@@ -592,11 +593,13 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   // Information personnalisée avant paiement : lecture de la décision par l'IA ; à défaut, phrases construites
   // à partir des réponses (blocages, silence de la préfecture, procédure en cours, diagnostic).
   const preAnalyseIA = (langueEcran === "fr" ? triage?.preAnalyse : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.preAnalyse : "")) || "";
+  const noteIA = (langueEcran === "fr" ? triage?.noteClient : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.note : "")) || "";
   const infoPersonnalisee = (() => {
     if (!procedure) return "";
     // Note de l'IA sur la situation du client, précédée de la lecture de sa décision s'il l'a transmise.
-    const noteIA = (langueEcran === "fr" ? triage?.noteClient : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.note : "")) || "";
-    if (preAnalyseIA || noteIA) return [preAnalyseIA, noteIA].filter(Boolean).join("\n\n");
+    // La note de l'IA sur la situation est affichée sous la procédure envisagée : pas de texte générique en plus.
+    if (preAnalyseIA) return preAnalyseIA;
+    if (noteIA) return "";
     const pref = prefecture ? t("la préfecture de {p}", { p: prefecture.replace(/\s*\(.*\)$/, "") }) : t("la préfecture");
     const demarche = typeDemande === "RENOUVELLEMENT" ? t("renouvellement de titre") : typeDemande === "CHANGEMENT" ? t("changement de statut") : t("demande de titre");
     if (AVEC_DECISION.includes(procedure))
@@ -1008,6 +1011,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     <b>{t(titreProcedure)}</b>
                   )}
                 </div>
+                {noteIA && <p className="tr-note">{noteIA}</p>}
 
                 {dateRef && etape === "RESULTAT" && (
                   <div className="dg-done">
