@@ -53,11 +53,13 @@ export const ResultatTriage = z.object({
     })
     .nullable()
     .default(null),
+  // Note au client sur SA situation (2 ou 3 phrases), avec ou sans décision jointe.
+  noteClient: z.string().default(""),
   // Pré-analyse personnalisée de la décision jointe (2 à 4 phrases), vide sans décision.
   preAnalyse: z.string().default(""),
   // Pour l'affichage : faits et information générale traduits dans la langue du récit, si ce n'est pas le français.
   traduction: z
-    .object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string(), preAnalyse: z.string().optional(), cas: z.string().optional(), voie: z.string().optional() })
+    .object({ langue: z.string(), faits: z.array(z.string()), obtenir: z.string(), preAnalyse: z.string().optional(), note: z.string().optional(), cas: z.string().optional(), voie: z.string().optional() })
     .nullable()
     .optional(),
 });
@@ -109,8 +111,9 @@ Règles :
 - "faits" : au plus 8 faits du récit qui comptent (ancienneté du séjour, vie familiale, enfants, emploi), formulés brièvement en français, sans les embellir.
 - "ceQueLeRecoursPeutObtenir" : une ou deux phrases d'information générale en français (ex. pour une OQTF : le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision). Jamais d'argument juridique, jamais de pronostic, jamais les mots « gratuit », « garanti », « offert ».
 - "preAnalyse" : seulement si une décision est jointe ; sinon "". Deux à quatre phrases complètes en français, rédigées à la troisième personne pour le cabinet (« la décision », « le cabinet », « votre avocat » ; jamais « nous »), adressées à la personne (« vous »), sur ce que dit SA décision : l'autorité et la nature de la décision, sa date et, si elle figure, la date de notification ; le délai de recours indiqué dans la mention des voies et délais ; les mesures qui l'accompagnent (délai de départ volontaire, interdiction de retour, pays de renvoi) ; le motif principal tel qu'il est écrit. Exemple de ton : « Le préfet de police vous fait obligation de quitter le territoire français dans un délai de trente jours, par une décision du 3 octobre 2026 notifiée le 6 octobre. ». Aucun argument juridique, aucun pronostic, aucune promesse. Style d'avocat, sobre et précis : pas de phrases hachées, pas de formules d'empathie.
+- "noteClient" : sauf HORS_PERIMETRE, deux ou trois phrases en français adressées à la personne (« vous »), qui montrent que sa situation a été comprise : reprends les éléments concrets de SON récit (nature de la décision ou du blocage, ancienneté, famille, emploi, études, démarche engagée, échéance) puis indique la démarche que votre avocat engagera dans son cas et son objet. Si une décision est jointe, la "preAnalyse" la décrit déjà : la note ne la répète pas. Troisième personne pour le cabinet (« votre avocat », « le cabinet », jamais « nous »). Aucun pronostic, aucune promesse, aucune formule d'empathie, aucune phrase générale qui vaudrait pour tout le monde, aucun fait inventé. Exemple de ton : « Vous vivez en France depuis 2017 et la préfecture refuse de renouveler votre titre de séjour salarié alors que vous êtes en contrat à durée indéterminée. Votre avocat contestera ce refus devant le tribunal administratif et demandera en urgence la suspension de ses effets, afin que vous puissiez conserver votre emploi pendant la procédure. »
 - "langue" : code ISO 639-1 de la langue du récit (celle dans laquelle la personne a écrit, pas celle des mots cités).
-- "traduction" : si la langue du récit n'est pas le français, { "langue": code ISO 639-1, "faits": les mêmes faits traduits dans cette langue, "obtenir": "ceQueLeRecoursPeutObtenir" traduit dans cette langue, "preAnalyse": "preAnalyse" traduite dans cette langue } ; sinon null.
+- "traduction" : si la langue du récit n'est pas le français, { "langue": code ISO 639-1, "faits": les mêmes faits traduits dans cette langue, "obtenir": "ceQueLeRecoursPeutObtenir" traduit dans cette langue, "preAnalyse": "preAnalyse" traduite dans cette langue, "note": "noteClient" traduite dans cette langue } ; sinon null.
 - Un refus de titre SANS obligation de quitter le territoire est REFUS_TITRE, jamais OQTF.
 - "visaType" : COURT (moins de 90 jours, tourisme, visite) ou LONG (études, conjoint, travail, regroupement) si le récit le dit, sinon null.
 - "naturalisationIssue" : REFUS ou AJOURNEMENT si le récit le dit, sinon null.
@@ -182,6 +185,10 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     res.ceQueLeRecoursPeutObtenir = "";
     if (res.traduction) res.traduction.obtenir = "";
   }
+  if (controlerTexte(res.noteClient).length > 0) {
+    res.noteClient = "";
+    if (res.traduction) res.traduction.note = "";
+  }
   if (controlerTexte(res.preAnalyse).length > 0) {
     res.preAnalyse = "";
     if (res.traduction) res.traduction.preAnalyse = "";
@@ -229,6 +236,7 @@ export function trierSimule(recit: string): ResultatTriage {
     cas: null,
     confiance: "FAIBLE",
     qualification: null,
+    noteClient: "",
     preAnalyse: "",
   };
 }

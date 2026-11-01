@@ -387,6 +387,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       cas: null,
       confiance: "FAIBLE",
       qualification: null,
+      noteClient: "",
       procedure: p,
       horsPerimetreMotif: null,
       situationOQTF: null,
@@ -593,7 +594,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const preAnalyseIA = (langueEcran === "fr" ? triage?.preAnalyse : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.preAnalyse : "")) || "";
   const infoPersonnalisee = (() => {
     if (!procedure) return "";
-    if (preAnalyseIA) return preAnalyseIA;
+    // Note de l'IA sur la situation du client, précédée de la lecture de sa décision s'il l'a transmise.
+    const noteIA = (langueEcran === "fr" ? triage?.noteClient : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.note : "")) || "";
+    if (preAnalyseIA || noteIA) return [preAnalyseIA, noteIA].filter(Boolean).join("\n\n");
     const pref = prefecture ? t("la préfecture de {p}", { p: prefecture.replace(/\s*\(.*\)$/, "") }) : t("la préfecture");
     const demarche = typeDemande === "RENOUVELLEMENT" ? t("renouvellement de titre") : typeDemande === "CHANGEMENT" ? t("changement de statut") : t("demande de titre");
     if (AVEC_DECISION.includes(procedure))
@@ -1268,7 +1271,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       <>
                         <div className="pa">
                           <b className="pa-t">{t("Première analyse")}</b>
-                          {infoPersonnalisee && <p className="pa-txt">{infoPersonnalisee}</p>}
+                          {infoPersonnalisee &&
+                            infoPersonnalisee.split("\n\n").map((para, i) => (
+                              <p key={i} className="pa-txt">
+                                {para}
+                              </p>
+                            ))}
                           <dl>
                             <div>
                               <dt>{t("Votre situation")}</dt>
