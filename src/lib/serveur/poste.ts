@@ -27,7 +27,7 @@ import { adresseEnLignes } from "@/lib/pays";
 import { rang } from "@/lib/statuts";
 import { minimiser } from "@/lib/triage";
 import { referencesPour } from "./actes-reference";
-import { trouverCas } from "@/lib/cas";
+import { casDuTriage } from "@/lib/cas";
 import { lireParametre } from "./parametres";
 import { valeur } from "./connexions";
 import { modeleActif } from "./modeles-cabinet";
@@ -146,16 +146,15 @@ function analyseSimulee(dos: Dossier, x: DonneesActe): Omit<Analyse, "vigilance"
 
 /** Qualification du dossier : cas validé par l'avocat, à défaut cas reconnu par l'IA, et lecture de la décision. */
 export async function qualificationDossier(d: Base, dos: Dossier) {
-  const t = (dos.triage ?? {}) as { cas?: string | null; confiance?: string; qualification?: unknown; validation?: { cas: string } | null };
-  const referentiel = await lireParametre(d, "cas");
-  const cas = trouverCas(referentiel, t.validation?.cas) ?? trouverCas(referentiel, t.cas);
+  const t = (dos.triage ?? {}) as { cas?: string | null; casLibre?: unknown; confiance?: string; qualification?: unknown; validation?: { cas: string } | null };
+  const cas = casDuTriage(await lireParametre(d, "cas"), t, true);
   return {
     cas: cas ?? null,
     validee: !!t.validation?.cas,
     pourIA: cas
       ? {
           cas: cas.libelle,
-          validePar: t.validation?.cas ? "avocat" : "IA, non encore validé",
+          validePar: t.validation?.cas ? "avocat" : cas.libre ? "IA, hors référentiel, non encore validé" : "IA, non encore validé",
           voie: cas.voieClient,
           juridiction: cas.juridiction,
           delai: cas.delai,

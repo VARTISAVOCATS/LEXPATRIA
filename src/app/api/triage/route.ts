@@ -8,7 +8,8 @@ import { valeur } from "@/lib/serveur/connexions";
 import { PROCEDURES } from "@/lib/procedures";
 import { lireParametre } from "@/lib/serveur/parametres";
 import { trier, trierSimule } from "@/lib/triage";
-import { trouverCas } from "@/lib/cas";
+import { casDuTriage, vueCas } from "@/lib/cas";
+import { casLibres } from "@/db/schema";
 import { envoyer } from "@/lib/serveur/notifications";
 
 export const runtime = "nodejs";
@@ -21,6 +22,7 @@ const Corps = z.object({
     .optional(),
   pdfs: z.array(z.object({ base64: z.string() })).max(3).optional(),
   procedure: z.enum(["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"]).optional(),
+  precisions: z.array(z.object({ question: z.string().max(300), reponse: z.string().max(120) })).max(2).optional(),
 });
 
 // Alerte au cabinet quand l'analyse par l'IA est indisponible : au plus une par heure, sans aucune donnée du client.
@@ -79,6 +81,11 @@ export async function POST(req: Request) {
   }
   const aujourdhui = versJour(new Date());
 
+  // Question de précision : l'IA hésite entre plusieurs cas et une réponse suffit à trancher (deux questions au plus).
+  if (t.question && (corps.data.precisions?.length ?? 0) < 2 && !t.detentionOuRetention) {
+    return NextResponse.json({ question: t.question });
+  }
+
   if (t.detentionOuRetention || t.situationOQTF === "DETENTION" || t.situationOQTF === "RETENTION") {
     return NextResponse.json({ triage: t, refus: t.situationOQTF === "RETENTION" ? "RETENTION" : "DETENTION" });
   }
@@ -99,12 +106,19 @@ export async function POST(req: Request) {
         });
 
   const proc = PROCEDURES[t.procedure];
-  const cas = trouverCas(referentiel, t.cas);
+  const cas = casDuTriage(referentiel, t);
+  // Qualification hors référentiel : conservée pour le back office (aucune donnée du client), sans bloquer la réponse.
+  if (cas?.libre) {
+    await base
+      .insert(casLibres)
+      .values({ libelle: cas.libelle, procedure: cas.procedure, fiche: t.casLibre as object })
+      .catch((e) => console.error("Enregistrement du cas hors référentiel impossible :", e instanceof Error ? e.message : e));
+  }
   return NextResponse.json({
     triage: t,
     procedure: { code: proc.code, libelle: proc.libelle },
     // Cas reconnu : libellé et voie affichés au client ; diligences ajoutées au devis.
-    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements, refere: cas.refere, demarche: cas.demarche, demanderUrgence: cas.demanderUrgence } : null,
+    cas: vueCas(cas),
     delai,
     // Le prix n'est pas affiché à l'écran « Résultat » ; il est renvoyé pour l'écran « Votre recours ».
     prix: {

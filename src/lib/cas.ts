@@ -60,6 +60,8 @@ export const schemaCas = z.object({
   demarche: z.boolean().default(true),
   /** Référé mesures utiles : l'urgence (emploi menacé) est-elle demandée au client ? Sinon, mise en demeure d'abord. */
   demanderUrgence: z.boolean().default(true),
+  /** Décision implicite de rejet (silence de l'administration) : pas de document à transmettre, délai vérifié par l'avocat. */
+  implicite: z.boolean().default(false),
   /** Diligences ajoutées au devis, en plus de la diligence principale de la procédure. */
   complements: z.array(z.enum(DILIGENCES_COMPLEMENTAIRES)).max(2).default([]),
   modele: z.enum(MODELES_CAS),
@@ -68,6 +70,17 @@ export const schemaCas = z.object({
   actif: z.boolean().default(true),
 });
 export type Cas = z.infer<typeof schemaCas>;
+
+/** Qualification rédigée par l'IA lorsqu'aucune fiche du référentiel ne correspond : mêmes champs, même cadre. */
+export const schemaCasLibre = schemaCas
+  .omit({ code: true, actif: true, pieces: true, demarche: true, demanderUrgence: true })
+  .extend({ signes: texte(1500).default("") });
+export type CasLibre = z.infer<typeof schemaCasLibre>;
+
+/** Fiche complète construite à partir d'une qualification libre (code LIBRE, pièces à définir par l'avocat). */
+export function casDepuisLibre(l: CasLibre): Cas {
+  return { ...l, code: "LIBRE", signes: l.signes || l.libelle, pieces: [], demarche: true, demanderUrgence: true, actif: true };
+}
 
 export const schemaReferentiel = z
   .array(schemaCas)
@@ -96,6 +109,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Titre de séjour ou récépissé antérieur", IDENTITE, "Justificatifs de présence, de vie familiale et d'emploi"],
@@ -121,6 +135,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Titre de séjour retiré (copie)", IDENTITE, "Courrier de la procédure contradictoire préalable, s'il existe"],
@@ -145,6 +160,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, IDENTITE, "Procès-verbal d'audition s'il a été remis", "Justificatifs de présence, de vie familiale et d'emploi"],
@@ -169,6 +185,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Décision de l'OFPRA et, le cas échéant, de la CNDA", IDENTITE],
@@ -193,6 +210,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_SOMMAIRE",
     pieces: [DECISION, "Arrêté d'assignation à résidence", NOTIF, IDENTITE],
@@ -214,6 +232,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Carte d'identité ou passeport européen", "Justificatifs de ressources, d'emploi et de durée de séjour"],
@@ -237,6 +256,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, IDENTITE, "Récépissé de la demande ou attestation de dépôt ANEF", "Pièces jointes à la demande"],
@@ -258,6 +278,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: ["REFERE_SUSPENSION_AVEC_REQUETE"],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, "Titre de séjour expiré", IDENTITE, "Contrat de travail et bulletins de salaire, le cas échéant"],
@@ -281,6 +302,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: ["REFERE_SUSPENSION_AVEC_REQUETE"],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, "Titre de séjour retiré (copie)", IDENTITE],
@@ -302,6 +324,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, "Titre de séjour détenu", "Contrat ou promesse d'embauche, diplôme", IDENTITE],
@@ -323,6 +346,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, "Titre de séjour en cours", "Justificatifs de ressources et d'intégration", IDENTITE],
@@ -344,6 +368,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, "Titre de séjour du demandeur", "Justificatifs de ressources des douze derniers mois", "Bail ou titre de propriété et surface du logement", "Actes d'état civil de la famille"],
@@ -365,6 +390,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, "Contrat ou promesse d'embauche", "Justificatifs de recherche de candidats par l'employeur", IDENTITE],
@@ -388,6 +414,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Formulaire de demande et pièces déposées", IDENTITE, "Attestation d'accueil, justificatifs de ressources et d'attaches dans le pays de résidence"],
@@ -408,6 +435,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Acte de mariage ou transcription", "Pièce d'identité du conjoint français", "Preuves de la communauté de vie et des échanges", IDENTITE],
@@ -429,6 +457,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Autorisation de regroupement familial ou décision de protection", "Actes d'état civil", "Preuves du lien familial (transferts d'argent, échanges, photos)", IDENTITE],
@@ -449,6 +478,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Attestation d'inscription ou de préinscription", "Justificatifs de ressources", "Diplômes et relevés de notes", IDENTITE],
@@ -469,6 +499,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Autorisation de travail ou contrat", "Justificatifs de ressources", IDENTITE],
@@ -492,6 +523,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_NATURALISATION",
     pieces: [DECISION, NOTIF, "Dossier de demande déposé", "Justificatifs d'insertion professionnelle et de ressources"],
@@ -512,6 +544,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "RAPO_NATURALISATION",
     pieces: [DECISION, NOTIF, "Dossier de demande déposé", "Éléments nouveaux répondant au motif de l'ajournement"],
@@ -520,6 +553,54 @@ export const CAS_DEFAUT: Cas[] = [
   },
 
   // ——— Silence de l'administration ———
+  {
+    code: "NATURALISATION_REJET_IMPLICITE",
+    libelle: "Demande de naturalisation rejetée implicitement, faute de réponse dans le délai légal",
+    voieClient: "Recours préalable obligatoire auprès du ministre de l'intérieur",
+    procedure: "NATURALISATION",
+    situationOQTF: null,
+    visaType: null,
+    naturalisationIssue: "REFUS",
+    signes:
+      "Un récépissé de complétude a été délivré (dossier « en instruction » ou au-delà, entretien passé) et aucune décision n'est intervenue dans les dix-huit mois suivant ce récépissé, ou douze mois si la personne réside habituellement en France depuis au moins dix ans. Récit : « dossier en instruction depuis deux ans », « entretien passé il y a vingt mois, aucune décision ». Si le dossier est encore au statut « dossier envoyé » (pas de récépissé), ce n'est PAS ce cas.",
+    juridiction: "Recours préalable obligatoire auprès du ministre chargé des naturalisations, puis tribunal administratif de Nantes.",
+    delai:
+      "Rejet implicite né à l'expiration du délai de dix-huit mois (douze mois après dix ans de résidence) suivant le récépissé de complétude (article 21-25-1 du code civil) ; recours préalable dans les deux mois de sa naissance si l'accusé de réception mentionnait les voies et délais, à défaut dans un délai raisonnable.",
+    refere: null,
+    demarche: true,
+    demanderUrgence: true,
+    implicite: true,
+    complements: [],
+    modele: "RAPO_NATURALISATION",
+    pieces: ["Récépissé de complétude", "Convocation à l'entretien et compte rendu, le cas échéant", "Captures d'écran datées du suivi ANEF", IDENTITE],
+    vigilance: [
+      "Vérifier la date du récépissé de complétude et la durée de résidence pour fixer la date de naissance du rejet implicite.",
+      "Demander la communication des motifs du rejet implicite.",
+    ],
+    actif: true,
+  },
+  {
+    code: "VISA_REFUS_IMPLICITE",
+    libelle: "Demande de visa restée sans réponse du consulat (refus implicite)",
+    voieClient: "Recours préalable obligatoire contre le refus implicite de visa",
+    procedure: "REFUS_VISA",
+    situationOQTF: null,
+    visaType: null,
+    naturalisationIssue: null,
+    signes:
+      "Demande de visa déposée (centre de dépôt, consulat) sans décision depuis plus de deux mois, passeport parfois conservé. Récit : « j'ai déposé ma demande de visa il y a trois mois et aucune réponse », « le consulat ne répond pas ».",
+    juridiction: "Commission de recours contre les refus de visa (long séjour) ou sous-directeur des visas (court séjour), puis tribunal administratif de Nantes.",
+    delai: "Refus implicite né deux mois après le dépôt de la demande ; délai du recours préalable à vérifier selon les mentions de l'accusé de dépôt.",
+    refere: null,
+    demarche: true,
+    demanderUrgence: true,
+    implicite: true,
+    complements: [],
+    modele: "RAPO_VISA",
+    pieces: ["Récépissé ou attestation de dépôt de la demande de visa", "Formulaire de demande et pièces déposées", IDENTITE],
+    vigilance: ["Vérifier la date de dépôt et la nature du visa demandé.", "Demander la communication des motifs du refus implicite."],
+    actif: true,
+  },
   {
     code: "SILENCE_DEMANDE_TITRE",
     libelle: "Demande de titre de séjour restée sans réponse (refus implicite)",
@@ -535,6 +616,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: ["Attestation de dépôt ou accusé de réception de la demande", "Récépissés successifs", "Échanges avec la préfecture", IDENTITE],
@@ -563,6 +645,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "MESURES_UTILES",
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REFERE_MESURES_UTILES",
     pieces: ["Captures d'écran datées des tentatives de prise de rendez-vous", "Courriels ou courriers adressés à la préfecture", "Titre ou récépissé en cours, le cas échéant", IDENTITE],
@@ -588,6 +671,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "MESURES_UTILES",
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REFERE_MESURES_UTILES",
     pieces: ["Récépissé ou attestation expiré", "Preuve du dépôt de la demande", "Attestation de l'employeur, courrier de la CAF ou de France Travail, le cas échéant", IDENTITE],
@@ -612,6 +696,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "MESURES_UTILES",
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REFERE_MESURES_UTILES",
     pieces: ["Décision favorable, SMS ou courriel de mise à disposition", "Tentatives de prise de rendez-vous de remise", "Timbres fiscaux acquittés", IDENTITE],
@@ -635,6 +720,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "MESURES_UTILES",
     demarche: false,
     demanderUrgence: false,
+    implicite: false,
     complements: [],
     modele: "MISE_EN_DEMEURE",
     pieces: ["Attestation de dépôt ANEF et captures d'écran datées du suivi du dossier", "Récépissé de complétude, s'il a été délivré", "Échanges avec la plateforme de naturalisation", IDENTITE],
@@ -663,6 +749,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "LIBERTE",
     demarche: false,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REFERE_LIBERTE",
     pieces: ["Récépissé de remise ou procès-verbal de retenue des documents", "Justificatif de l'urgence (billet, convocation, attestation de l'employeur)", "Copie du passeport ou du titre retenu"],
@@ -687,6 +774,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "LIBERTE",
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REFERE_LIBERTE",
     pieces: ["Lettre de l'employeur (convocation, mise à pied, fin de contrat) ou de l'organisme social", "Récépissé expiré ou preuve du dépôt", "Titre de séjour antérieur", "Actes de naissance des enfants, le cas échéant", IDENTITE],
@@ -711,6 +799,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: "LIBERTE",
     demarche: false,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "REFERE_LIBERTE",
     pieces: ["Copie du titre de séjour perdu ou expiré", "Déclaration de perte ou de vol", "Demande de visa de retour et réponse du consulat", "Justificatifs de la vie familiale et de l'emploi en France"],
@@ -737,6 +826,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "MEMOIRE_COMPLEMENTAIRE",
     pieces: ["Requête déposée", "Courriers du greffe", "Mémoire en défense de la préfecture, s'il a été reçu", DECISION],
@@ -757,6 +847,7 @@ export const CAS_DEFAUT: Cas[] = [
     refere: null,
     demarche: true,
     demanderUrgence: true,
+    implicite: false,
     complements: [],
     modele: "MEMOIRE_COMPLEMENTAIRE",
     pieces: ["Jugement et courrier de notification", "Requête et mémoires de première instance", DECISION],
@@ -770,4 +861,35 @@ export { memeFamille } from "./procedures";
 /** Cas actif d'un code, dans le référentiel en vigueur. */
 export function trouverCas(referentiel: Cas[], code: string | null | undefined): Cas | undefined {
   return code ? referentiel.find((c) => c.code === code && c.actif) : undefined;
+}
+
+/** Cas d'un dossier ou d'une orientation : cas validé par l'avocat (si demandé), cas du référentiel, sinon qualification libre de l'IA. */
+export function casDuTriage(
+  referentiel: Cas[],
+  t: { cas?: string | null; casLibre?: unknown; validation?: { cas: string } | null } | null | undefined,
+  avecValidation = false,
+): (Cas & { libre: boolean }) | undefined {
+  const valide = avecValidation ? trouverCas(referentiel, t?.validation?.cas) : undefined;
+  const reconnu = valide ?? trouverCas(referentiel, t?.cas);
+  if (reconnu) return { ...reconnu, libre: false };
+  const l = t?.casLibre ? schemaCasLibre.safeParse(t.casLibre) : null;
+  return l?.success ? { ...casDepuisLibre(l.data), libre: true } : undefined;
+}
+
+/** Ce que le navigateur reçoit d'un cas : libellés, voie et éléments du parcours (ni signes ni vigilance). */
+export function vueCas(c: (Cas & { libre: boolean }) | undefined) {
+  return c
+    ? {
+        code: c.code,
+        procedure: c.procedure,
+        libelle: c.libelle,
+        voie: c.voieClient,
+        complements: c.complements,
+        refere: c.refere,
+        demarche: c.demarche,
+        demanderUrgence: c.demanderUrgence,
+        implicite: c.implicite,
+        libre: c.libre,
+      }
+    : null;
 }

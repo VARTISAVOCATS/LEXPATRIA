@@ -26,6 +26,7 @@ import { ConfirmationFaits, DepotPieces, QuestionnaireEcrans } from "./Questionn
 type Etape =
   | "RECIT"
   | "ANALYSE"
+  | "PRECISION"
   | "CHOIX"
   | "REFUS"
   | "Q_SITUATION"
@@ -59,6 +60,8 @@ interface CasReconnu {
   refere: "MESURES_UTILES" | "LIBERTE" | null;
   demarche?: boolean;
   demanderUrgence?: boolean;
+  implicite?: boolean;
+  libre?: boolean;
 }
 
 const SITUATIONS: { v: SituationOQTF; l: string }[] = [
@@ -139,6 +142,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const [triage, setTriage] = useState<ResultatTriage | null>(null);
   /** Cas du référentiel reconnu par l'IA : libellé et voie affichés, diligences ajoutées au devis. */
   const [casReconnu, setCasReconnu] = useState<CasReconnu | null>(null);
+  /** Question de précision posée par l'IA et réponses déjà données (deux au plus). */
+  const [questionIA, setQuestionIA] = useState<{ texte: string; options: string[]; procedure?: CodeProcedure | null } | null>(null);
+  const [precisions, setPrecisions] = useState<{ question: string; reponse: string }[]>([]);
   // Vrai si la procédure vient de l'analyse par l'IA (récit libre ou décision), faux pour une situation courante choisie.
   const [analyseIA, setAnalyseIA] = useState(false);
   const [procedure, setProcedure] = useState<CodeProcedure | null>(null);
@@ -388,6 +394,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       cas: null,
       confiance: "FAIBLE",
       qualification: null,
+      casLibre: null,
+      question: null,
       noteClient: "",
       procedure: p,
       horsPerimetreMotif: null,
@@ -410,7 +418,13 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     };
   }
 
-  function appliquerTriage(tri: ResultatTriage, decisionJointe = false, urgenceAcquise = false, sansDemarche = false, sansUrgence = false) {
+  function appliquerTriage(tri: ResultatTriage, decisionJointe = false, cas: CasReconnu | null = null) {
+    const urgenceAcquise = cas?.refere === "LIBERTE";
+    const sansDemarche = cas?.demarche === false;
+    const sansUrgence = cas?.refere === "MESURES_UTILES" && cas?.demanderUrgence === false;
+    // Décision implicite de rejet : aucun document ni date de notification à demander, l'avocat vérifie le délai.
+    const implicite = !!cas?.implicite;
+    if (implicite) setDateRef(null);
     setTriage(tri);
     const p = tri.procedure as CodeProcedure;
     setProcedure(p);
@@ -435,9 +449,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         emp,
         ech: tri.dateEcheance ?? undefined,
         q: "",
-        dref: undefined,
+        dref: implicite ? null : undefined,
         ddem: tri.dateDemande,
-        dec: decisionJointe,
+        dec: decisionJointe || implicite,
         dmd: sansDemarche ? null : typeDemande,
         pref: prefecture,
         depuis: "ANALYSE",
@@ -445,7 +459,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     );
   }
 
-  async function analyser(texte: string, liste: File[], procedureIndiquee?: CodeProcedure | null) {
+  async function analyser(texte: string, liste: File[], procedureIndiquee?: CodeProcedure | null, reponses: { question: string; reponse: string }[] = precisions) {
     setErreur(null);
     const direct = liste.length ? null : triageDirect(texte);
     if (direct) {
@@ -470,11 +484,16 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
           images,
           pdfs,
           procedure: procedureIndiquee && AVEC_DECISION.includes(procedureIndiquee) ? procedureIndiquee : undefined,
+          precisions: reponses.length ? reponses : undefined,
         }),
       });
       const j = await r.json().catch(() => ({}));
       if (!r.ok && r.status !== 400) return secours(procedureIndiquee, liste.length > 0);
       if (!r.ok) throw new Error(j.erreur ?? t("Analyse impossible"));
+      if (j.question) {
+        setQuestionIA({ ...j.question, procedure: procedureIndiquee ?? null });
+        return setEtape("PRECISION");
+      }
       const tri: ResultatTriage = j.triage;
       if (j.refus) {
         setTriage(tri);
@@ -483,7 +502,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       }
       if (liste.length) setDecisionLue(true);
       setCasReconnu(j.cas ?? null);
-      appliquerTriage(tri, liste.length > 0, j.cas?.refere === "LIBERTE", j.cas?.demarche === false, j.cas?.refere === "MESURES_UTILES" && j.cas?.demanderUrgence === false);
+      appliquerTriage(tri, liste.length > 0, j.cas ?? null);
     } catch (e) {
       // Erreur réseau : même secours ; seule une demande invalide (400) renvoie au récit.
       if (e instanceof TypeError) return secours(procedureIndiquee, liste.length > 0);
@@ -703,7 +722,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       : null;
 
   // ---- Présentation : interface validée (démonstration « Encre ») ----
-  const orientation = ["RECIT", "ANALYSE", "CHOIX", "REFUS", "Q_SITUATION", "Q_VISA", "Q_NATU", "Q_EMPLOI", "Q_ECHEANCE", "Q_DIAG", "DECISION", "Q_DEMANDE", "Q_PREFECTURE", "DATE", "RESULTAT"].includes(etape);
+  const orientation = ["RECIT", "ANALYSE", "PRECISION", "CHOIX", "REFUS", "Q_SITUATION", "Q_VISA", "Q_NATU", "Q_EMPLOI", "Q_ECHEANCE", "Q_DIAG", "DECISION", "Q_DEMANDE", "Q_PREFECTURE", "DATE", "RESULTAT"].includes(etape);
   useEffect(() => {
     document.body.classList.toggle("pay1", etape === "PAIEMENT");
     return () => document.body.classList.remove("pay1");
@@ -968,6 +987,22 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                   <span className="spin" />
                   {fichiers.length ? t("Lecture de votre décision…") : t("Analyse de votre situation…")}
                 </div>
+              </div>
+            )}
+
+            {etape === "PRECISION" && questionIA && (
+              <div className="triresult">
+                {question1(
+                  questionIA.texte,
+                  null,
+                  questionIA.options.map((o) => ({ v: o, l: o })),
+                  (v) => {
+                    const r = [...precisions, { question: questionIA.texte, reponse: v }];
+                    setPrecisions(r);
+                    setQuestionIA(null);
+                    analyser(recit, fichiers, questionIA.procedure, r);
+                  },
+                )}
               </div>
             )}
 
@@ -1294,6 +1329,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                                   : t(
                                       procedure === "DIAGNOSTIC"
                                         ? "Indiqué dans l'avis écrit de l'avocat"
+                                        : casActuel?.implicite
+                                          ? "Vérifié par votre avocat à partir de la date de votre demande"
                                         : procedure === "BLOCAGE_EMPLOI" && casActuel?.refere === "LIBERTE"
                                           ? "À traiter en urgence : le juge statue en 48 heures"
                                         : procedure === "BLOCAGE_EMPLOI"

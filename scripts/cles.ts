@@ -68,6 +68,7 @@ for (const f of ["src/lib/accueil.ts", "src/app/depot/Parcours.tsx"]) {
   "Référé mesures utiles devant le tribunal administratif",
   "Référé-liberté devant le tribunal administratif",
   "À traiter en urgence : le juge statue en 48 heures",
+  "Vérifié par votre avocat à partir de la date de votre demande",
   "Votre avocat vérifiera ensuite votre dossier et votre décision.",
   "Votre recours",
   "Date limite estimée",

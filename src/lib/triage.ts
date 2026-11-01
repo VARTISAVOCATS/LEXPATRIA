@@ -8,7 +8,7 @@
 import { extraireJson } from "@/lib/ia";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
-import { CAS_DEFAUT, trouverCas, type Cas } from "./cas";
+import { CAS_DEFAUT, casDepuisLibre, schemaCasLibre, trouverCas, type Cas } from "./cas";
 import { controlerTexte } from "./deontologie";
 
 export const ResultatTriage = z.object({
@@ -55,6 +55,10 @@ export const ResultatTriage = z.object({
     .default(null),
   // Note au client sur SA situation (2 ou 3 phrases), avec ou sans décision jointe.
   noteClient: z.string().default(""),
+  // Qualification rédigée par l'IA quand aucun cas du référentiel ne correspond (validée ensuite contre le schéma).
+  casLibre: z.unknown().nullable().default(null),
+  // Question de précision, quand une seule réponse permet de trancher entre plusieurs cas.
+  question: z.object({ texte: z.string().min(5).max(300), options: z.array(z.string().min(1).max(120)).min(2).max(4) }).nullable().default(null),
   // Pré-analyse personnalisée de la décision jointe (2 à 4 phrases), vide sans décision.
   preAnalyse: z.string().default(""),
   // Pour l'affichage : faits et information générale traduits dans la langue du récit, si ce n'est pas le français.
@@ -100,7 +104,7 @@ Règles de qualification :
 - Lis la décision jointe en entier (en-tête, visas, motifs, dispositif, articles, mention des voies et délais) avant de conclure : l'article cité (par exemple L. 611-1, 3° ou 4° du CESEDA), l'autorité, les mesures et le motif déterminent le cas.
 - "cas" : le code du cas qui correspond EXACTEMENT à la situation. La "procedure" est alors celle indiquée entre crochets pour ce cas. Si aucun cas ne correspond, "cas" vaut null et "procedure" est la procédure la plus proche ; "confiance" vaut alors "FAIBLE" et "qualification.aVerifier" explique pourquoi.
 - "confiance" : HAUTE si la décision jointe ou un récit précis établit le cas ; MOYENNE si le récit l'indique sans décision ; FAIBLE si plusieurs cas restent possibles.
-- Une demande EN COURS sans décision (dossier déposé, en attente, non instruit, sans réponse) n'est jamais un refus : ne choisis un cas de refus (titre, visa, naturalisation) ou d'OQTF que si la personne a reçu une décision défavorable. Pour une demande restée sans suite, choisis le cas de silence ou de blocage qui correspond (titre de séjour, naturalisation, rendez-vous, récépissé).
+- Un recours contre un refus suppose une décision de rejet : décision EXPLICITE reçue, ou décision IMPLICITE née du silence de l'administration au-delà du délai légal, à compter d'un point de départ établi (demande de titre enregistrée : quatre mois ; naturalisation : dix-huit mois, douze mois après dix ans de résidence, à compter du récépissé de complétude ; visa : deux mois après le dépôt ; recours administratif : deux mois). Une demande en cours dont le délai n'a pas expiré, ou dont le point de départ n'existe pas encore (par exemple naturalisation au statut « dossier envoyé », sans récépissé), n'a fait naître aucun refus : choisis alors le cas de blocage qui correspond (mise en demeure, référé). En cas de refus implicite, indique dans "qualification.aVerifier" le point de départ et la date de naissance retenus.
 - Distingue avec soin : refus de titre AVEC OQTF (cas OQTF) / refus SANS OQTF ; première demande / renouvellement / changement de statut / retrait ; refus de regroupement familial par le préfet / refus de visa famille par le consulat ; visa court / long séjour ; naturalisation par décret (administratif) / déclaration de nationalité (juge judiciaire, hors périmètre) ; recours déjà déposé / jugement déjà rendu.
 - Blocages en préfecture : distingue (1) le blocage qui appelle un RÉFÉRÉ MESURES UTILES (rendez-vous impossible, demande non enregistrée, récépissé non délivré ou non renouvelé, titre accordé mais non remis : l'administration n'accomplit pas une démarche due, sans conséquence grave dans les tout prochains jours) et (2) celui qui appelle un RÉFÉRÉ-LIBERTÉ (documents retenus par l'administration, retour en France impossible, ou blocage qui entraîne dans les jours qui viennent une atteinte grave : licenciement imminent, perte du logement ou des ressources, séparation familiale, alors que la personne remplit manifestement les conditions). En cas de doute, retiens le référé mesures utiles et indique-le dans "aVerifier".
 - Une demande d'asile, un transfert « Dublin » ou un recours devant l'OFPRA ou la CNDA est HORS_PERIMETRE (ASILE). Le souhait de DÉPOSER une demande de régularisation est HORS_PERIMETRE (AES) ; en revanche, le REFUS d'une demande de régularisation se conteste (cas de refus de titre ou d'OQTF).
@@ -113,6 +117,8 @@ Règles :
 - "ceQueLeRecoursPeutObtenir" : une ou deux phrases d'information générale en français (ex. pour une OQTF : le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision). Jamais d'argument juridique, jamais de pronostic, jamais les mots « gratuit », « garanti », « offert ».
 - "preAnalyse" : seulement si une décision est jointe ; sinon "". Deux à quatre phrases complètes en français, rédigées à la troisième personne pour le cabinet (« la décision », « le cabinet », « votre avocat » ; jamais « nous »), adressées à la personne (« vous »), sur ce que dit SA décision : l'autorité et la nature de la décision, sa date et, si elle figure, la date de notification ; le délai de recours indiqué dans la mention des voies et délais ; les mesures qui l'accompagnent (délai de départ volontaire, interdiction de retour, pays de renvoi) ; le motif principal tel qu'il est écrit. Exemple de ton : « Le préfet de police vous fait obligation de quitter le territoire français dans un délai de trente jours, par une décision du 3 octobre 2026 notifiée le 6 octobre. ». Aucun argument juridique, aucun pronostic, aucune promesse. Style d'avocat, sobre et précis : pas de phrases hachées, pas de formules d'empathie.
 - "noteClient" : sauf HORS_PERIMETRE, deux ou trois phrases en français adressées à la personne (« vous »), qui montrent que sa situation a été comprise : reprends les éléments concrets de SON récit (nature de la décision ou du blocage, ancienneté, famille, emploi, études, démarche engagée, échéance) puis indique la démarche que votre avocat engagera dans son cas et son objet. Si une décision est jointe, la "preAnalyse" la décrit déjà : la note ne la répète pas. Troisième personne pour le cabinet (« votre avocat », « le cabinet », jamais « nous »). Aucun pronostic, aucune promesse, aucune formule d'empathie, aucune phrase générale qui vaudrait pour tout le monde, aucun fait inventé. Exemple de ton : « Vous vivez en France depuis 2017 et la préfecture refuse de renouveler votre titre de séjour salarié alors que vous êtes en contrat à durée indéterminée. Votre avocat contestera ce refus devant le tribunal administratif et demandera en urgence la suspension de ses effets, afin que vous puissiez conserver votre emploi pendant la procédure. »
+- "casLibre" : uniquement si AUCUN cas du référentiel ne correspond ("cas" null) et hors HORS_PERIMETRE ; sinon null. Rédige alors toi-même la qualification, dans le même cadre que les fiches : {"libelle": situation en une ligne, "voieClient": voie de recours en une ligne, "procedure": l'une de ${"OQTF, REFUS_TITRE, REFUS_VISA, NATURALISATION, REFUS_IMPLICITE, BLOCAGE_SIMPLE, BLOCAGE_EMPLOI, PROCEDURE_EN_COURS, DIAGNOSTIC"} (elle détermine les honoraires : requête au tribunal, recours préalable, mise en demeure, référé, reprise, diagnostic), "situationOQTF": null ou LIBRE/ASSIGNE/LIBRE_APRES_ASILE, "visaType": null/COURT/LONG, "naturalisationIssue": null/REFUS/AJOURNEMENT, "signes": indices généraux permettant de reconnaître ce type de situation, sans aucune donnée personnelle, "juridiction", "delai" (texte, avec la règle et son point de départ), "refere": null/MESURES_UTILES/LIBERTE (blocages seulement), "implicite": true si le recours vise une décision implicite de rejet, "complements": [] ou ["REFERE_SUSPENSION_AVEC_REQUETE"] si la décision prive d'un droit en cours (renouvellement, retrait), "modele": l'un de REQUETE_OQTF, REQUETE_REFUS_TITRE, REQUETE_SOMMAIRE, MEMOIRE_COMPLEMENTAIRE, REFERE_SUSPENSION, REFERE_LIBERTE, REFERE_MESURES_UTILES, RECOURS_GRACIEUX, RAPO_VISA, RAPO_NATURALISATION, MISE_EN_DEMEURE, AVIS_ECRIT, "vigilance": points à vérifier par l'avocat}. Si aucune de ces procédures ne convient, choisis DIAGNOSTIC (avis écrit d'un avocat).
+- "question" : seulement si "confiance" serait FAIBLE et qu'UNE question fermée permet de trancher (ex. « Avez-vous reçu une décision écrite ? », « Votre dossier est-il passé au statut "en instruction" ? »). {"texte": la question, "options": deux à quatre réponses courtes}, dans la langue du récit. Sinon null. Ne pose jamais de question si des précisions ont déjà été apportées deux fois.
 - "langue" : code ISO 639-1 de la langue du récit (celle dans laquelle la personne a écrit, pas celle des mots cités).
 - "traduction" : si la langue du récit n'est pas le français, { "langue": code ISO 639-1, "faits": les mêmes faits traduits dans cette langue, "obtenir": "ceQueLeRecoursPeutObtenir" traduit dans cette langue, "preAnalyse": "preAnalyse" traduite dans cette langue, "note": "noteClient" traduite dans cette langue } ; sinon null.
 - Un refus de titre SANS obligation de quitter le territoire est REFUS_TITRE, jamais OQTF.
@@ -126,11 +132,15 @@ Réponds UNIQUEMENT par un objet JSON conforme à ce schéma : ${JSON.stringify(
 
 export interface EntreeTriage {
   recit?: string;
+  /** Réponses de la personne aux questions de précision (deux au plus). */
+  precisions?: { question: string; reponse: string }[];
   /** Procédure choisie par la personne parmi les situations courantes, avant de transmettre sa décision. */
   procedure?: string;
   images?: { mime: "image/jpeg" | "image/png" | "image/webp"; base64: string }[];
   pdfs?: { base64: string }[];
 }
+
+const precisionsEpuisees = (e: EntreeTriage) => (e.precisions?.length ?? 0) >= 2;
 
 export async function trier(entree: EntreeTriage, client = new Anthropic(), modele?: string, referentiel: Cas[] = CAS_DEFAUT): Promise<ResultatTriage> {
   const contenu: Anthropic.Messages.ContentBlockParam[] = [];
@@ -144,6 +154,10 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     type: "text",
     text:
       (entree.recit ? `Récit de la personne :\n${minimiser(entree.recit)}` : "La personne a seulement transmis sa décision.") +
+      (entree.precisions?.length
+        ? `\nPrécisions apportées par la personne :\n${entree.precisions.map((p) => `- ${p.question} → ${p.reponse}`).join("\n")}` +
+          (entree.precisions.length >= 2 ? "\nNe pose plus de question : qualifie avec ces éléments." : "")
+        : "") +
       (entree.procedure ? `\nSituation choisie par la personne : ${entree.procedure}. Retiens-la sauf si la décision jointe dit clairement autre chose.` : ""),
   });
 
@@ -167,11 +181,16 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   }
 
   // Cohérence avec le référentiel : le cas reconnu fixe la procédure et les éléments qu'il détermine.
-  const cas = trouverCas(referentiel, res.cas);
-  if (res.cas && !cas) {
+  // À défaut, la qualification libre de l'IA, validée contre le même schéma, joue le même rôle.
+  const reconnu = trouverCas(referentiel, res.cas);
+  if (res.cas && !reconnu) {
     res.cas = null;
     res.confiance = "FAIBLE";
   }
+  const libre = !reconnu && res.casLibre ? schemaCasLibre.safeParse(res.casLibre) : null;
+  res.casLibre = libre?.success && controlerTexte([libre.data.libelle, libre.data.voieClient].join(" ")).length === 0 ? libre.data : null;
+  const cas = reconnu ?? (res.casLibre ? casDepuisLibre(schemaCasLibre.parse(res.casLibre)) : undefined);
+  if (precisionsEpuisees(entree)) res.question = null;
   if (cas && res.procedure !== "HORS_PERIMETRE") {
     res.procedure = cas.procedure;
     if (cas.situationOQTF) res.situationOQTF = cas.situationOQTF;
@@ -244,6 +263,8 @@ export function trierSimule(recit: string): ResultatTriage {
     cas: null,
     confiance: "FAIBLE",
     qualification: null,
+    casLibre: null,
+    question: null,
     noteClient: "",
     preAnalyse: "",
   };

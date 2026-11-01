@@ -20,7 +20,7 @@ import { valeur } from "./connexions";
 import { facturer } from "./integrations/pennylane";
 import { envoyer } from "./notifications";
 import { lireParametre } from "./parametres";
-import { memeFamille, trouverCas } from "@/lib/cas";
+import { casDuTriage, memeFamille } from "@/lib/cas";
 
 export async function charger(d: Base, dossierId: string) {
   const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
@@ -32,8 +32,7 @@ export async function charger(d: Base, dossierId: string) {
 /** Diligences ajoutées par le cas reconnu à l'orientation, relues dans le référentiel du serveur (jamais celles envoyées par le navigateur). */
 async function casDuDossier(d: Base, dos: typeof dossiers.$inferSelect) {
   // Cas reconnu à l'orientation, avant paiement : une requalification ultérieure ne modifie pas le prix convenu.
-  const t = dos.triage as { cas?: string | null } | null;
-  const cas = trouverCas(await lireParametre(d, "cas"), t?.cas);
+  const cas = casDuTriage(await lireParametre(d, "cas"), dos.triage as { cas?: string | null; casLibre?: unknown } | null);
   return cas && memeFamille(cas.procedure, dos.procedure) ? cas : null;
 }
 

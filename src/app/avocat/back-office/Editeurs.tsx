@@ -471,3 +471,45 @@ export function EditeurCas({ valeur }: { valeur: Cas[] }) {
     </form>
   );
 }
+
+// ——— Qualifications rédigées par l'IA hors référentiel ———
+export function CasHorsReferentiel({ groupes }: { groupes: { ids: string[]; libelle: string; nombre: number; dernier: Date; fiche: Cas }[] }) {
+  const e = useEnregistrer();
+  if (!groupes.length) return <p className="note">Aucun cas hors référentiel en attente.</p>;
+  return (
+    <div className="bo-libres">
+      <h3>Cas hors référentiel ({groupes.length})</h3>
+      <p className="note">
+        Situations qualifiées par l&apos;IA sans fiche correspondante. Relisez la fiche proposée, puis ajoutez-la au référentiel (elle reste modifiable ci-dessous) ou
+        écartez-la.
+      </p>
+      {groupes.map((g) => (
+        <details key={g.ids[0]} className="bo-item">
+          <summary>
+            <b>{g.fiche.libelle}</b>{" "}
+            <span className="note">
+              · {g.nombre} prospect{g.nombre > 1 ? "s" : ""} · dernier le {new Date(g.dernier).toLocaleDateString("fr-FR")} · {PROCEDURES[g.fiche.procedure].libelle}
+            </span>
+          </summary>
+          <dl className="qualif-dl">
+            <div><dt>Voie</dt><dd>{g.fiche.voieClient}</dd></div>
+            <div><dt>Juridiction</dt><dd>{g.fiche.juridiction}</dd></div>
+            <div><dt>Délai</dt><dd>{g.fiche.delai}</dd></div>
+            <div><dt>Acte</dt><dd>{LIBELLES_MODELE[g.fiche.modele]}{g.fiche.complements.length ? ` · ${g.fiche.complements.map((c) => LIBELLES_DILIGENCE[c]).join(" · ")}` : ""}</dd></div>
+            <div><dt>Signes</dt><dd>{g.fiche.signes}</dd></div>
+            {g.fiche.vigilance.length > 0 && <div><dt>Vigilance</dt><dd>{g.fiche.vigilance.join(" · ")}</dd></div>}
+          </dl>
+          <div className="bo-item-b">
+            <button type="button" className="btn sm ghost" disabled={e.envoi} onClick={() => e.enregistrer({ action: "casLibre", id: g.ids[0], decision: "ecarter" })}>
+              Écarter
+            </button>
+            <button type="button" className="btn cta sm" disabled={e.envoi} onClick={() => e.enregistrer({ action: "casLibre", id: g.ids[0], decision: "ajouter" })}>
+              Ajouter au référentiel
+            </button>
+          </div>
+        </details>
+      ))}
+      {e.erreur && <p className="erreur">{e.erreur}</p>}
+    </div>
+  );
+}

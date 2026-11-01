@@ -179,6 +179,8 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .bo-cas-t { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
 .bo-cas-t:focus-visible { outline: 2px solid var(--accent, currentColor); outline-offset: 2px; }
 .bo-inactif { opacity: .6; }
+.bo-libres { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.bo-libres summary { cursor: pointer; }
 .bo-compl { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
 .bo-item-b { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 .bo-pied { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }

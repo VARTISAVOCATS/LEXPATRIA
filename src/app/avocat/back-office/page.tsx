@@ -22,7 +22,8 @@ import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import { etatConventions, etatModeles } from "@/lib/serveur/modeles-cabinet";
 import { CODES_CONVENTION, modeleIntegre, VARIABLES_CONVENTION } from "@/lib/convention";
 import { VARIABLES } from "@/lib/modeles";
-import { Assistant, EditeurAccueil, EditeurAvocats, EditeurCas, EditeurDelais, EditeurFaq, EditeurEcheancier, EditeurRemuneration, EditeurTarifs } from "./Editeurs";
+import { casLibresEnAttente } from "@/lib/serveur/cas-libres";
+import { Assistant, CasHorsReferentiel, EditeurAccueil, EditeurAvocats, EditeurCas, EditeurDelais, EditeurFaq, EditeurEcheancier, EditeurRemuneration, EditeurTarifs } from "./Editeurs";
 
 export const metadata = { title: "Back office — Espace cabinet", robots: { index: false } };
 
@@ -163,6 +164,7 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                         {cle === "avocats" && <EditeurAvocats valeur={valeur as { nom: string; titre: string; photo: string | null }[]} />}
                         {cle === "accueil" && <EditeurAccueil valeur={valeur as { titre: string; sousTitre: string }} />}
                         {cle === "delais" && <EditeurDelais valeur={valeur as { acceptationNormaleH: number; acceptationUrgenceH: number }} />}
+                        {cle === "cas" && <CasHorsReferentiel groupes={await casLibresEnAttente(d)} />}
                         {cle === "cas" && <EditeurCas valeur={valeur as Parameters<typeof EditeurCas>[0]["valeur"]} />}
                         {cle === "remuneration" && <EditeurRemuneration valeur={valeur as { acteHT: number }} />}
                         {cle === "echeancier" && <EditeurEcheancier valeur={valeur as Parameters<typeof EditeurEcheancier>[0]["valeur"]} />}

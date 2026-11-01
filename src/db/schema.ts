@@ -402,3 +402,13 @@ export const articles = pgTable("articles", {
   creeLe: cree(),
   majLe: timestamp("maj_le", { withTimezone: true }).notNull().defaultNow(),
 });
+
+/** Qualifications rédigées par l'IA hors référentiel (sans aucune donnée du client) : base des fiches à ajouter. */
+export const casLibres = pgTable("cas_libres", {
+  id: id(),
+  libelle: text("libelle").notNull(),
+  procedure: text("procedure").notNull(),
+  fiche: jsonb("fiche").notNull(),
+  traite: boolean("traite").notNull().default(false),
+  creeLe: cree(),
+});

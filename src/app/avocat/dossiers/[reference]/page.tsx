@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { adresseEnLignes } from "@/lib/pays";
 import { formatEuros, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
-import { memeFamille, trouverCas, type Cas } from "@/lib/cas";
+import { casDuTriage, memeFamille, type Cas } from "@/lib/cas";
 import { lireParametre } from "@/lib/serveur/parametres";
 import { appelDe, premiereInstance } from "@/lib/serveur/appel";
 import { equipe, journalDossier, TYPES_ECHEANCE } from "@/lib/serveur/cabinet";
@@ -67,6 +67,7 @@ function Valeur({ l, v }: { l: string; v?: string | null }) {
 
 interface TriageStocke {
   cas?: string | null;
+  casLibre?: unknown;
   confiance?: "HAUTE" | "MOYENNE" | "FAIBLE";
   qualification?: { decision: string; autorite: string | null; mesures: string[]; motif: string | null; aVerifier: string[] } | null;
   validation?: { cas: string; le: string } | null;
@@ -76,9 +77,9 @@ const CONFIANCE: Record<string, [string, string]> = { HAUTE: ["ok", "confiance h
 
 /** Qualification proposée par l'IA à l'orientation : l'avocat la valide ou la corrige avant de rédiger. */
 function FicheQualification({ reference, triage, procedure, referentiel, peutValider }: { reference: string; triage: TriageStocke | null; procedure: string; referentiel: Cas[]; peutValider: boolean }) {
-  const valide = trouverCas(referentiel, triage?.validation?.cas);
-  const ia = trouverCas(referentiel, triage?.cas);
-  const cas = valide ?? ia;
+  const cas = casDuTriage(referentiel, triage, true);
+  const valide = triage?.validation?.cas && cas ? cas : undefined;
+  const ia = cas;
   const q = triage?.qualification;
   const conf = CONFIANCE[triage?.confiance ?? ""];
   const actifs = referentiel.filter((c) => c.actif);
@@ -94,6 +95,7 @@ function FicheQualification({ reference, triage, procedure, referentiel, peutVal
           <span className="pill warn">{triage?.qualification ? "aucun cas du référentiel reconnu par l'IA" : "situation choisie par le client, sans analyse de l'IA"}</span>
         )}
         {!valide && conf && <span className={`pill ${conf[0]}`}>{conf[1]}</span>}
+        {cas?.libre && <span className="pill bad">qualification libre, hors référentiel</span>}
       </p>
       {cas && (
         <>

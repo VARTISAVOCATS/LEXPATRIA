@@ -69,4 +69,37 @@ describe("référentiel des cas", () => {
     expect(r.procedure).toBe("BLOCAGE_SIMPLE");
     expect(r.emploiMenace).toBe(false);
   });
+
+  it("sans fiche, la qualification libre de l'IA fixe la procédure, dans le cadre du schéma", async () => {
+    const casLibre = {
+      libelle: "Refus d'échange de permis de conduire étranger",
+      voieClient: "Requête en annulation devant le tribunal administratif",
+      procedure: "REFUS_TITRE",
+      situationOQTF: null, visaType: null, naturalisationIssue: null,
+      signes: "Refus de la préfecture d'échanger un permis de conduire étranger contre un permis français.",
+      juridiction: "Tribunal administratif du ressort de la préfecture.",
+      delai: "Deux mois à compter de la notification.",
+      refere: null, implicite: false, complements: [], modele: "REQUETE_REFUS_TITRE", vigilance: [],
+    };
+    const r = await trier({ recit: "La préfecture refuse d'échanger mon permis algérien" }, client({ ...base, procedure: "DIAGNOSTIC", cas: null, casLibre }));
+    expect(r.procedure).toBe("REFUS_TITRE");
+    expect(r.casLibre).not.toBeNull();
+    const invalide = await trier({ recit: "x" }, client({ ...base, procedure: "DIAGNOSTIC", casLibre: { libelle: "x" } }));
+    expect(invalide.casLibre).toBeNull();
+  });
+
+  it("le rejet implicite d'une naturalisation après récépissé ouvre le recours préalable", async () => {
+    const r = await trier({ recit: "Récépissé de complétude reçu il y a deux ans, aucune décision" }, client({ ...base, procedure: "NATURALISATION", cas: "NATURALISATION_REJET_IMPLICITE", confiance: "HAUTE" }));
+    expect(r.procedure).toBe("NATURALISATION");
+    expect(CAS_DEFAUT.find((c) => c.code === "NATURALISATION_REJET_IMPLICITE")!.implicite).toBe(true);
+  });
+
+  it("plus de question de précision après deux réponses", async () => {
+    const question = { texte: "Avez-vous reçu une décision écrite ?", options: ["Oui", "Non"] };
+    const r1 = await trier({ recit: "Problème de papiers" }, client({ ...base, procedure: "DIAGNOSTIC", question }));
+    expect(r1.question).not.toBeNull();
+    const precisions = [{ question: "a ?", reponse: "Oui" }, { question: "b ?", reponse: "Non" }];
+    const r2 = await trier({ recit: "Problème de papiers", precisions }, client({ ...base, procedure: "DIAGNOSTIC", question }));
+    expect(r2.question).toBeNull();
+  });
 });

@@ -7,6 +7,7 @@ import { journaliser } from "@/lib/journal";
 import { CLES_PARAMETRES, type CleParametre } from "@/lib/parametres";
 import { decider, proposer } from "@/lib/serveur/assistant";
 import { ecrireParametre, restaurer } from "@/lib/serveur/parametres";
+import { ajouterAuReferentiel, ecarter } from "@/lib/serveur/cas-libres";
 import { membreConnecte } from "@/lib/serveur/session";
 import { createId } from "@/db/id";
 import { CODES_QUALITE, QUALITES, VALEURS_CABINET, type Qualite } from "@/lib/equipe";
@@ -45,6 +46,7 @@ const Corps = z.discriminatedUnion("action", [
     validationAssocie: z.boolean().default(false),
     attributionOuverte: z.boolean().default(true),
   }),
+  z.object({ action: z.literal("casLibre"), id: z.string().max(40), decision: z.enum(["ajouter", "ecarter"]) }),
   z.object({ action: z.literal("remunerationMembre"), id: z.string().max(40), mode: z.enum(["A_L_ACTE", "COLLABORATEUR_FIXE_VARIABLE", "AUCUNE"]) }),
 ]);
 
@@ -62,6 +64,14 @@ export async function POST(req: Request) {
     return r.ok
       ? NextResponse.json({ ok: true })
       : NextResponse.json({ erreur: [...r.erreurs, ...r.infractions.map((i) => `Terme interdit « ${i.motif} » : …${i.extrait}…`)].join(" ; ") }, { status: 422 });
+  }
+  if (x.action === "casLibre") {
+    if (x.decision === "ecarter") {
+      await ecarter(d, x.id);
+      return NextResponse.json({ ok: true });
+    }
+    const r = await ajouterAuReferentiel(d, x.id, m.id);
+    return r.ok ? NextResponse.json({ ok: true, code: r.code }) : NextResponse.json({ erreur: r.erreur }, { status: 422 });
   }
   if (x.action === "restaurer") {
     const r = await restaurer(d, x.id, m.id);
