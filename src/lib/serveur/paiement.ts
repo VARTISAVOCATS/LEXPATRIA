@@ -20,7 +20,7 @@ import { valeur } from "./connexions";
 import { facturer } from "./integrations/pennylane";
 import { envoyer } from "./notifications";
 import { lireParametre } from "./parametres";
-import { trouverCas } from "@/lib/cas";
+import { memeFamille, trouverCas } from "@/lib/cas";
 
 export async function charger(d: Base, dossierId: string) {
   const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
@@ -30,10 +30,16 @@ export async function charger(d: Base, dossierId: string) {
 }
 
 /** Diligences ajoutées par le cas reconnu à l'orientation, relues dans le référentiel du serveur (jamais celles envoyées par le navigateur). */
-async function complementsDuCas(d: Base, dos: typeof dossiers.$inferSelect) {
-  const code = (dos.triage as { cas?: string | null } | null)?.cas;
-  const cas = trouverCas(await lireParametre(d, "cas"), code);
-  return cas && cas.procedure === dos.procedure ? cas.complements : [];
+async function casDuDossier(d: Base, dos: typeof dossiers.$inferSelect) {
+  // Cas reconnu à l'orientation, avant paiement : une requalification ultérieure ne modifie pas le prix convenu.
+  const t = dos.triage as { cas?: string | null } | null;
+  const cas = trouverCas(await lireParametre(d, "cas"), t?.cas);
+  return cas && memeFamille(cas.procedure, dos.procedure) ? cas : null;
+}
+
+async function optionsDuCas(d: Base, dos: typeof dossiers.$inferSelect) {
+  const cas = await casDuDossier(d, dos);
+  return { complements: cas?.complements ?? [], refere: cas?.refere ?? null };
 }
 
 export async function offre(d: Base, dos: typeof dossiers.$inferSelect) {
@@ -42,7 +48,7 @@ export async function offre(d: Base, dos: typeof dossiers.$inferSelect) {
   // Appel : forfait d'appel seul, sans majoration d'urgence.
   const lignes = dos.dossierParentId
     ? [{ diligence: "APPEL" as const, libelle: LIBELLES_DILIGENCE.APPEL, montant: tarifs.APPEL }]
-    : composerOffre(code, { urgence: dos.traitement === "URGENCE", avisPrealable: dos.avisPrealable, complements: await complementsDuCas(d, dos) }, tarifs);
+    : composerOffre(code, { urgence: dos.traitement === "URGENCE", avisPrealable: dos.avisPrealable, ...(await optionsDuCas(d, dos)) }, tarifs);
   return { code, lignes, total: lignes.reduce((s, l) => s + l.montant, 0) };
 }
 

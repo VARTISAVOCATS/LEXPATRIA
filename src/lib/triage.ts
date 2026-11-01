@@ -99,6 +99,7 @@ Règles de qualification :
 - "cas" : le code du cas qui correspond EXACTEMENT à la situation. La "procedure" est alors celle indiquée entre crochets pour ce cas. Si aucun cas ne correspond, "cas" vaut null et "procedure" est la procédure la plus proche ; "confiance" vaut alors "FAIBLE" et "qualification.aVerifier" explique pourquoi.
 - "confiance" : HAUTE si la décision jointe ou un récit précis établit le cas ; MOYENNE si le récit l'indique sans décision ; FAIBLE si plusieurs cas restent possibles.
 - Distingue avec soin : refus de titre AVEC OQTF (cas OQTF) / refus SANS OQTF ; première demande / renouvellement / changement de statut / retrait ; refus de regroupement familial par le préfet / refus de visa famille par le consulat ; visa court / long séjour ; naturalisation par décret (administratif) / déclaration de nationalité (juge judiciaire, hors périmètre) ; recours déjà déposé / jugement déjà rendu.
+- Blocages en préfecture : distingue (1) le blocage qui appelle un RÉFÉRÉ MESURES UTILES (rendez-vous impossible, demande non enregistrée, récépissé non délivré ou non renouvelé, titre accordé mais non remis : l'administration n'accomplit pas une démarche due, sans conséquence grave dans les tout prochains jours) et (2) celui qui appelle un RÉFÉRÉ-LIBERTÉ (documents retenus par l'administration, retour en France impossible, ou blocage qui entraîne dans les jours qui viennent une atteinte grave : licenciement imminent, perte du logement ou des ressources, séparation familiale, alors que la personne remplit manifestement les conditions). En cas de doute, retiens le référé mesures utiles et indique-le dans "aVerifier".
 - Une demande d'asile, un transfert « Dublin » ou un recours devant l'OFPRA ou la CNDA est HORS_PERIMETRE (ASILE). Le souhait de DÉPOSER une demande de régularisation est HORS_PERIMETRE (AES) ; en revanche, le REFUS d'une demande de régularisation se conteste (cas de refus de titre ou d'OQTF).
 - "qualification" : toujours remplie (sauf HORS_PERIMETRE) ; "decision" en une phrase précise (ex. « Arrêté du préfet du Val-de-Marne refusant le renouvellement d'un titre de séjour salarié, portant OQTF dans un délai de trente jours »), "autorite" (préfet de…, consulat de…, ministre…), "mesures" (OQTF, délai de départ volontaire, pays de renvoi, interdiction de retour et sa durée, assignation à résidence), "motif" tel qu'il est écrit, "aVerifier" les points que l'avocat doit contrôler (date de notification absente, page manquante, fondement incertain…). En français, style d'avocat, sans pronostic.
 Règles :
@@ -169,6 +170,11 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     if (cas.situationOQTF) res.situationOQTF = cas.situationOQTF;
     if (cas.visaType) res.visaType = cas.visaType;
     if (cas.naturalisationIssue) res.naturalisationIssue = cas.naturalisationIssue;
+    // Référé-liberté : l'urgence est inhérente au cas ; référé mesures utiles : l'urgence est demandée au client.
+    if (cas.refere === "LIBERTE") {
+      res.procedure = "BLOCAGE_EMPLOI";
+      res.emploiMenace = true;
+    }
   }
 
   // Filet déontologique sur le seul texte destiné au public.

@@ -12,7 +12,7 @@ import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
 import { adresseComplete, adresseEnLignes, nomPays, PAYS, tvaApplicable } from "@/lib/pays";
 import { useContenus } from "../composants/Contenus";
-import { composerOffre, estRecoursPrealable, formatEuros, PROCEDURES, type CodeProcedure, type Diligence } from "@/lib/procedures";
+import { composerOffre, estRecoursPrealable, formatEuros, LIBELLES_REFERE, memeFamille, PROCEDURES, type CodeProcedure, type Diligence } from "@/lib/procedures";
 import { dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
 import type { ResultatTriage } from "@/lib/triage";
 import { ChoixLangue, useLangue, useT } from "@/i18n/client";
@@ -56,6 +56,8 @@ interface CasReconnu {
   libelle: string;
   voie: string;
   complements: Diligence[];
+  refere: "MESURES_UTILES" | "LIBERTE" | null;
+  demarche?: boolean;
 }
 
 const SITUATIONS: { v: SituationOQTF; l: string }[] = [
@@ -306,8 +308,15 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   }, [procedure, situation, dateRef, dateDemande, echeance, apresRecours, aujourdhui]);
 
   const urgence = delai?.traitement === "URGENCE" && !avisPrealable;
-  const casActuel = casReconnu && casReconnu.procedure === procedure ? casReconnu : null;
-  const offre = procedure ? composerOffre(procedure, { urgence, avisPrealable, complements: casActuel?.complements }, tarifs) : [];
+  const casActuel = casReconnu && memeFamille(casReconnu.procedure, procedure) ? casReconnu : null;
+  const offre = procedure ? composerOffre(procedure, { urgence, avisPrealable, complements: casActuel?.complements, refere: casActuel?.refere }, tarifs) : [];
+  // Voie affichée : pour un blocage, elle dépend de l'urgence établie (mise en demeure ou référé désigné par le cas).
+  const voieCas = (() => {
+    if (!casActuel) return "";
+    if (casActuel.refere && procedure === "BLOCAGE_SIMPLE") return t("Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire");
+    if (casActuel.refere && procedure === "BLOCAGE_EMPLOI") return t(LIBELLES_REFERE[casActuel.refere]);
+    return langueEcran === "fr" ? casActuel.voie : (triage?.traduction?.langue === langueEcran ? triage.traduction.voie : undefined) ?? casActuel.voie;
+  })();
   const total = offre.reduce((s, l) => s + l.montant, 0);
   // Paiement en trois fois sans frais, à partir du seuil fixé au back office : acompte, puis deux échéances.
   const fractionnable = echelonnable(total, reglesEch);
@@ -399,7 +408,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     };
   }
 
-  function appliquerTriage(tri: ResultatTriage, decisionJointe = false) {
+  function appliquerTriage(tri: ResultatTriage, decisionJointe = false, urgenceAcquise = false, sansDemarche = false) {
     setTriage(tri);
     const p = tri.procedure as CodeProcedure;
     setProcedure(p);
@@ -409,8 +418,11 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     if (tri.nationaliteAlgerienne !== null) setAlgerien(tri.nationaliteAlgerienne);
     setVisaType(tri.visaType);
     setNatuIssue(tri.naturalisationIssue);
-    // L'emploi menacé est toujours demandé explicitement (jamais deviné), comme la situation pour une OQTF.
-    setEmploi(null);
+    // L'emploi menacé est toujours demandé explicitement (jamais deviné), comme la situation pour une OQTF,
+    // sauf pour un cas de référé-liberté reconnu, où l'urgence est inhérente à la situation.
+    const emp = urgenceAcquise ? true : null;
+    setEmploi(emp);
+    if (sansDemarche) setTypeDemande(null);
     setEcheance(tri.dateEcheance ?? undefined);
     setEtape(
       prochaine({
@@ -418,13 +430,13 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         sit: null,
         visa: tri.visaType,
         natu: tri.naturalisationIssue,
-        emp: null,
+        emp,
         ech: tri.dateEcheance ?? undefined,
         q: "",
         dref: undefined,
         ddem: tri.dateDemande,
         dec: decisionJointe,
-        dmd: typeDemande,
+        dmd: sansDemarche ? null : typeDemande,
         pref: prefecture,
         depuis: "ANALYSE",
       }),
@@ -469,7 +481,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       }
       if (liste.length) setDecisionLue(true);
       setCasReconnu(j.cas ?? null);
-      appliquerTriage(tri, liste.length > 0);
+      appliquerTriage(tri, liste.length > 0, j.cas?.refere === "LIBERTE", j.cas?.demarche === false);
     } catch (e) {
       // Erreur réseau : même secours ; seule une demande invalide (400) renvoie au récit.
       if (e instanceof TypeError) return secours(procedureIndiquee, liste.length > 0);
@@ -572,6 +584,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
         : "Recours préalable auprès du sous-directeur des visas";
     if (procedure === "NATURALISATION" && natuIssue === "AJOURNEMENT") return "Recours préalable contre un ajournement de naturalisation";
     if (procedure === "REFUS_IMPLICITE" && delai?.refusImpliciteNonNe) return "Demande restée sans réponse";
+    if (procedure === "BLOCAGE_EMPLOI" && casActuel?.refere) return LIBELLES_REFERE[casActuel.refere];
     return PROCEDURES[procedure].libelle;
   })();
   const libelleOffre = avisPrealable ? "Avis écrit d'un avocat" : titreProcedure;
@@ -589,6 +602,10 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       return dateDemande
         ? t("Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.", { d: demarche, p: pref, date: dateLongue(isoVersDate(dateDemande)!) })
         : t("Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.");
+    if (procedure === "BLOCAGE_EMPLOI" && casActuel?.refere === "LIBERTE")
+      return t("Le juge des référés, saisi d'un référé-liberté, statue en principe dans les 48 heures. Il peut ordonner à l'administration de faire cesser une atteinte grave et manifestement illégale à une liberté fondamentale.");
+    if (procedure === "BLOCAGE_EMPLOI" && casActuel?.refere === "MESURES_UTILES")
+      return t("Le juge des référés peut ordonner à la préfecture d'accomplir la démarche bloquée : vous donner un rendez-vous, enregistrer votre demande, vous délivrer un récépissé ou vous remettre votre titre.");
     if (procedure === "BLOCAGE_EMPLOI")
       return t("Votre dossier ({d}) est bloqué auprès de {p} et votre emploi est menacé. Le juge des référés peut ordonner rapidement à la préfecture de vous donner un rendez-vous ou de vous délivrer un récépissé.", { d: demarche, p: pref });
     if (procedure === "BLOCAGE_SIMPLE")
@@ -982,7 +999,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                   {casActuel ? (
                     <>
                       <b>{langueEcran === "fr" ? casActuel.libelle : (traductionIA?.cas ?? casActuel.libelle)}</b>
-                      <span className="tr-voie">{langueEcran === "fr" ? casActuel.voie : (traductionIA?.voie ?? casActuel.voie)}</span>
+                      <span className="tr-voie">{voieCas}</span>
                     </>
                   ) : (
                     <b>{t(titreProcedure)}</b>
@@ -1265,6 +1282,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                                   : t(
                                       procedure === "DIAGNOSTIC"
                                         ? "Indiqué dans l'avis écrit de l'avocat"
+                                        : procedure === "BLOCAGE_EMPLOI" && casActuel?.refere === "LIBERTE"
+                                          ? "À traiter en urgence : le juge statue en 48 heures"
                                         : procedure === "BLOCAGE_EMPLOI"
                                           ? "À traiter en urgence : votre emploi est en jeu"
                                           : procedure === "BLOCAGE_SIMPLE"
@@ -1276,7 +1295,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             <div>
                               <dt>{t("La voie adaptée")}</dt>
                               <dd>
-                                {casActuel ? (langueEcran === "fr" ? casActuel.voie : (traductionIA?.voie ?? casActuel.voie)) : `${t(titreProcedure)} · ${t(contenu.instance)}`}
+                                {casActuel ? voieCas : `${t(titreProcedure)} · ${t(contenu.instance)}`}
                               </dd>
                             </div>
                           </dl>
@@ -1374,7 +1393,9 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     <ul className="off-in">
                       {(avisPrealable
                         ? ["L'étude de votre dossier par un avocat du cabinet", "Un avis écrit sous 48 heures ouvrées", "69 € non déduits si la procédure est engagée ensuite"]
-                        : contenu.compris
+                        : procedure === "BLOCAGE_EMPLOI" && casActuel?.refere
+                          ? ["La rédaction de la requête par un avocat du cabinet", ...contenu.compris.slice(1)]
+                          : contenu.compris
                       ).map((c) => (
                         <li key={c}>✓ {t(c)}</li>
                       ))}

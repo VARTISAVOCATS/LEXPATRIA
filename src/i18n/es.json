@@ -960,5 +960,11 @@
   "Confidentialité": "Privacidad",
   "Le délai de recours court dès la notification de la décision. Transmettez-la sans attendre.": "El plazo de recurso corre desde la notificación de la decisión. Envíela sin demora.",
   "Quelle situation correspond à la vôtre ?": "¿Qué situación corresponde a la suya?",
-  "Votre avocat vérifiera ensuite votre dossier et votre décision.": "Su abogado revisará después su expediente y su decisión."
+  "Votre avocat vérifiera ensuite votre dossier et votre décision.": "Su abogado revisará después su expediente y su decisión.",
+  "Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire": "Requerimiento formal a la prefectura y, si es necesario, recurso de medidas útiles ante el juez de urgencia",
+  "Référé mesures utiles devant le tribunal administratif": "Recurso de medidas útiles ante el juez de urgencia del tribunal administrativo",
+  "Référé-liberté devant le tribunal administratif": "Recurso de amparo de libertades fundamentales ante el juez de urgencia del tribunal administrativo",
+  "Le juge des référés, saisi d'un référé-liberté, statue en principe dans les 48 heures. Il peut ordonner à l'administration de faire cesser une atteinte grave et manifestement illégale à une liberté fondamentale.": "El juez de urgencia, ante un recurso de amparo de libertades fundamentales, resuelve en principio en un plazo de 48 horas. Puede ordenar a la administración que ponga fin a una vulneración grave y manifiestamente ilegal de una libertad fundamental.",
+  "Le juge des référés peut ordonner à la préfecture d'accomplir la démarche bloquée : vous donner un rendez-vous, enregistrer votre demande, vous délivrer un récépissé ou vous remettre votre titre.": "El juez de urgencia puede ordenar a la prefectura que realice el trámite bloqueado: darle una cita, registrar su solicitud, expedirle un resguardo o entregarle su permiso de residencia.",
+  "À traiter en urgence : le juge statue en 48 heures": "Debe tramitarse con urgencia: el juez resuelve en 48 horas"
 }

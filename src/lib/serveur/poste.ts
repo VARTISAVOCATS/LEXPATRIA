@@ -170,6 +170,8 @@ export async function qualificationDossier(d: Base, dos: Dossier) {
 export async function modelesDuDossier(d: Base, dos: Dossier): Promise<CodeModele[]> {
   const base = modelesPour(dos.procedure, dos.avisPrealable, !!dos.dossierParentId);
   if (dos.avisPrealable || dos.dossierParentId) return base;
+  // Blocage sans urgence établie : la mise en demeure reste le premier acte.
+  if (dos.procedure === "BLOCAGE_SIMPLE") return base;
   const { cas } = await qualificationDossier(d, dos);
   return cas ? [cas.modele, ...base.filter((m) => m !== cas.modele)] : base;
 }

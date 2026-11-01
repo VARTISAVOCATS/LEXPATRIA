@@ -145,6 +145,11 @@ export const LIBELLES_DILIGENCE: Record<Diligence, string> = {
   APPEL: "Appel devant la cour administrative d'appel",
 };
 
+export const LIBELLES_REFERE = {
+  MESURES_UTILES: "Référé mesures utiles devant le tribunal administratif",
+  LIBERTE: "Référé-liberté devant le tribunal administratif",
+} as const;
+
 export function libelleDiligence(d: Diligence): string {
   return LIBELLES_DILIGENCE[d];
 }
@@ -152,12 +157,16 @@ export function libelleDiligence(d: Diligence): string {
 /** Lignes d'honoraires de l'offre « Votre recours » (ou de l'avis préalable). */
 export function composerOffre(
   code: CodeProcedure,
-  opts: { urgence: boolean; avisPrealable?: boolean; complements?: readonly Diligence[] },
+  opts: { urgence: boolean; avisPrealable?: boolean; complements?: readonly Diligence[]; refere?: "MESURES_UTILES" | "LIBERTE" | null },
   tarifs: Record<Diligence, number> = TARIFS_DEFAUT,
 ): { diligence: Diligence; libelle: string; montant: number }[] {
   const ligne = (d: Diligence) => ({ diligence: d, libelle: LIBELLES_DILIGENCE[d], montant: tarifs[d] });
   if (opts.avisPrealable) return [ligne("AVIS_PREALABLE")];
-  const lignes = [ligne(PROCEDURES[code].diligence)];
+  // Blocage avec urgence : le cas reconnu désigne le référé (mesures utiles ou liberté).
+  const lignes =
+    code === "BLOCAGE_EMPLOI" && opts.refere
+      ? [{ ...ligne(opts.refere === "LIBERTE" ? "REFERE_LIBERTE" : "REFERE_MESURES_UTILES"), libelle: LIBELLES_REFERE[opts.refere] }]
+      : [ligne(PROCEDURES[code].diligence)];
   // Diligences ajoutées par le cas reconnu (référé-suspension avec la requête, par exemple).
   for (const d of opts.complements ?? []) if (!lignes.some((l) => l.diligence === d)) lignes.push(ligne(d));
   if (opts.urgence && PROCEDURES[code].diligence !== "DIAGNOSTIC") lignes.push(ligne("MAJORATION_URGENCE"));
@@ -167,4 +176,10 @@ export function composerOffre(
 /** Recours préalables : la mission s'achève à la réponse de l'administration. */
 export function estRecoursPrealable(code: CodeProcedure): boolean {
   return PROCEDURES[code].diligence === "RAPO";
+}
+
+/** Les deux procédures de blocage forment une même famille : la réponse sur l'urgence fait passer de l'une à l'autre. */
+const BLOCAGES = ["BLOCAGE_SIMPLE", "BLOCAGE_EMPLOI"];
+export function memeFamille(a: string, b: string | null | undefined): boolean {
+  return a === b || (BLOCAGES.includes(a) && !!b && BLOCAGES.includes(b));
 }

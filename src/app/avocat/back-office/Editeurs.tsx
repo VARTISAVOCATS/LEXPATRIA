@@ -395,6 +395,19 @@ export function EditeurCas({ valeur }: { valeur: Cas[] }) {
                     </select>
                   </label>
                 )}
+                {(c.procedure === "BLOCAGE_SIMPLE" || c.procedure === "BLOCAGE_EMPLOI") && (
+                  <label className="af-c">
+                    <span>Référé</span>
+                    <select className="champ" value={c.refere ?? ""} onChange={(x) => maj(i, { refere: (x.target.value || null) as Cas["refere"] })}>
+                      <option value="">Aucun</option>
+                      <option value="MESURES_UTILES">Référé mesures utiles (mise en demeure si l&apos;urgence n&apos;est pas établie)</option>
+                      <option value="LIBERTE">Référé-liberté d&apos;emblée</option>
+                    </select>
+                    <label>
+                      <input type="checkbox" checked={c.demarche} onChange={(x) => maj(i, { demarche: x.target.checked })} /> Demander la démarche engagée en préfecture
+                    </label>
+                  </label>
+                )}
                 <fieldset className="af-c bo-compl">
                   <span>Ajouté au devis</span>
                   {DILIGENCES_COMPLEMENTAIRES.map((dl) => (

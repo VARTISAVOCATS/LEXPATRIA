@@ -104,7 +104,7 @@ export async function POST(req: Request) {
     triage: t,
     procedure: { code: proc.code, libelle: proc.libelle },
     // Cas reconnu : libellé et voie affichés au client ; diligences ajoutées au devis.
-    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements } : null,
+    cas: cas ? { code: cas.code, procedure: cas.procedure, libelle: cas.libelle, voie: cas.voieClient, complements: cas.complements, refere: cas.refere, demarche: cas.demarche } : null,
     delai,
     // Le prix n'est pas affiché à l'écran « Résultat » ; il est renvoyé pour l'écran « Votre recours ».
     prix: {

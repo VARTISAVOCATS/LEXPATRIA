@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/db";
 import { adresseEnLignes } from "@/lib/pays";
 import { formatEuros, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
-import { trouverCas, type Cas } from "@/lib/cas";
+import { memeFamille, trouverCas, type Cas } from "@/lib/cas";
 import { lireParametre } from "@/lib/serveur/parametres";
 import { appelDe, premiereInstance } from "@/lib/serveur/appel";
 import { equipe, journalDossier, TYPES_ECHEANCE } from "@/lib/serveur/cabinet";
@@ -98,7 +98,7 @@ function FicheQualification({ reference, triage, procedure, referentiel, peutVal
       {cas && (
         <>
           <h3>{cas.libelle}</h3>
-          {cas.procedure !== procedure && (
+          {!memeFamille(cas.procedure, procedure) && (
             <p className="erreur">
               Ce cas relève de la procédure « {PROCEDURES[cas.procedure as CodeProcedure].libelle} », différente de celle du dossier : un écart d&apos;honoraires se règle par avenant.
             </p>
@@ -107,7 +107,7 @@ function FicheQualification({ reference, triage, procedure, referentiel, peutVal
             <div><dt>Voie de recours</dt><dd>{cas.voieClient}</dd></div>
             <div><dt>Juridiction</dt><dd>{cas.juridiction}</dd></div>
             <div><dt>Délai</dt><dd>{cas.delai}</dd></div>
-            <div><dt>Acte à rédiger</dt><dd>{LIBELLES_MODELE[cas.modele]}{cas.complements.length ? ` · ${cas.complements.map((c) => LIBELLES_DILIGENCE[c]).join(" · ")}` : ""}</dd></div>
+            <div><dt>Acte à rédiger</dt><dd>{cas.refere && procedure === "BLOCAGE_SIMPLE" ? `${LIBELLES_MODELE.MISE_EN_DEMEURE}, puis ${LIBELLES_MODELE[cas.modele]} si elle reste sans effet (urgence non établie par le client)` : LIBELLES_MODELE[cas.modele]}{cas.complements.length ? ` · ${cas.complements.map((c) => LIBELLES_DILIGENCE[c]).join(" · ")}` : ""}</dd></div>
           </dl>
         </>
       )}

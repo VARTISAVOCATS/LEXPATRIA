@@ -42,4 +42,22 @@ describe("référentiel des cas", () => {
     const offre = composerOffre("REFUS_TITRE", { urgence: false, complements: cas.complements }, TARIFS_DEFAUT);
     expect(offre.map((l) => l.diligence)).toEqual(["REQUETE", "REFERE_SUSPENSION_AVEC_REQUETE"]);
   });
+
+  it("un cas de référé-liberté passe au référé d'emblée, sans question sur l'urgence", async () => {
+    const r = await trier(
+      { recit: "La police a gardé mon passeport et je dois partir pour l'enterrement de mon père" },
+      client({ ...base, procedure: "BLOCAGE_SIMPLE", cas: "DOCUMENTS_RETENUS", confiance: "HAUTE" }),
+    );
+    expect(r.procedure).toBe("BLOCAGE_EMPLOI");
+    expect(r.emploiMenace).toBe(true);
+    const offre = composerOffre("BLOCAGE_EMPLOI", { urgence: false, refere: "LIBERTE" }, TARIFS_DEFAUT);
+    expect(offre[0].diligence).toBe("REFERE_LIBERTE");
+  });
+
+  it("un cas de référé mesures utiles laisse la mise en demeure sans urgence établie", async () => {
+    const r = await trier({ recit: "Impossible d'avoir un rendez-vous" }, client({ ...base, procedure: "BLOCAGE_SIMPLE", cas: "RENDEZ_VOUS_IMPOSSIBLE", confiance: "HAUTE" }));
+    expect(r.procedure).toBe("BLOCAGE_SIMPLE");
+    expect(r.emploiMenace).toBeNull();
+    expect(composerOffre("BLOCAGE_EMPLOI", { urgence: false, refere: "MESURES_UTILES" }, TARIFS_DEFAUT)[0].diligence).toBe("REFERE_MESURES_UTILES");
+  });
 });
