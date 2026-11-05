@@ -23,7 +23,7 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
       "Son dépôt au tribunal",
       "Le suivi jusqu'au jugement",
     ],
-    nonCompris: "L'appel et les référés sont des recours distincts.",
+    nonCompris: "L'appel et les référés sont des procédures distinctes.",
     instance: "Tribunal administratif",
   },
   REFUS_TITRE: {
