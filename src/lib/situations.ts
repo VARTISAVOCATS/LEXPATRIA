@@ -76,7 +76,7 @@ export const SITUATIONS: PageSituation[] = [
     slug: "refus-titre-de-sejour",
     nav: "Refus de titre de séjour",
     titre: "Contester un refus de titre de séjour",
-    description: "Délai pour contester un refus de titre de séjour ou de renouvellement, référé-suspension, ressortissants algériens.",
+    description: "Délai pour contester un refus de titre de séjour ou de renouvellement, référé-suspension.",
     chapo:
       "Le refus de délivrer ou de renouveler un titre de séjour peut être contesté devant le tribunal administratif. Le délai et la procédure dépendent de ce qui accompagne le refus.",
     sections: [
@@ -97,12 +97,6 @@ export const SITUATIONS: PageSituation[] = [
         ],
       },
       {
-        titre: "Les ressortissants algériens",
-        blocs: [
-          "Les ressortissants algériens relèvent de l'accord franco-algérien du 27 décembre 1968, qui régit le certificat de résidence. Les règles du code de l'entrée et du séjour s'appliquent pour le reste, notamment la procédure.",
-        ],
-      },
-      {
         titre: "Les pièces utiles",
         blocs: [
           [
@@ -113,7 +107,7 @@ export const SITUATIONS: PageSituation[] = [
         ],
       },
     ],
-    textes: "Code de justice administrative, art. R. 421-1 et L. 521-1 ; CESEDA, art. L. 614-1 ; accord franco-algérien du 27 décembre 1968.",
+    textes: "Code de justice administrative, art. R. 421-1 et L. 521-1 ; CESEDA, art. L. 614-1.",
   },
   {
     slug: "refus-de-visa",

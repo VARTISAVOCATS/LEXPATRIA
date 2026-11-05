@@ -15,10 +15,11 @@ import { controlerTexte } from "./deontologie";
 // échouer toute l'analyse (seule la procédure est indispensable, et elle se replie elle-même sur le diagnostic).
 const liste = (max: number) =>
   z
-    .array(z.unknown())
+    .union([z.array(z.unknown()), z.string().transform((x) => [x])])
     .catch([])
-    .transform((a) => a.filter((x): x is string => typeof x === "string" && x.trim().length > 0).slice(0, max));
+    .transform((a): string[] => (a as unknown[]).filter((x): x is string => typeof x === "string" && x.trim().length > 0).slice(0, max));
 const texteOuNul = z.string().nullable().catch(null);
+const booleen = z.preprocess((v) => (v === "true" ? true : v === "false" ? false : v), z.boolean().nullable()).catch(null);
 
 export const ResultatTriage = z.object({
   procedure: z
@@ -26,16 +27,16 @@ export const ResultatTriage = z.object({
     .catch("DIAGNOSTIC"),
   horsPerimetreMotif: z.enum(["ASILE", "AES", "JUDICIAIRE", "AUTRE"]).nullable().catch(null),
   situationOQTF: z.enum(["LIBRE", "ASSIGNE", "DETENTION", "RETENTION", "LIBRE_APRES_ASILE"]).nullable().catch(null),
-  detentionOuRetention: z.boolean().catch(false),
+  detentionOuRetention: z.preprocess((v) => v === true || v === "true", z.boolean()),
   dateDecision: texteOuNul, // AAAA-MM-JJ
   dateNotification: texteOuNul,
   dateDemande: texteOuNul, // refus implicite
   dateEcheance: texteOuNul, // procédure en cours : prochaine échéance du tribunal
   visaType: z.enum(["COURT", "LONG"]).nullable().catch(null),
   naturalisationIssue: z.enum(["REFUS", "AJOURNEMENT"]).nullable().catch(null),
-  emploiMenace: z.boolean().nullable().catch(null),
+  emploiMenace: booleen,
   prefecture: texteOuNul,
-  nationaliteAlgerienne: z.boolean().nullable().catch(null),
+  nationaliteAlgerienne: booleen,
   langue: z.string().catch("fr"),
   faits: liste(8), // faits qui comptent, tirés du récit, à confirmer par le client
   ceQueLeRecoursPeutObtenir: z.string().catch(""), // information générale, ni argument ni pronostic
@@ -93,7 +94,38 @@ export function minimiser(texte: string): string {
   return MASQUES.reduce((t, [re, rempl]) => t.replace(re, rempl), texte);
 }
 
-function consigne(referentiel: Cas[]): string {
+const GABARIT = JSON.stringify(
+  {
+    procedure: "OQTF | REFUS_TITRE | REFUS_VISA | NATURALISATION | REFUS_IMPLICITE | BLOCAGE_EMPLOI | BLOCAGE_SIMPLE | PROCEDURE_EN_COURS | DIAGNOSTIC | HORS_PERIMETRE",
+    cas: "CODE_DU_CAS ou null",
+    confiance: "HAUTE | MOYENNE | FAIBLE",
+    horsPerimetreMotif: "ASILE | AES | JUDICIAIRE | AUTRE ou null",
+    situationOQTF: "LIBRE | ASSIGNE | DETENTION | RETENTION | LIBRE_APRES_ASILE ou null",
+    detentionOuRetention: false,
+    dateDecision: "AAAA-MM-JJ ou null",
+    dateNotification: "AAAA-MM-JJ ou null",
+    dateDemande: "AAAA-MM-JJ ou null",
+    dateEcheance: "AAAA-MM-JJ ou null",
+    visaType: "COURT | LONG ou null",
+    naturalisationIssue: "REFUS | AJOURNEMENT ou null",
+    emploiMenace: null,
+    prefecture: "texte ou null",
+    nationaliteAlgerienne: null,
+    langue: "fr",
+    faits: ["fait 1", "fait 2"],
+    qualification: { decision: "texte", autorite: "texte ou null", mesures: ["mesure 1"], motif: "texte ou null", aVerifier: ["point 1", "point 2"] },
+    noteClient: "texte",
+    preAnalyse: "texte ou chaîne vide",
+    ceQueLeRecoursPeutObtenir: "texte",
+    casLibre: "objet décrit plus haut, ou null",
+    question: null,
+    traduction: "objet décrit plus haut, ou null",
+  },
+  null,
+  1,
+);
+
+export function consigne(referentiel: Cas[]): string {
   const cas = referentiel
     .filter((c) => c.actif)
     .map((c) => `- ${c.code} [procédure ${c.procedure}] : ${c.libelle}. Signes : ${c.signes}`)
@@ -130,7 +162,7 @@ Règles :
 - "preAnalyse" : seulement si une décision est jointe ; sinon "". Deux à quatre phrases complètes en français, rédigées à la troisième personne pour le cabinet (« la décision », « le cabinet », « votre avocat » ; jamais « nous »), adressées à la personne (« vous »), sur ce que dit SA décision : l'autorité et la nature de la décision, sa date et, si elle figure, la date de notification ; le délai de recours indiqué dans la mention des voies et délais ; les mesures qui l'accompagnent (délai de départ volontaire, interdiction de retour, pays de renvoi) ; le motif principal tel qu'il est écrit. Exemple de ton : « Le préfet de police vous fait obligation de quitter le territoire français dans un délai de trente jours, par une décision du 3 octobre 2026 notifiée le 6 octobre. ». Aucun argument juridique, aucun pronostic, aucune promesse. Style d'avocat, sobre et précis : pas de phrases hachées, pas de formules d'empathie.
 - "noteClient" : sauf HORS_PERIMETRE, deux ou trois phrases en français adressées à la personne (« vous »), qui montrent que sa situation a été comprise : reprends les éléments concrets de SON récit (nature de la décision ou du blocage, ancienneté, famille, emploi, études, démarche engagée, échéance) puis indique la démarche que votre avocat engagera dans son cas et son objet. Si une décision est jointe, la "preAnalyse" la décrit déjà : la note ne la répète pas. Troisième personne pour le cabinet (« votre avocat », « le cabinet », jamais « nous »). Aucun pronostic, aucune promesse, aucune formule d'empathie, aucune phrase générale qui vaudrait pour tout le monde, aucun fait inventé. Exemple de ton : « Vous vivez en France depuis 2017 et la préfecture refuse de renouveler votre titre de séjour salarié alors que vous êtes en contrat à durée indéterminée. Votre avocat contestera ce refus devant le tribunal administratif et demandera en urgence la suspension de ses effets, afin que vous puissiez conserver votre emploi pendant la procédure. »
 - "casLibre" : uniquement si AUCUN cas du référentiel ne correspond ("cas" null) et hors HORS_PERIMETRE ; sinon null. Rédige alors toi-même la qualification, dans le même cadre que les fiches : {"libelle": situation en une ligne, "voieClient": voie de recours en une ligne, "procedure": l'une de ${"OQTF, REFUS_TITRE, REFUS_VISA, NATURALISATION, REFUS_IMPLICITE, BLOCAGE_SIMPLE, BLOCAGE_EMPLOI, PROCEDURE_EN_COURS, DIAGNOSTIC"} (elle détermine les honoraires : requête au tribunal, recours préalable, mise en demeure, référé, reprise, diagnostic), "situationOQTF": null ou LIBRE/ASSIGNE/LIBRE_APRES_ASILE, "visaType": null/COURT/LONG, "naturalisationIssue": null/REFUS/AJOURNEMENT, "signes": indices généraux permettant de reconnaître ce type de situation, sans aucune donnée personnelle, "juridiction", "delai" (texte, avec la règle et son point de départ), "refere": null/MESURES_UTILES/LIBERTE (blocages seulement), "implicite": true si le recours vise une décision implicite de rejet, "complements": [] ou ["REFERE_SUSPENSION_AVEC_REQUETE"] si la décision prive d'un droit en cours (renouvellement, retrait), "modele": l'un de REQUETE_OQTF, REQUETE_REFUS_TITRE, REQUETE_SOMMAIRE, MEMOIRE_COMPLEMENTAIRE, REFERE_SUSPENSION, REFERE_LIBERTE, REFERE_MESURES_UTILES, RECOURS_GRACIEUX, RAPO_VISA, RAPO_NATURALISATION, MISE_EN_DEMEURE, AVIS_ECRIT, "vigilance": points à vérifier par l'avocat}. Si aucune de ces procédures ne convient, choisis DIAGNOSTIC (avis écrit d'un avocat).
-- "question" : seulement si "confiance" serait FAIBLE et qu'UNE question fermée permet de trancher (ex. « Avez-vous reçu une décision écrite ? », « Votre dossier est-il passé au statut "en instruction" ? »). {"texte": la question, "options": deux à quatre réponses courtes}, dans la langue du récit. Sinon null. Ne pose jamais de question si des précisions ont déjà été apportées deux fois.
+- "question" : seulement si la réponse change la procédure ou les honoraires (par exemple refus de première demande ou de renouvellement, demande en cours ou décision reçue, statut du dossier de naturalisation). Si les cas encore possibles relèvent de la même procédure (par exemple plusieurs variantes d'OQTF), ne pose pas de question : retiens le cas le plus général et note l'alternative dans "qualification.aVerifier". Pose-la seulement si "confiance" serait FAIBLE et qu'UNE question fermée permet de trancher (ex. « Avez-vous reçu une décision écrite ? », « Votre dossier est-il passé au statut "en instruction" ? »). {"texte": la question, "options": deux à quatre réponses courtes}, dans la langue du récit. Sinon null. Ne pose jamais de question si des précisions ont déjà été apportées deux fois.
 - "langue" : code ISO 639-1 de la langue du récit (celle dans laquelle la personne a écrit, pas celle des mots cités).
 - "traduction" : si la langue du récit n'est pas le français, { "langue": code ISO 639-1, "faits": les mêmes faits traduits dans cette langue, "obtenir": "ceQueLeRecoursPeutObtenir" traduit dans cette langue, "preAnalyse": "preAnalyse" traduite dans cette langue, "note": "noteClient" traduite dans cette langue } ; sinon null.
 - Un refus de titre SANS obligation de quitter le territoire est REFUS_TITRE, jamais OQTF.
@@ -139,7 +171,8 @@ Règles :
 - "emploiMenace" : true seulement si le récit dit que l'emploi ou le contrat de travail est menacé, false s'il dit le contraire, sinon null.
 - "dateEcheance" : pour une procédure en cours, la prochaine date fixée par le tribunal (mémoire à produire, audience), sinon null.
 - "traduction" comprend aussi, si la langue du récit n'est pas le français, "cas" (le libellé du cas reconnu, traduit) et "voie" (sa voie de recours, traduite).
-Réponds UNIQUEMENT par un objet JSON conforme à ce schéma : ${JSON.stringify(Object.keys(ResultatTriage.shape))}.`;
+Réponds UNIQUEMENT par un objet JSON de cette forme exacte (types respectés : les listes sont des tableaux de chaînes, jamais une chaîne seule ; booléens true/false ; null quand l'information manque ; "question", si tu en poses une, est un objet {"texte": "…", "options": ["…", "…"]}) :
+${GABARIT}`;
 }
 
 export interface EntreeTriage {
@@ -176,7 +209,8 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
   const rep = await client.messages.create({
     model: modele ?? process.env.ANTHROPIC_MODEL_TRIAGE ?? process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5",
     max_tokens: 8000,
-    system: consigne(referentiel),
+    // Consigne mise en cache chez Anthropic (identique d'un appel à l'autre) : coût et temps de réponse réduits.
+    system: [{ type: "text", text: consigne(referentiel), cache_control: { type: "ephemeral" } }],
     messages: [
       { role: "user", content: contenu },
     ],
@@ -192,6 +226,9 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     const exigeDecision = ["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURALISATION"].includes(motsCles);
     if (motsCles !== "DIAGNOSTIC" && (!exigeDecision || decisionNommee)) res.procedure = motsCles;
   }
+
+  // Rétention : le récit qui mentionne un centre de rétention vaut situation de rétention (écran et motif adaptés).
+  if (res.detentionOuRetention && !res.situationOQTF && entree.recit && /r[ée]tention|\bcra\b/i.test(entree.recit)) res.situationOQTF = "RETENTION";
 
   // Garde-fou de matière : une demande de naturalisation ne relève jamais des procédures propres aux titres de séjour.
   // Sans décision défavorable nommée, c'est une demande restée sans suite (la fiche rappelle à l'avocat de vérifier un rejet implicite).
@@ -213,7 +250,9 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
     res.confiance = "FAIBLE";
   }
   const libre = !reconnu && res.casLibre ? schemaCasLibre.safeParse(res.casLibre) : null;
-  res.casLibre = libre?.success && controlerTexte([libre.data.libelle, libre.data.voieClient].join(" ")).length === 0 ? libre.data : null;
+  // Une qualification libre qui ne débouche que sur le diagnostic n'apporte rien au prospect ni au référentiel : écartée.
+  res.casLibre =
+    libre?.success && libre.data.procedure !== "DIAGNOSTIC" && controlerTexte([libre.data.libelle, libre.data.voieClient].join(" ")).length === 0 ? libre.data : null;
   const cas = reconnu ?? (res.casLibre ? casDepuisLibre(schemaCasLibre.parse(res.casLibre)) : undefined);
   if (precisionsEpuisees(entree)) res.question = null;
   if (cas && res.procedure !== "HORS_PERIMETRE") {

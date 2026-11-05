@@ -120,4 +120,13 @@ describe("référentiel des cas", () => {
     expect(r.question).toBeNull();
     expect(r.horsPerimetreMotif).toBeNull();
   });
+
+  it("les listes rendues sous forme de texte sont conservées, et la rétention est reconnue", async () => {
+    const r = await trier(
+      { recit: "Je suis au centre de rétention de Vincennes depuis hier." },
+      client({ procedure: "DIAGNOSTIC", detentionOuRetention: true, qualification: { decision: "Placement en rétention", aVerifier: "Fondement de la rétention à vérifier", mesures: "Rétention" } }),
+    );
+    expect(r.qualification?.aVerifier).toEqual(["Fondement de la rétention à vérifier"]);
+    expect(r.situationOQTF).toBe("RETENTION");
+  });
 });

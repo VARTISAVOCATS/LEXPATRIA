@@ -19,7 +19,7 @@ const SECTIONS: SectionJuridique[] = [
     titre: "Données traitées",
     paragraphes: [
       [
-        "Identité et coordonnées : civilité, nom, prénom, adresse e-mail, téléphone, adresse postale, pays de résidence, nationalité algérienne ou non.",
+        "Identité et coordonnées : civilité, nom, prénom, adresse e-mail, téléphone, adresse postale, pays de résidence, nationalité.",
         "Éléments du dossier : votre récit, vos réponses au questionnaire, la décision contestée et les pièces que vous transmettez.",
         "Paiement : montant, date et statut du règlement. Les données de carte bancaire sont saisies et conservées par le prestataire de paiement et ne sont jamais transmises au cabinet.",
         "Données techniques : journal des connexions et des actions sur le dossier, adresse IP lors de l'acceptation de la convention.",
@@ -31,7 +31,7 @@ const SECTIONS: SectionJuridique[] = [
     titre: "Finalités et bases légales",
     paragraphes: [
       [
-        "Étude de votre situation, rédaction et dépôt des actes, suivi de la procédure : exécution de la convention d'honoraires.",
+        "Étude de votre situation, rédaction et dépôt des recours, suivi de la procédure : exécution de la convention d'honoraires.",
         "Constatation, exercice ou défense de vos droits en justice, pour les données sensibles du dossier.",
         "Facturation, comptabilité et lutte contre le blanchiment des capitaux : obligations légales du cabinet.",
         "Rappel par e-mail d'un dépôt de dossier non terminé : intérêt légitime du cabinet. Chaque message comporte un lien pour ne plus en recevoir.",

@@ -10,7 +10,7 @@ import { dateCourte, type Echeance, type ReglesEcheancier } from "./echeancier";
 import { formatEuros, type Diligence } from "./procedures";
 
 /** Version des modèles intégrés. Un modèle du cabinet porte sa propre version (« cabinet-N »). */
-export const VERSION_CONVENTION = "2026-10-26.1";
+export const VERSION_CONVENTION = "2026-11-04.1";
 
 export interface LigneHonoraires {
   diligence: Diligence;
@@ -161,13 +161,13 @@ const MISSIONS: Record<CodeConvention, { mission: string; exclusions: string; ob
     article2: REMBOURSEMENT,
   },
   CONV_AVIS: {
-    mission: "La mission consiste en l'étude de la situation du Client et de ses documents, et en la remise d'un avis écrit dans son espace. Elle ne comprend ni la rédaction d'un acte ni le suivi d'une procédure, qui font, le cas échéant, l'objet d'une proposition distincte.",
-    exclusions: "Sont exclus de la mission la rédaction de tout acte et toute procédure, administrative ou juridictionnelle, qui font, le cas échéant, l'objet d'une proposition distincte soumise à l'accord du Client.",
+    mission: "La mission consiste en l'étude de la situation du Client et de ses documents, et en la remise d'un avis écrit dans son espace. Elle ne comprend ni la rédaction d'un recours ni le suivi d'une procédure, qui font, le cas échéant, l'objet d'une proposition distincte.",
+    exclusions: "Sont exclus de la mission la rédaction de tout recours et toute procédure, administrative ou juridictionnelle, qui font, le cas échéant, l'objet d'une proposition distincte soumise à l'accord du Client.",
     obligation: "L'avis écrit est remis dans l'espace du Client.",
     article2: "Une fois l'avis écrit remis, les honoraires restent acquis au Cabinet.",
   },
   CONV_CONSULTATION: {
-    mission: "La mission consiste en un entretien de trente minutes en visioconférence avec un avocat du Cabinet, au créneau choisi par le Client. Elle ne comprend ni la rédaction d'un acte ni le suivi d'une procédure, qui font, le cas échéant, l'objet d'une proposition distincte.",
+    mission: "La mission consiste en un entretien de trente minutes en visioconférence avec un avocat du Cabinet, au créneau choisi par le Client. Elle ne comprend ni la rédaction d'un recours ni le suivi d'une procédure, qui font, le cas échéant, l'objet d'une proposition distincte.",
     exclusions: EXCLUSIONS_PREMIERE_INSTANCE,
     obligation: "Le Client peut déplacer le rendez-vous au plus tard vingt-quatre heures à l'avance, par le lien reçu par e-mail.",
     article2: "Si le Client ne se présente pas au rendez-vous sans l'avoir déplacé, la consultation est due.",
@@ -209,7 +209,7 @@ ARTICLE 2 — HONORAIRES
 Les honoraires sont fixés forfaitairement comme suit :
 {{honoraires}}
 Total : {{total}}.
-Ce forfait est ferme. Il ne comporte aucun honoraire de résultat. Hors Île-de-France, seuls les frais de déplacement de l'avocat pour l'audience font l'objet d'un avenant soumis à l'accord préalable du Client.
+Ces honoraires sont forfaitaires et ne comportent aucun honoraire de résultat. Hors Île-de-France, seuls les frais de déplacement de l'avocat pour l'audience font l'objet d'un avenant soumis à l'accord préalable du Client.
 ${m.article2}
 Les sommes que la juridiction pourrait mettre à la charge de l'administration au titre de l'article L. 761-1 du code de justice administrative reviennent au Client. Le Cabinet n'en assure pas le recouvrement mais indique au Client la marche à suivre pour les obtenir.
 
@@ -286,12 +286,12 @@ export function resumeConvention(d: DonneesConvention): string[] {
     ];
   if (d.avis)
     return [
-      `Forfait ferme de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour l'avis écrit d'un avocat du cabinet.`,
+      `Honoraires forfaitaires de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour l'avis écrit d'un avocat du cabinet.`,
       "L'avis écrit vous est remis dans votre espace sous 48 heures ouvrées.",
       "Il vous indique la démarche à engager et son délai.",
     ];
   return [
-    `Forfait ferme de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour ${d.appelDe ? "toute l'instance d'appel" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance"}.`,
+    `Honoraires forfaitaires de ${formatEuros(total)}${d.horsUE ? "" : " TTC"} pour ${d.appelDe ? "toute l'instance d'appel" : d.recoursPrealable ? "le recours préalable, jusqu'à la réponse de l'administration" : "toute la première instance"}.`,
     "Un avocat du cabinet étudie votre dossier et forme votre recours.",
     "Délai déjà expiré au jour du paiement : remboursement, 69 € conservés pour l'avis écrit.",
   ];

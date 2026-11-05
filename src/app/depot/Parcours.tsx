@@ -170,6 +170,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   // Coordonnées et paiement
   const [coord, setCoord] = useState({ civilite: "", prenom: "", nom: "", email: "", telephone: "", adresse: "", codePostal: "", ville: "", pays: "FR" });
   const [algerien, setAlgerien] = useState<boolean | null>(null);
+  /** Nationalité déclarée (formulaire) : seule l'appartenance au régime de l'accord franco-algérien est conservée. */
+  const [nationalite, setNationalite] = useState("");
   const [jeton, setJeton] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
   const [caseConvention, setCaseConvention] = useState(false);
@@ -1499,7 +1501,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                             </button>
                           ))}
                         </div>
-                        <span className="help">{t("Elle sert à la rédaction des actes.")}</span>
+                        <span className="help">{t("Elle sert à la rédaction du recours.")}</span>
                       </div>
                       <div className="f">
                         <label htmlFor="q_prenom">{t("Prénom")} *</label>
@@ -1523,16 +1525,22 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                       )}
                       {demanderAlgerien && (
                         <div className="f full">
-                          <label>{t("Êtes-vous de nationalité algérienne ?")} *</label>
-                          <div className="yn">
-                            <button className={algerien === true ? "sel" : ""} onClick={() => setAlgerien(true)}>
-                              {t("Oui")}
-                            </button>
-                            <button className={algerien === false ? "sel" : ""} onClick={() => setAlgerien(false)}>
-                              {t("Non")}
-                            </button>
-                          </div>
-                          <span className="help">{t("Les ressortissants algériens relèvent de l'accord franco-algérien de 1968.")}</span>
+                          <label htmlFor="q_nat">{t("Nationalité")} *</label>
+                          <select
+                            id="q_nat"
+                            value={nationalite}
+                            onChange={(e) => {
+                              setNationalite(e.target.value);
+                              setAlgerien(e.target.value === "DZ");
+                            }}
+                          >
+                            <option value="">{t("Choisissez")}</option>
+                            {listePays.map(([c, n]) => (
+                              <option key={c} value={c}>
+                                {n}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       )}
                     </div>

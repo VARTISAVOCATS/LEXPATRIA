@@ -1,0 +1,913 @@
+[
+ {
+  "recit": "J'ai déposé ma demande de naturalisation sur ANEF depuis le 1er aout 2025. le statuts est encore en \" dossier envoyé\".",
+  "reponse": {
+   "procedure": "BLOCAGE_SIMPLE",
+   "cas": "NATURALISATION_SANS_SUITE",
+   "confiance": "HAUTE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": "2025-08-01",
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Demande de naturalisation déposée sur l'ANEF le 1er août 2025",
+    "Le statut du dossier est toujours « dossier envoyé »"
+   ],
+   "qualification": {
+    "decision": "Demande de naturalisation par décret déposée sur l'ANEF restée au statut « dossier envoyé », sans récépissé de complétude ni décision",
+    "autorite": "Préfecture (service de la naturalisation)",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Absence de récépissé de complétude et de convocation à l'entretien d'assimilation",
+     "Aucun refus implicite n'est né : le délai de dix-huit mois (ou douze mois après dix ans de résidence) ne court qu'à compter du récépissé de complétude",
+     "Préfecture de dépôt et éventuelle réponse de l'administration sur l'ANEF"
+    ]
+   },
+   "noteClient": "Vous avez déposé votre demande de naturalisation sur l'ANEF le 1er août 2025 et le dossier est toujours au statut « dossier envoyé », sans passage en instruction. Votre avocat adressera à l'administration une mise en demeure d'instruire votre dossier et, à défaut de réponse, saisira le juge des référés du tribunal administratif afin qu'il enjoigne à l'administration d'accomplir cette démarche.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "La mise en demeure et, le cas échéant, le référé tendent à ce que l'administration reprenne l'instruction de la demande ; le juge peut lui enjoindre d'accomplir la démarche due dans un délai déterminé.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "J'ai reçu une OQTF hier, je suis en France depuis 2018 avec ma femme et mes deux enfants scolarisés.",
+  "reponse": {
+   "procedure": "OQTF",
+   "cas": "OQTF_GENERALE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Obligation de quitter le territoire français reçue hier",
+    "En France depuis 2018",
+    "Marié(e), vit avec son conjoint",
+    "Deux enfants scolarisés"
+   ],
+   "qualification": {
+    "decision": "Obligation de quitter le territoire français dont le fondement n'est pas précisé",
+    "autorite": null,
+    "mesures": [
+     "OQTF"
+    ],
+    "motif": null,
+    "aVerifier": [
+     "Date de la décision et date de notification (« hier » ne permet pas de la fixer)",
+     "Fondement de l'OQTF (refus ou retrait de titre, séjour irrégulier, rejet de l'asile, assignation à résidence), à établir à la lecture de la décision",
+     "Délai de départ volontaire, interdiction de retour, pays de renvoi et délai de recours indiqué"
+    ]
+   },
+   "noteClient": "Vous vivez en France depuis 2018 avec votre conjoint et vos deux enfants scolarisés, et vous avez reçu hier une obligation de quitter le territoire français. Votre avocat lira la décision pour en déterminer le fondement, puis la contestera devant le tribunal administratif dans le délai de recours.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Ma carte de séjour salarié n'a pas été renouvelée, la préfecture m'a envoyé un refus sans obligation de quitter la France. Je suis en CDI depuis 2019.",
+  "reponse": {
+   "procedure": "REFUS_TITRE",
+   "cas": "REFUS_RENOUVELLEMENT",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Titre de séjour salarié non renouvelé",
+    "Refus de la préfecture sans obligation de quitter le territoire",
+    "En CDI depuis 2019"
+   ],
+   "qualification": {
+    "decision": "Décision de la préfecture refusant le renouvellement d'un titre de séjour salarié, sans obligation de quitter le territoire",
+    "autorite": "Préfecture (département non précisé)",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Date de la décision et date de notification",
+     "Absence effective d'OQTF dans la décision",
+     "Validité du titre ou du récépissé à ce jour et situation de l'emploi",
+     "Motif du refus et délai de recours indiqué"
+    ]
+   },
+   "noteClient": "Votre carte de séjour salarié n'a pas été renouvelée par la préfecture, sans obligation de quitter le territoire, alors que vous êtes en CDI depuis 2019. Votre avocat contestera ce refus devant le tribunal administratif et examinera l'opportunité d'une demande en urgence de suspension de ses effets, afin de préserver votre droit de travailler pendant la procédure.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le tribunal administratif peut annuler la décision de refus et, selon les cas, enjoindre à la préfecture de réexaminer la demande ; une demande de suspension peut être présentée en urgence.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "La police a gardé mon passeport et je dois partir pour des obsèques au pays dans 5 jours.",
+  "reponse": {
+   "procedure": "BLOCAGE_EMPLOI",
+   "cas": "DOCUMENTS_RETENUS",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Le passeport a été conservé par la police",
+    "Départ nécessaire dans 5 jours pour des obsèques au pays"
+   ],
+   "qualification": {
+    "decision": "Rétention du passeport par la police, sans restitution, alors qu'un voyage urgent est prévu",
+    "autorite": "Police (service non précisé)",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Circonstances et date de la retenue du passeport, et service concerné",
+     "Existence éventuelle d'une assignation à résidence ou d'une mesure d'éloignement justifiant la retenue",
+     "Date exacte du départ envisagé, justificatifs des obsèques et situation de séjour de la personne",
+     "Délivrance éventuelle d'un récépissé de retenue de document"
+    ]
+   },
+   "noteClient": "La police a conservé votre passeport et vous devez partir dans cinq jours pour des obsèques au pays. Votre avocat saisira en urgence le juge des référés du tribunal administratif, sur le fondement du référé-liberté, afin d'obtenir la restitution de votre passeport avant la date de votre départ.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le juge des référés peut, en urgence, ordonner à l'administration de restituer le document retenu lorsqu'une liberté fondamentale est gravement et immédiatement atteinte.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Impossible d'avoir un rendez-vous à la préfecture de Bobigny depuis trois mois pour renouveler mon titre.",
+  "reponse": {
+   "procedure": "BLOCAGE_SIMPLE",
+   "cas": "RENDEZ_VOUS_IMPOSSIBLE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": "Bobigny",
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Impossible d'obtenir un rendez-vous à la préfecture de Bobigny depuis trois mois",
+    "Démarche visant le renouvellement du titre de séjour"
+   ],
+   "qualification": {
+    "decision": "Impossibilité d'obtenir un rendez-vous en préfecture pour déposer une demande de renouvellement de titre de séjour",
+    "autorite": "Préfecture de la Seine-Saint-Denis (Bobigny)",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Date d'expiration du titre actuel et validité d'un éventuel récépissé",
+     "Nature du titre à renouveler et existence d'un emploi menacé",
+     "Justificatifs des tentatives de prise de rendez-vous (captures d'écran, courriels)",
+     "Retenu par défaut : référé mesures utiles, aucune atteinte grave imminente n'étant indiquée"
+    ]
+   },
+   "noteClient": "Vous cherchez depuis trois mois à obtenir un rendez-vous à la préfecture de Bobigny pour renouveler votre titre de séjour, sans y parvenir. Votre avocat saisira le juge des référés du tribunal administratif d'une demande de mesures utiles, afin qu'il enjoigne à la préfecture de vous fixer un rendez-vous pour enregistrer votre demande.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le juge des référés peut enjoindre à la préfecture, dans un délai déterminé, de fixer un rendez-vous ou d'enregistrer la demande.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Mon récépissé a expiré il y a deux semaines, mon employeur m'a dit qu'il me licenciait vendredi si je n'ai pas de papier.",
+  "reponse": {
+   "procedure": "BLOCAGE_EMPLOI",
+   "cas": "BLOCAGE_ATTEINTE_GRAVE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": true,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Le récépissé a expiré il y a deux semaines",
+    "L'employeur annonce un licenciement vendredi à défaut de document valable"
+   ],
+   "qualification": {
+    "decision": "Absence de renouvellement du récépissé de demande de titre de séjour, expiré depuis environ deux semaines, sans décision sur la demande",
+    "autorite": null,
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Date d'expiration exacte du récépissé et nature du titre demandé",
+     "Date de dépôt de la demande et préfecture compétente",
+     "Échéance précise du licenciement annoncé et existence d'une lettre de l'employeur",
+     "Si la personne ne remplit pas manifestement les conditions du titre, retenir le référé mesures utiles plutôt que le référé-liberté"
+    ]
+   },
+   "noteClient": "Votre récépissé a expiré il y a deux semaines et votre employeur annonce votre licenciement vendredi si vous ne produisez pas de document valable. Votre avocat saisira en urgence le juge des référés du tribunal administratif afin qu'il enjoigne à la préfecture de vous délivrer un récépissé ou une attestation de prolongation, pour préserver votre emploi.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le juge des référés peut, en urgence, ordonner à la préfecture de délivrer un document provisoire de séjour dans un délai fixé. L'avocat vérifie les conditions de recevabilité et d'urgence.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Le consulat de France à Alger a refusé le visa de mon mari alors que nous sommes mariés depuis un an et que je suis française.",
+  "reponse": {
+   "procedure": "REFUS_VISA",
+   "cas": "VISA_CONJOINT_FRANCAIS",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": "LONG",
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Vous êtes de nationalité française",
+    "Vous êtes mariée depuis un an",
+    "Le consulat de France à Alger a refusé le visa de votre mari"
+   ],
+   "qualification": {
+    "decision": "Refus de visa de long séjour opposé par le consulat de France à Alger au conjoint d'une ressortissante française",
+    "autorite": "Consulat de France à Alger",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Date de la décision de refus et date de notification",
+     "Motif du refus mentionné dans la décision",
+     "Existence d'un recours administratif préalable déjà formé et date de son dépôt",
+     "Transcription du mariage à l'état civil français",
+     "Lien avec la mention des voies et délais de la décision"
+    ]
+   },
+   "noteClient": "Vous êtes française, mariée depuis un an, et le consulat de France à Alger a refusé le visa de votre mari. Votre avocat formera le recours administratif préalable contre ce refus de visa de conjoint de Français, dans le délai de deux mois, afin de conduire la contestation de la décision.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours peut conduire à un réexamen de la demande de visa et, le cas échéant, à l'annulation de la décision de refus. L'avocat vérifie le délai et la voie de recours applicables.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Ma naturalisation a été ajournée de deux ans pour insuffisance de ressources.",
+  "reponse": {
+   "procedure": "NATURALISATION",
+   "cas": "NATURALISATION_AJOURNEMENT",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": "AJOURNEMENT",
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "La demande de naturalisation a été ajournée de deux ans",
+    "L'ajournement est motivé par une insuffisance de ressources"
+   ],
+   "qualification": {
+    "decision": "Décision ajournant de deux ans la demande de naturalisation par décret",
+    "autorite": null,
+    "mesures": [
+     "Ajournement de deux ans"
+    ],
+    "motif": "Insuffisance de ressources",
+    "aVerifier": [
+     "Date de la décision et date de notification",
+     "Autorité ayant statué (préfet ou ministre) et conditions à remplir mentionnées",
+     "Délai et voie de recours indiqués dans la décision, dont l'éventuel recours administratif préalable obligatoire"
+    ]
+   },
+   "noteClient": "Votre demande de naturalisation a été ajournée de deux ans au motif d'une insuffisance de ressources. Votre avocat contestera cet ajournement par la voie du recours dirigé contre la décision, afin de faire examiner à nouveau votre situation financière.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours peut conduire à l'annulation de la décision d'ajournement et à un nouvel examen de la demande. L'avocat vérifie le délai de recours et la procédure applicable.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "J'ai fait un recours seul au tribunal administratif contre mon OQTF, le tribunal me demande un mémoire avant le 20 novembre.",
+  "reponse": {
+   "procedure": "PROCEDURE_EN_COURS",
+   "cas": "RECOURS_EN_COURS",
+   "confiance": "HAUTE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": "2026-11-20",
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Vous avez formé seul un recours devant le tribunal administratif contre une OQTF",
+    "Le tribunal demande un mémoire avant le 20 novembre"
+   ],
+   "qualification": {
+    "decision": "Recours formé sans avocat devant le tribunal administratif contre une obligation de quitter le territoire français, avec invitation à produire un mémoire",
+    "autorite": "Tribunal administratif",
+    "mesures": [
+     "Mémoire à produire avant le 20 novembre 2026"
+    ],
+    "motif": null,
+    "aVerifier": [
+     "Numéro de requête et tribunal saisi",
+     "Copie de la décision d'OQTF attaquée et de sa notification",
+     "Courrier du greffe : nature exacte de la demande et date limite (année)",
+     "Date d'audience éventuelle et situation de la personne (libre, assignée, retenue)"
+    ]
+   },
+   "noteClient": "Vous avez formé seul un recours contre votre OQTF et le tribunal administratif vous demande un mémoire avant le 20 novembre. Votre avocat reprendra la procédure en cours et rédigera le mémoire à produire dans le délai fixé.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Je veux demander l'asile en France.",
+  "reponse": {
+   "procedure": "HORS_PERIMETRE",
+   "cas": null,
+   "confiance": "HAUTE",
+   "horsPerimetreMotif": "ASILE",
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Vous souhaitez demander l'asile en France"
+   ],
+   "qualification": null,
+   "noteClient": "",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "La demande d'asile relève d'une procédure distincte, devant l'OFPRA, qui ne fait pas partie des procédures prises en charge par le cabinet.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Je suis au centre de rétention de Vincennes depuis hier.",
+  "reponse": {
+   "procedure": "OQTF",
+   "cas": "OQTF_GENERALE",
+   "confiance": "FAIBLE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": "RETENTION",
+   "detentionOuRetention": true,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Vous êtes placé(e) au centre de rétention administrative de Vincennes depuis la veille."
+   ],
+   "qualification": {
+    "decision": "Placement en rétention administrative au centre de Vincennes, décision d'éloignement sous-jacente non précisée",
+    "autorite": null,
+    "mesures": [
+     "Rétention administrative au centre de Vincennes"
+    ],
+    "motif": null,
+    "aVerifier": [
+     "Nature de la mesure d'éloignement à l'origine de la rétention (OQTF, interdiction de retour, transfert Dublin, autre)",
+     "Date de notification de la décision d'éloignement et de la décision de placement en rétention",
+     "Délais de recours applicables, particulièrement brefs en rétention",
+     "Éventuelle demande d'asile en cours, qui relèverait d'une autre procédure"
+    ]
+   },
+   "noteClient": "Vous êtes retenu(e) au centre de rétention de Vincennes depuis hier, ce qui laisse penser qu'une mesure d'éloignement a été prise à votre encontre. Votre avocat identifiera la décision qui vous a été notifiée et, s'il s'agit d'une obligation de quitter le territoire français, la contestera devant le tribunal administratif dans le délai qui s'impose en rétention.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Lorsque la décision d'éloignement est contestée dans le délai, le tribunal administratif en examine la légalité et peut l'annuler ; les délais et les effets du recours en rétention sont vérifiés par l'avocat.",
+   "casLibre": null,
+   "question": {
+    "texte": "Quelle décision vous a été remise avant votre placement en rétention ?",
+    "options": [
+     "Une OQTF (obligation de quitter le territoire)",
+     "Une décision de transfert vers un autre pays (Dublin)",
+     "Après un refus de ma demande d'asile",
+     "Je ne sais pas"
+    ]
+   },
+   "traduction": null
+  }
+ },
+ {
+  "recit": "La préfecture refuse d'échanger mon permis de conduire marocain contre un permis français.",
+  "reponse": {
+   "procedure": "HORS_PERIMETRE",
+   "cas": null,
+   "confiance": "HAUTE",
+   "horsPerimetreMotif": "AUTRE",
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "La préfecture refuse l'échange de votre permis de conduire marocain contre un permis français."
+   ],
+   "qualification": null,
+   "noteClient": "",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "J'ai déposé ma demande de titre de séjour vie privée et familiale sur l'ANEF il y a 7 mois, aucune réponse.",
+  "reponse": {
+   "procedure": "REFUS_IMPLICITE",
+   "cas": "SILENCE_DEMANDE_TITRE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Demande de titre de séjour au titre de la vie privée et familiale déposée sur l'ANEF il y a environ sept mois.",
+    "Aucune réponse de la préfecture à ce jour."
+   ],
+   "qualification": {
+    "decision": "Absence de réponse de la préfecture à une demande de titre de séjour vie privée et familiale déposée sur l'ANEF, valant décision implicite de rejet au-delà de quatre mois",
+    "autorite": "Préfet (préfecture non précisée)",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Point de départ du délai : date d'enregistrement de la demande sur l'ANEF (attestation de dépôt ou de prolongation d'instruction) ; date de naissance du refus implicite à fixer à l'expiration de quatre mois à compter de cet enregistrement, qui paraît dépassée au vu d'un dépôt remontant à sept mois",
+     "Préfecture compétente et date exacte du dépôt",
+     "Existence d'une attestation en cours de validité ou d'une demande de pièces restée sans réponse",
+     "Existence d'une décision explicite déjà notifiée sur l'espace ANEF"
+    ]
+   },
+   "noteClient": "Vous avez déposé il y a sept mois sur l'ANEF une demande de titre de séjour au titre de la vie privée et familiale et la préfecture n'a pas répondu. Votre avocat contestera devant le tribunal administratif le refus implicite né de ce silence, afin d'obtenir l'annulation de la décision et le réexamen de votre demande.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le tribunal administratif peut annuler la décision implicite de rejet et enjoindre à la préfecture de réexaminer la demande, le cas échéant dans un délai fixé.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "J'ai un problème avec mes papiers.",
+  "reponse": {
+   "procedure": "DIAGNOSTIC",
+   "cas": null,
+   "confiance": "FAIBLE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Vous indiquez rencontrer un problème avec vos papiers, sans en préciser la nature."
+   ],
+   "qualification": {
+    "decision": "Difficulté relative aux papiers d'identité ou de séjour, de nature non précisée",
+    "autorite": null,
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Nature exacte de la difficulté (décision reçue, absence de réponse, rendez-vous impossible, document retenu)",
+     "Existence d'une décision écrite et date de sa notification",
+     "Situation de séjour actuelle et titre éventuellement détenu"
+    ]
+   },
+   "noteClient": "Vous signalez un problème avec vos papiers sans en préciser la nature, ce qui ne permet pas encore de déterminer la démarche adaptée. Un avocat examinera votre situation et vous remettra un avis écrit indiquant la voie à suivre.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "L'avis écrit de l'avocat précise la nature de la difficulté, les recours ou démarches possibles et les délais à respecter.",
+   "casLibre": {
+    "libelle": "Difficulté relative aux papiers, nature non précisée",
+    "voieClient": "Avis écrit d'un avocat pour identifier la démarche adaptée",
+    "procedure": "DIAGNOSTIC",
+    "situationOQTF": null,
+    "visaType": null,
+    "naturalisationIssue": null,
+    "signes": "Récit très général faisant état d'un problème de papiers sans mention d'une décision, d'un silence de l'administration ou d'un blocage identifiable.",
+    "juridiction": "Aucune à ce stade",
+    "delai": "À déterminer après examen de la situation ; le point de départ dépend de la décision éventuellement notifiée",
+    "refere": null,
+    "implicite": false,
+    "complements": [],
+    "modele": "AVIS_ECRIT",
+    "vigilance": [
+     "Vérifier si une décision écrite a été reçue et sa date de notification",
+     "Vérifier si une OQTF ou une échéance proche existe",
+     "Vérifier l'existence d'un recours déjà déposé"
+    ]
+   },
+   "question": {
+    "texte": "Quelle est votre difficulté ?",
+    "options": [
+     "J'ai reçu une décision de refus",
+     "La préfecture ne répond pas",
+     "Je n'arrive pas à obtenir de rendez-vous",
+     "Autre"
+    ]
+   },
+   "traduction": null
+  }
+ },
+ {
+  "recit": "رفضت المحافظة تجديد بطاقة إقامتي كطالب وأعطتني أمرا بمغادرة التراب الفرنسي خلال 30 يوما",
+  "reponse": {
+   "procedure": "OQTF",
+   "cas": "OQTF_REFUS_TITRE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": "LIBRE",
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "ar",
+   "faits": [
+    "Vous déteniez un titre de séjour en qualité d'étudiant.",
+    "La préfecture a refusé le renouvellement de ce titre.",
+    "Elle vous a fait obligation de quitter le territoire français dans un délai de trente jours."
+   ],
+   "qualification": {
+    "decision": "Décision de la préfecture refusant le renouvellement d'un titre de séjour étudiant, portant obligation de quitter le territoire français dans un délai de trente jours",
+    "autorite": "Préfecture (non précisée)",
+    "mesures": [
+     "Obligation de quitter le territoire français",
+     "Délai de départ volontaire de trente jours"
+    ],
+    "motif": null,
+    "aVerifier": [
+     "Décision non jointe : date de la décision et date de notification",
+     "Préfecture auteure de l'arrêté",
+     "Motif du refus de renouvellement",
+     "Existence d'un pays de renvoi, d'une interdiction de retour ou d'une assignation à résidence",
+     "Délai de recours mentionné dans la décision"
+    ]
+   },
+   "noteClient": "Vous étiez titulaire d'un titre de séjour étudiant dont la préfecture a refusé le renouvellement en vous faisant obligation de quitter le territoire dans un délai de trente jours. Votre avocat contestera cet arrêté devant le tribunal administratif afin d'obtenir son annulation, dans le délai de recours qui court depuis sa notification.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision.",
+   "casLibre": null,
+   "question": null,
+   "traduction": {
+    "langue": "ar",
+    "faits": [
+     "كنتَ تحمل بطاقة إقامة بصفة طالب.",
+     "رفضت المحافظة تجديد هذه البطاقة.",
+     "أمرتك بمغادرة التراب الفرنسي خلال ثلاثين يومًا."
+    ],
+    "obtenir": "الطعن المقدَّم داخل الأجل يوقف في الأصل تنفيذ الإبعاد إلى حين صدور الحكم، مع استثناءات يتحقق منها المحامي، ويمكن للمحكمة أن تلغي القرار.",
+    "preAnalyse": "",
+    "note": "كنتَ تحمل بطاقة إقامة بصفة طالب، وقد رفضت المحافظة تجديدها وأمرتك بمغادرة التراب الفرنسي خلال ثلاثين يومًا. سيطعن محاميك في هذا القرار أمام المحكمة الإدارية بهدف إلغائه، ضمن أجل الطعن الذي يسري من تاريخ تبليغه.",
+    "cas": "رفض بطاقة إقامة مرفق بأمر بمغادرة التراب الفرنسي",
+    "voie": "طعن أمام المحكمة الإدارية ضد القرار"
+   }
+  }
+ },
+ {
+  "recit": "Mon dossier de naturalisation est en instruction depuis le récépissé de complétude reçu en mars 2024, entretien passé en septembre 2024, toujours pas de décision. Je vis en France depuis 2009.",
+  "reponse": {
+   "procedure": "NATURALISATION",
+   "cas": "NATURALISATION_REJET_IMPLICITE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Résidence en France depuis 2009",
+    "Récépissé de complétude de la demande de naturalisation reçu en mars 2024",
+    "Dossier au statut « en instruction »",
+    "Entretien passé en septembre 2024",
+    "Aucune décision reçue à ce jour"
+   ],
+   "qualification": {
+    "decision": "Rejet implicite d'une demande de naturalisation par décret, né du silence de l'administration plus de douze mois après la délivrance du récépissé de complétude",
+    "autorite": "Ministre chargé des naturalisations / préfet compétent",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Date exacte du récépissé de complétude (mars 2024), point de départ du délai : douze mois en cas de résidence habituelle en France depuis au moins dix ans, soit une décision implicite née en mars 2025 sous réserve de la date exacte",
+     "Ancienneté de la résidence habituelle en France depuis 2009, à justifier",
+     "Absence de toute décision explicite ou de courrier de l'administration postérieur à l'entretien",
+     "Préfecture de dépôt et date de l'entretien d'assimilation"
+    ]
+   },
+   "noteClient": "Vous résidez en France depuis 2009 et votre demande de naturalisation, pour laquelle un récépissé de complétude vous a été délivré en mars 2024 et un entretien tenu en septembre 2024, n'a donné lieu à aucune décision. Votre avocat engagera le recours contre le rejet implicite de votre demande, afin de faire examiner ce refus par la juridiction compétente.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours contre une décision implicite de rejet permet de soumettre ce refus à un juge, qui peut l'annuler et obliger l'administration à réexaminer la demande.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Mon titre de séjour est prêt depuis un mois (SMS reçu), mais impossible de prendre rendez-vous pour le récupérer.",
+  "reponse": {
+   "procedure": "BLOCAGE_SIMPLE",
+   "cas": "TITRE_NON_REMIS",
+   "confiance": "HAUTE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Titre de séjour accordé et disponible depuis un mois, confirmé par un SMS de la préfecture",
+    "Impossible d'obtenir un rendez-vous pour le retirer"
+   ],
+   "qualification": {
+    "decision": "Absence de remise d'un titre de séjour accordé, faute de rendez-vous disponible pour le retirer",
+    "autorite": null,
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Préfecture concernée et type de titre accordé",
+     "Date du SMS annonçant la disponibilité du titre",
+     "Démarches déjà effectuées pour obtenir un rendez-vous (captures du site, courriels)",
+     "Existence d'une conséquence grave dans les jours à venir (emploi, logement, voyage) : à défaut, référé mesures utiles retenu"
+    ]
+   },
+   "noteClient": "La préfecture vous a informé par SMS que votre titre de séjour est disponible depuis un mois, mais aucun rendez-vous de remise n'est accessible. Votre avocat saisira le juge des référés pour qu'il enjoigne à la préfecture de vous remettre votre titre ou de fixer sans délai un rendez-vous à cette fin.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le juge des référés peut ordonner à l'administration d'accomplir la démarche qu'elle doit, en fixant un délai pour la remise du titre.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Voici ma décision : ARRÊTÉ n° 2026/1234. Le préfet du Val-de-Marne, vu le CESEDA, notamment ses articles L. 423-23 et L. 611-1, 3°… ARRÊTE : Article 1er : La demande de titre de séjour présentée par M. X est rejetée. Article 2 : M. X est obligé de quitter le territoire français dans un délai de trente jours. Article 3 : Il pourra être reconduit vers le pays dont il a la nationalité. Article 4 : Une interdiction de retour d'une durée d'un an est prononcée. Voies et délais de recours : la présente décision peut être contestée devant le tribunal administratif de Melun dans un délai d'un mois à compter de sa notification. Fait à Créteil le 2 octobre 2026. Je l'ai reçue le 6 octobre 2026.",
+  "reponse": {
+   "procedure": "OQTF",
+   "cas": "OQTF_REFUS_TITRE",
+   "confiance": "HAUTE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": "LIBRE",
+   "detentionOuRetention": false,
+   "dateDecision": "2026-10-02",
+   "dateNotification": "2026-10-06",
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": "Val-de-Marne",
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Demande de titre de séjour rejetée par la préfecture du Val-de-Marne",
+    "Arrêté reçu le 6 octobre 2026"
+   ],
+   "qualification": {
+    "decision": "Arrêté du préfet du Val-de-Marne du 2 octobre 2026 rejetant une demande de titre de séjour, portant OQTF dans un délai de trente jours et interdiction de retour d'un an",
+    "autorite": "Préfet du Val-de-Marne",
+    "mesures": [
+     "Obligation de quitter le territoire français dans un délai de trente jours",
+     "Pays de renvoi : pays dont la personne a la nationalité",
+     "Interdiction de retour sur le territoire français d'une durée d'un an"
+    ],
+    "motif": "Demande de titre de séjour rejetée au regard des articles L. 423-23 et L. 611-1, 3° du CESEDA",
+    "aVerifier": [
+     "Délai de recours d'un mois mentionné dans les voies et délais, à rapprocher du délai légal applicable à une OQTF assortie d'un délai de départ volontaire de trente jours ; échéance à calculer dès la notification du 6 octobre 2026, proche à la date du dépôt",
+     "Texte intégral de l'arrêté (visas, motifs détaillés, pays de renvoi), seul un extrait étant reproduit",
+     "Nationalité et situation personnelle et familiale de l'intéressé, absentes du récit",
+     "Justificatif de la date de notification",
+     "Juridiction : tribunal administratif de Melun mentionné"
+    ]
+   },
+   "noteClient": "Vous avez reçu le 6 octobre 2026 un arrêté de la préfecture du Val-de-Marne rejetant votre demande de titre de séjour fondée sur la vie privée et familiale. Votre avocat formera un recours devant le tribunal administratif de Melun contre l'ensemble de l'arrêté, dans le délai de recours, y compris contre l'interdiction de retour, afin de faire suspendre l'éloignement pendant la procédure.",
+   "preAnalyse": "Le préfet du Val-de-Marne rejette votre demande de titre de séjour et vous fait obligation de quitter le territoire français dans un délai de trente jours, par un arrêté du 2 octobre 2026 que vous avez reçu le 6 octobre 2026. L'arrêté vous interdit en outre de revenir sur le territoire pendant un an et prévoit votre reconduite vers le pays dont vous avez la nationalité. La mention des voies et délais indique que la décision peut être contestée devant le tribunal administratif de Melun dans un délai d'un mois à compter de sa notification. Les visas citent les articles L. 423-23 et L. 611-1, 3° du CESEDA.",
+   "ceQueLeRecoursPeutObtenir": "Le recours formé dans le délai suspend en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "Mon fils de 15 ans est bloqué au Maroc, le consulat ne répond pas à sa demande de visa regroupement familial déposée il y a 4 mois.",
+  "reponse": {
+   "procedure": "REFUS_VISA",
+   "cas": "VISA_REFUS_IMPLICITE",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": null,
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": "LONG",
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Fils âgé de 15 ans, actuellement au Maroc",
+    "Demande de visa au titre du regroupement familial déposée il y a quatre mois",
+    "Aucune réponse du consulat"
+   ],
+   "qualification": {
+    "decision": "Refus implicite de visa de long séjour au titre du regroupement familial, né du silence du consulat plus de deux mois après le dépôt de la demande",
+    "autorite": "Consulat de France au Maroc",
+    "mesures": [],
+    "motif": null,
+    "aVerifier": [
+     "Date exacte du dépôt de la demande, point de départ du délai de deux mois ; refus implicite né deux mois après ce dépôt, soit environ deux mois avant ce jour d'après le récit",
+     "Consulat ou centre de dépôt concerné",
+     "Autorisation de regroupement familial délivrée par le préfet, et date de cette décision",
+     "Absence de toute décision explicite ou de demande de pièces complémentaires du consulat",
+     "Lien de filiation et état civil de l'enfant"
+    ]
+   },
+   "noteClient": "Votre fils, âgé de 15 ans, se trouve au Maroc et le consulat n'a pas répondu à la demande de visa au titre du regroupement familial déposée il y a quatre mois. Votre avocat contestera ce refus implicite de visa par un recours préalable, dans le délai applicable, afin que le consulat réexamine la demande et permette à votre fils de vous rejoindre.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours contre un refus de visa permet de demander l'annulation de la décision et un nouvel examen de la demande par l'autorité consulaire.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ },
+ {
+  "recit": "J'ai été contrôlée par la police, je suis sans papiers depuis 2020, ils m'ont donné une OQTF sans délai et je dois pointer au commissariat deux fois par semaine.",
+  "reponse": {
+   "procedure": "OQTF",
+   "cas": "OQTF_ASSIGNATION",
+   "confiance": "MOYENNE",
+   "horsPerimetreMotif": null,
+   "situationOQTF": "ASSIGNE",
+   "detentionOuRetention": false,
+   "dateDecision": null,
+   "dateNotification": null,
+   "dateDemande": null,
+   "dateEcheance": null,
+   "visaType": null,
+   "naturalisationIssue": null,
+   "emploiMenace": null,
+   "prefecture": null,
+   "nationaliteAlgerienne": null,
+   "langue": "fr",
+   "faits": [
+    "Sans papiers depuis 2020",
+    "Contrôlée par la police",
+    "OQTF reçue sans délai de départ volontaire",
+    "Obligation de pointer au commissariat deux fois par semaine"
+   ],
+   "qualification": {
+    "decision": "Obligation de quitter le territoire français sans délai de départ volontaire, prise après un contrôle de police, assortie d'une assignation à résidence avec pointage au commissariat",
+    "autorite": null,
+    "mesures": [
+     "Obligation de quitter le territoire français sans délai de départ volontaire",
+     "Assignation à résidence avec obligation de pointer au commissariat deux fois par semaine"
+    ],
+    "motif": "Séjour irrégulier depuis 2020 selon le récit",
+    "aVerifier": [
+     "Décision non lue : cas OQTF_SEJOUR_IRREGULIER également possible, de même procédure ; assignation retenue au vu du pointage",
+     "Délai de recours applicable à une OQTF sans délai de départ volontaire, très bref, et date de notification",
+     "Existence d'une interdiction de retour et pays de renvoi",
+     "Autorité auteur de la décision et arrêté d'assignation distinct ou non",
+     "Situation familiale, durée de présence en France et éventuelle rétention précédant l'assignation"
+    ]
+   },
+   "noteClient": "Vous êtes sans papiers depuis 2020 et, après un contrôle de police, vous avez reçu une OQTF sans délai de départ volontaire, avec une obligation de pointer deux fois par semaine au commissariat. Votre avocat formera sans attendre un recours devant le tribunal administratif contre l'OQTF et contre l'assignation à résidence, le délai pour agir étant très court.",
+   "preAnalyse": "",
+   "ceQueLeRecoursPeutObtenir": "Le recours formé dans le délai empêche en principe l'éloignement jusqu'au jugement, sauf exceptions que l'avocat vérifie, et le tribunal peut annuler la décision.",
+   "casLibre": null,
+   "question": null,
+   "traduction": null
+  }
+ }
+]

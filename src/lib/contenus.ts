@@ -23,7 +23,7 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
       "Son dépôt au tribunal",
       "Le suivi jusqu'au jugement",
     ],
-    nonCompris: "L'appel et les référés sont des actes distincts.",
+    nonCompris: "L'appel et les référés sont des recours distincts.",
     instance: "Tribunal administratif",
   },
   REFUS_TITRE: {
@@ -112,7 +112,7 @@ export const CONTENUS: Record<CodeProcedure, ContenuProcedure> = {
   CONSULTATION: {
     obtenir: "Un avocat du cabinet répond à vos questions en visio, au créneau que vous choisissez.",
     compris: ["Un entretien de 30 minutes en visio avec un avocat du cabinet", "Le lien de connexion et un rappel par e-mail"],
-    nonCompris: "La rédaction d'un acte fait l'objet d'une offre distincte.",
+    nonCompris: "La rédaction d'un recours fait l'objet d'une offre distincte.",
     instance: "Consultation en visio",
   },
 };

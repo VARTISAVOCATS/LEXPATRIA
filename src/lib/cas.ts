@@ -95,6 +95,28 @@ const IDENTITE = "Passeport";
 export const CAS_DEFAUT: Cas[] = [
   // ——— Obligation de quitter le territoire ———
   {
+    code: "OQTF_GENERALE",
+    libelle: "Obligation de quitter le territoire français",
+    voieClient: "Requête en annulation devant le tribunal administratif",
+    procedure: "OQTF",
+    situationOQTF: null,
+    visaType: null,
+    naturalisationIssue: null,
+    signes:
+      "La personne indique avoir reçu une OQTF sans préciser son fondement (refus ou retrait de titre, séjour irrégulier, rejet de l'asile) ni sa situation. Cas à retenir tant que la décision n'a pas été lue ; la lecture de la décision permet ensuite de préciser le cas.",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
+    delai: "Un mois à compter de la notification, hors mesure restrictive de liberté ; sept jours avec assignation à résidence ; 48 heures en rétention (hors dépôt en ligne).",
+    refere: null,
+    demarche: true,
+    demanderUrgence: true,
+    implicite: false,
+    complements: [],
+    modele: "REQUETE_OQTF",
+    pieces: [DECISION, NOTIF, IDENTITE, "Justificatifs de présence, de vie familiale et d'emploi"],
+    vigilance: ["Identifier le fondement de l'OQTF (L. 611-1 du CESEDA) et les décisions qui l'accompagnent à la lecture de l'arrêté."],
+    actif: true,
+  },
+  {
     code: "OQTF_REFUS_TITRE",
     libelle: "Refus de titre de séjour assorti d'une obligation de quitter le territoire",
     voieClient: "Requête en annulation devant le tribunal administratif",

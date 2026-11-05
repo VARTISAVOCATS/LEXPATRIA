@@ -7,7 +7,7 @@ import { EnteteSite } from "../composants/Entete";
 import PiedSite from "../composants/PiedSite";
 import { BandeFin, Bandeau, Visages } from "../composants/Vitrine";
 
-export const metadata = meta("Honoraires des recours en droit des étrangers — LEXPATRIA Avocats", "Forfaits fermes toutes taxes comprises pour chaque recours : requête au tribunal administratif, référé, recours préalable, appel. Paiement en 3 fois sans frais.", "/honoraires");
+export const metadata = meta("Honoraires des recours en droit des étrangers — LEXPATRIA Avocats", "Honoraires forfaitaires toutes taxes comprises pour chaque recours : requête au tribunal administratif, référé, recours préalable, appel. Paiement en 3 fois sans frais.", "/honoraires");
 
 const GROUPES: { titre: string; lignes: [Diligence, string][] }[] = [
   {
@@ -47,11 +47,11 @@ export default async function Honoraires() {
       <main className="acc">
         <Bandeau
           surtitre={t("Honoraires")}
-          titre={t("Des forfaits fermes, toutes taxes comprises")}
+          titre={t("Des honoraires forfaitaires, toutes taxes comprises")}
           chapo={t("Le prix de votre recours vous est indiqué avant tout paiement.")}
         >
           <ul className="acc-eng">
-            <li>{t("Forfait ferme, toutes taxes comprises")}</li>
+            <li>{t("Honoraires forfaitaires, toutes taxes comprises")}</li>
             <li>{t("Paiement en 3 fois sans frais à partir de {seuil}", { seuil: formatEuros(echeancier.seuil) })}</li>
             <li>{t("Convention d'honoraires acceptée en ligne")}</li>
           </ul>
