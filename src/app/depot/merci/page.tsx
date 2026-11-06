@@ -33,9 +33,10 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
     }
   }
   const [frais] = dos ? await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id)) : [];
-  // Blocage : pièces propres au cas reconnu à l'orientation (référentiel ou qualification libre).
-  const casBlocage = frais && memeFamille("BLOCAGE_SIMPLE", frais.procedure) ? casDuTriage(await lireParametre(d, "cas"), frais.triage as { cas?: string; casLibre?: unknown } | null) : undefined;
-  const piecesCas = casBlocage?.refere && casBlocage.pieces.length ? casBlocage.pieces : undefined;
+  // Cas reconnu à l'orientation (référentiel ou qualification libre) : questions et pièces propres à la situation.
+  const casDossier = frais ? casDuTriage(await lireParametre(d, "cas"), frais.triage as { cas?: string; casLibre?: unknown } | null) : undefined;
+  const cas = casDossier && memeFamille(casDossier.procedure, frais?.procedure) ? casDossier : undefined;
+  const qualif = (frais?.qualification ?? {}) as { prefecture?: string | null };
   const [client] = frais ? await d.select().from(schema.clients).where(eq(schema.clients.id, frais.clientId)) : [];
   const deposees = frais
     ? (await d.select({ type: schema.pieces.type, fichiers: schema.pieces.fichiers }).from(schema.pieces).where(eq(schema.pieces.dossierId, frais.id)))
@@ -78,7 +79,15 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
             <Collecte
               reference={frais.reference}
               jetonServeur={p.suite && verifier(p.suite) === frais.id ? p.suite : null}
-              contexte={{ procedure: frais.procedure as CodeProcedure, algerien: client?.algerien ?? null, avisOuDiagnostic: false, pieces: piecesCas }}
+              contexte={{
+                procedure: frais.procedure as CodeProcedure,
+                algerien: client?.algerien ?? null,
+                avisOuDiagnostic: false,
+                cas: cas?.code,
+                pieces: cas?.pieces.length ? cas.pieces : undefined,
+                implicite: !!cas?.implicite,
+                prefectureConnue: !!qualif.prefecture,
+              }}
               reponsesInitiales={((frais.qualification ?? {}) as { reponses?: Reponses }).reponses ?? {}}
               faits={((frais.triage ?? {}) as { faits?: string[] }).faits ?? []}
               deposees={deposees}

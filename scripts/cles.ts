@@ -5,6 +5,7 @@ import { apresPaiement, CONTENUS, SUGGESTIONS } from "../src/lib/contenus";
 import { piecesDemandees, questions } from "../src/lib/questionnaire";
 import { PROCEDURES, type CodeProcedure } from "../src/lib/procedures";
 import { SITUATIONS } from "../src/lib/situations";
+import { CAS_DEFAUT } from "../src/lib/cas";
 import { LIBELLES_STATUT } from "../src/lib/statuts";
 
 const cles = new Set<string>();
@@ -36,6 +37,8 @@ ajouter(apresPaiement(false));
 ajouter(SUGGESTIONS);
 Object.values(PROCEDURES).forEach((p) => cles.add(p.libelle));
 SITUATIONS.forEach((s) => cles.add(s.nav));
+// Pièces des fiches du référentiel, demandées au client après paiement.
+CAS_DEFAUT.forEach((c) => c.pieces.forEach((p) => p !== "Passeport" && !p.startsWith("La décision complète") && !p.startsWith("L'enveloppe ou l'accusé") && cles.add(p)));
 const reponsesTypes = [{}, { titreAnt: "oui", famille: "marie", enfants: "2", activite: "cdi", decisionRecue: "oui", rapoForme: "oui", scolarises: "oui", entree: "2018-01-01" }, { famille: "pacs" }, { famille: "concubinage" }];
 for (const proc of Object.keys(PROCEDURES) as CodeProcedure[])
   for (const algerien of [true, false])
@@ -69,6 +72,8 @@ for (const f of ["src/lib/accueil.ts", "src/app/depot/Parcours.tsx"]) {
   "Référé-liberté devant le tribunal administratif",
   "À traiter en urgence : le juge statue en 48 heures",
   "Vérifié par votre avocat à partir de la date de votre demande",
+  "Quand avez-vous reçu le jugement ?",
+  "Le délai d'appel court à compter de cette date : un mois en matière d'OQTF, deux mois dans les autres cas.",
   "Depuis quand votre démarche est-elle bloquée ?",
   "Captures d'écran datées des tentatives de prise de rendez-vous",
   "Courriels ou courriers adressés à la préfecture",

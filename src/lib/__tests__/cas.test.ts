@@ -138,4 +138,19 @@ describe("référentiel des cas", () => {
     expect(l.some((p) => /ANEF/.test(p.libelle))).toBe(true);
     expect(l.some((p) => p.type === "EMPLOYEUR")).toBe(false);
   });
+
+  it("chaque cas : pièces sans doublon, sans décision pour un rejet implicite, propres au cas", async () => {
+    const { piecesDemandees, questions } = await import("../questionnaire");
+    const r = { entree: "2018-03-01", titreAnt: "oui", famille: "marie", enfants: "2", scolarises: "oui", activite: "cdi" };
+    for (const c of CAS_DEFAUT) {
+      const ctx = { procedure: c.procedure, algerien: false, avisOuDiagnostic: false, cas: c.code, pieces: c.pieces, implicite: c.implicite, prefectureConnue: true };
+      const l = piecesDemandees(ctx, r);
+      expect(new Set(l.map((x) => x.type)).size, c.code).toBe(l.length);
+      expect(new Set(l.map((x) => x.libelle)).size, c.code).toBe(l.length);
+      if (c.implicite) expect(l.some((x) => x.type === "DECISION"), c.code).toBe(false);
+      expect(l.some((x) => x.type === "BLOCAGE" || x.type === "EMPLOYEUR"), c.code).toBe(false);
+      const libelles = questions(ctx, r).map((q) => q.libelle);
+      expect(libelles.filter((x) => x === "Quelle préfecture est concernée ?"), c.code).toEqual([]);
+    }
+  });
 });

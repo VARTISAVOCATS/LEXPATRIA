@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PREFECTURES } from "@/lib/listes";
-import { jour, versJour } from "@/lib/calendrier";
+import { ajouterMois, jour, versJour } from "@/lib/calendrier";
 import { apresPaiement, CONTENUS, SUGGESTION_PROCEDURE, SUGGESTIONS } from "@/lib/contenus";
 import { resumeConvention, texteConvention } from "@/lib/convention";
 import { evaluerDelai, type ResultatDelai, type SituationOQTF } from "@/lib/delais";
@@ -87,6 +87,7 @@ const AVEC_DATE: CodeProcedure[] = ["OQTF", "REFUS_TITRE", "REFUS_VISA", "NATURA
 const REGIME_ALGERIEN: CodeProcedure[] = ["OQTF", "REFUS_TITRE", "REFUS_IMPLICITE", "BLOCAGE_EMPLOI", "BLOCAGE_SIMPLE"];
 const ETAPES_PROGRESSION: Etape[] = ["RECIT", "RESULTAT", "RECOURS", "COORDONNEES", "FAITS", "QUESTIONNAIRE", "PIECES", "PRET", "PAIEMENT"];
 
+const dateIso = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 const isoVersDate = (s?: string | null) => {
   if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined;
   const [y, m, d] = s.split("-").map(Number);
@@ -158,6 +159,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   const [decisionLue, setDecisionLue] = useState(false);
   const [typeDemande, setTypeDemande] = useState<string | null | undefined>(undefined);
   const [prefecture, setPrefecture] = useState<string | null | undefined>(undefined);
+  const [receptionJugement, setReceptionJugement] = useState<string | undefined>(undefined);
   const [prefChoisie, setPrefChoisie] = useState("");
   const [echeance, setEcheance] = useState<string | null | undefined>(undefined); // undefined : pas encore demandée
   const [question, setQuestion] = useState("");
@@ -690,7 +692,15 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     langueEcran === "fr" ? obtenir : (traductionIA?.obtenir ?? (contenu ? t(contenu.obtenir) : ""));
   const faitsAffiches = langueEcran === "fr" ? (triage?.faits ?? []) : (traductionIA?.faits ?? []);
   const avisOuDiagnostic = avisPrealable || procedure === "DIAGNOSTIC";
-  const contexteQ = { procedure: procedure ?? "DIAGNOSTIC", algerien, avisOuDiagnostic, pieces: casActuel?.refere ? casActuel.pieces : undefined };
+  const contexteQ = {
+    procedure: procedure ?? "DIAGNOSTIC",
+    algerien,
+    avisOuDiagnostic,
+    cas: casActuel?.code,
+    pieces: casActuel?.pieces,
+    implicite: !!casActuel?.implicite,
+    prefectureConnue: !!prefecture,
+  };
   const faits = triage?.faits ?? [];
   const progression = (() => {
     const i = ETAPES_PROGRESSION.indexOf(etape);
@@ -1116,7 +1126,26 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                     },
                   )}
 
-                {etape === "Q_ECHEANCE" &&
+                {etape === "Q_ECHEANCE" && casActuel?.code === "JUGEMENT_DEFAVORABLE" &&
+                  champDate(
+                    "Quand avez-vous reçu le jugement ?",
+                    "Le délai d'appel court à compter de cette date : un mois en matière d'OQTF, deux mois dans les autres cas.",
+                    receptionJugement,
+                    (v) => setReceptionJugement(v),
+                    () => {
+                      // Échéance retenue par prudence : un mois après la réception du jugement ; l'avocat vérifie.
+                      const d = isoVersDate(receptionJugement);
+                      const ech = d ? dateIso(ajouterMois(d, 1)) : null;
+                      setEcheance(ech);
+                      avancer("Q_ECHEANCE", { ech });
+                    },
+                    () => {
+                      setEcheance(null);
+                      avancer("Q_ECHEANCE", { ech: null });
+                    },
+                  )}
+
+                {etape === "Q_ECHEANCE" && casActuel?.code !== "JUGEMENT_DEFAVORABLE" &&
                   champDate(
                     "Quelle est la prochaine date fixée par le tribunal ?",
                     "Date limite pour produire un mémoire, ou date d'audience, indiquée dans le dernier courrier du tribunal.",
