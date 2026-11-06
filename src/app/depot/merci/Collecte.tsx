@@ -13,8 +13,9 @@ import { ConfirmationFaits, DepotPieces, QuestionnaireEcrans } from "../Question
 // Ce qui permet à l'avocat de commencer, selon la procédure ; le reste vient après le questionnaire.
 // Ordre d'utilité : la pièce qui fonde le recours d'abord, l'identité en dernier.
 const ESSENTIEL = ["DECISION", "ENVELOPPE", "BLOCAGE", "DEMANDE_DEPOSEE", "ECRITURES", "COURRIERS_TRIBUNAL", "IDENTITE"];
-const estEssentiel = (type: string) => ESSENTIEL.includes(type);
-const estAutre = (type: string) => !ESSENTIEL.includes(type);
+// Pièces propres au cas reconnu pour un blocage (BLOCAGE_1, BLOCAGE_2…) : demandées avec les pièces essentielles.
+const estEssentiel = (type: string) => ESSENTIEL.includes(type) || /^BLOCAGE_\d+$/.test(type);
+const estAutre = (type: string) => !estEssentiel(type);
 
 type Phase = "ESSENTIEL" | "FAITS" | "QUESTIONNAIRE" | "AUTRES" | "FIN";
 

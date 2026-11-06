@@ -54,10 +54,10 @@ describe("référentiel des cas", () => {
     expect(offre[0].diligence).toBe("REFERE_LIBERTE");
   });
 
-  it("un cas de référé mesures utiles laisse la mise en demeure sans urgence établie", async () => {
+  it("un cas de référé mesures utiles mène directement au référé, sans mise en demeure", async () => {
     const r = await trier({ recit: "Impossible d'avoir un rendez-vous" }, client({ ...base, procedure: "BLOCAGE_SIMPLE", cas: "RENDEZ_VOUS_IMPOSSIBLE", confiance: "HAUTE" }));
-    expect(r.procedure).toBe("BLOCAGE_SIMPLE");
-    expect(r.emploiMenace).toBeNull();
+    expect(r.procedure).toBe("BLOCAGE_EMPLOI");
+    expect(r.emploiMenace).toBe(true);
     expect(composerOffre("BLOCAGE_EMPLOI", { urgence: false, refere: "MESURES_UTILES" }, TARIFS_DEFAUT)[0].diligence).toBe("REFERE_MESURES_UTILES");
   });
 
@@ -66,8 +66,8 @@ describe("référentiel des cas", () => {
     const parDefaut = await trier({ recit }, client({ ...base, procedure: "DIAGNOSTIC" }));
     expect(parDefaut.cas).toBe("NATURALISATION_SANS_SUITE");
     const r = await trier({ recit }, client({ ...base, procedure: "NATURALISATION", cas: "NATURALISATION_SANS_SUITE", confiance: "HAUTE" }));
-    expect(r.procedure).toBe("BLOCAGE_SIMPLE");
-    expect(r.emploiMenace).toBe(false);
+    expect(r.procedure).toBe("BLOCAGE_EMPLOI");
+    expect(r.emploiMenace).toBe(true);
   });
 
   it("sans fiche, la qualification libre de l'IA fixe la procédure, dans le cadre du schéma", async () => {
@@ -107,7 +107,7 @@ describe("référentiel des cas", () => {
     const recit = "J'ai déposé ma demande de naturalisation sur ANEF depuis le 1er août 2025. Le statut est encore « dossier envoyé ».";
     const r = await trier({ recit }, client({ ...base, procedure: "REFUS_IMPLICITE", cas: null }));
     expect(r.cas).toBe("NATURALISATION_SANS_SUITE");
-    expect(r.procedure).toBe("BLOCAGE_SIMPLE");
+    expect(r.procedure).toBe("BLOCAGE_EMPLOI");
   });
 
   it("une réponse incomplète ou mal formée du modèle ne fait pas échouer l'analyse", async () => {
@@ -128,5 +128,14 @@ describe("référentiel des cas", () => {
     );
     expect(r.qualification?.aVerifier).toEqual(["Fondement de la rétention à vérifier"]);
     expect(r.situationOQTF).toBe("RETENTION");
+  });
+
+  it("les pièces demandées pour un blocage sont celles du cas reconnu", async () => {
+    const { piecesDemandees } = await import("../questionnaire");
+    const nat = CAS_DEFAUT.find((c) => c.code === "NATURALISATION_SANS_SUITE")!;
+    const l = piecesDemandees({ procedure: "BLOCAGE_EMPLOI", algerien: null, avisOuDiagnostic: false, pieces: nat.pieces }, {});
+    expect(l.some((p) => /rendez-vous/.test(p.libelle))).toBe(false);
+    expect(l.some((p) => /ANEF/.test(p.libelle))).toBe(true);
+    expect(l.some((p) => p.type === "EMPLOYEUR")).toBe(false);
   });
 });

@@ -62,6 +62,7 @@ interface CasReconnu {
   demanderUrgence?: boolean;
   implicite?: boolean;
   libre?: boolean;
+  pieces?: string[];
 }
 
 const SITUATIONS: { v: SituationOQTF; l: string }[] = [
@@ -421,9 +422,10 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
   }
 
   function appliquerTriage(tri: ResultatTriage, decisionJointe = false, cas: CasReconnu | null = null) {
-    const urgenceAcquise = cas?.refere === "LIBERTE";
+    // Référé d'emblée (liberté, ou mesures utiles sans question sur l'emploi) : l'urgence n'est pas demandée.
+    const urgenceAcquise = cas?.refere === "LIBERTE" || (cas?.refere === "MESURES_UTILES" && cas?.demanderUrgence === false);
     const sansDemarche = cas?.demarche === false;
-    const sansUrgence = cas?.refere === "MESURES_UTILES" && cas?.demanderUrgence === false;
+    const sansUrgence = false;
     // Décision implicite de rejet : aucun document ni date de notification à demander, l'avocat vérifie le délai.
     const implicite = !!cas?.implicite;
     if (implicite) setDateRef(null);
@@ -688,7 +690,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     langueEcran === "fr" ? obtenir : (traductionIA?.obtenir ?? (contenu ? t(contenu.obtenir) : ""));
   const faitsAffiches = langueEcran === "fr" ? (triage?.faits ?? []) : (traductionIA?.faits ?? []);
   const avisOuDiagnostic = avisPrealable || procedure === "DIAGNOSTIC";
-  const contexteQ = { procedure: procedure ?? "DIAGNOSTIC", algerien, avisOuDiagnostic };
+  const contexteQ = { procedure: procedure ?? "DIAGNOSTIC", algerien, avisOuDiagnostic, pieces: casActuel?.refere ? casActuel.pieces : undefined };
   const faits = triage?.faits ?? [];
   const progression = (() => {
     const i = ETAPES_PROGRESSION.indexOf(etape);
@@ -1332,6 +1334,8 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
                                           ? "Vérifié par votre avocat à partir de la date de votre demande"
                                         : procedure === "BLOCAGE_EMPLOI" && casActuel?.refere === "LIBERTE"
                                           ? "À traiter en urgence : le juge statue en 48 heures"
+                                        : procedure === "BLOCAGE_EMPLOI" && casActuel?.refere === "MESURES_UTILES" && casActuel?.demanderUrgence === false
+                                          ? "Aucun délai de recours ne court pour l'instant"
                                         : procedure === "BLOCAGE_EMPLOI"
                                           ? "À traiter en urgence : votre emploi est en jeu"
                                           : procedure === "BLOCAGE_SIMPLE"

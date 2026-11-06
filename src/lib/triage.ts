@@ -265,9 +265,9 @@ export async function trier(entree: EntreeTriage, client = new Anthropic(), mode
       res.procedure = "BLOCAGE_EMPLOI";
       res.emploiMenace = true;
     } else if (cas.refere === "MESURES_UTILES" && !cas.demanderUrgence) {
-      // Urgence rarement caractérisée (naturalisation, par exemple) : mise en demeure, l'avocat apprécie la suite.
-      res.procedure = "BLOCAGE_SIMPLE";
-      res.emploiMenace = false;
+      // Les mises en demeure restant sans réponse : référé mesures utiles d'emblée, sans question sur l'emploi.
+      res.procedure = "BLOCAGE_EMPLOI";
+      res.emploiMenace = true;
     }
   }
 

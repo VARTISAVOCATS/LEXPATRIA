@@ -9,7 +9,9 @@ import { db, schema } from "@/db";
 import { marquerPaye } from "@/lib/serveur/paiement";
 import { stripe } from "@/lib/stripe";
 import { verifier } from "@/lib/jeton";
-import type { CodeProcedure } from "@/lib/procedures";
+import { memeFamille, type CodeProcedure } from "@/lib/procedures";
+import { casDuTriage } from "@/lib/cas";
+import { lireParametre } from "@/lib/serveur/parametres";
 import type { Reponses } from "@/lib/questionnaire";
 import Collecte from "./Collecte";
 
@@ -31,6 +33,9 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
     }
   }
   const [frais] = dos ? await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id)) : [];
+  // Blocage : pièces propres au cas reconnu à l'orientation (référentiel ou qualification libre).
+  const casBlocage = frais && memeFamille("BLOCAGE_SIMPLE", frais.procedure) ? casDuTriage(await lireParametre(d, "cas"), frais.triage as { cas?: string; casLibre?: unknown } | null) : undefined;
+  const piecesCas = casBlocage?.refere && casBlocage.pieces.length ? casBlocage.pieces : undefined;
   const [client] = frais ? await d.select().from(schema.clients).where(eq(schema.clients.id, frais.clientId)) : [];
   const deposees = frais
     ? (await d.select({ type: schema.pieces.type, fichiers: schema.pieces.fichiers }).from(schema.pieces).where(eq(schema.pieces.dossierId, frais.id)))
@@ -73,7 +78,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
             <Collecte
               reference={frais.reference}
               jetonServeur={p.suite && verifier(p.suite) === frais.id ? p.suite : null}
-              contexte={{ procedure: frais.procedure as CodeProcedure, algerien: client?.algerien ?? null, avisOuDiagnostic: false }}
+              contexte={{ procedure: frais.procedure as CodeProcedure, algerien: client?.algerien ?? null, avisOuDiagnostic: false, pieces: piecesCas }}
               reponsesInitiales={((frais.qualification ?? {}) as { reponses?: Reponses }).reponses ?? {}}
               faits={((frais.triage ?? {}) as { faits?: string[] }).faits ?? []}
               deposees={deposees}

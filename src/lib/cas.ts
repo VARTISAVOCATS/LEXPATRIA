@@ -58,7 +58,7 @@ export const schemaCas = z.object({
   refere: z.enum(["MESURES_UTILES", "LIBERTE"]).nullable().default(null),
   /** Blocages : la démarche engagée en préfecture (première demande, renouvellement…) est-elle demandée au client ? */
   demarche: z.boolean().default(true),
-  /** Référé mesures utiles : l'urgence (emploi menacé) est-elle demandée au client ? Sinon, mise en demeure d'abord. */
+  /** Référé mesures utiles : l'urgence (emploi menacé) est-elle demandée au client ? Non : référé d'emblée. Oui : mise en demeure si le client répond que son emploi n'est pas menacé. */
   demanderUrgence: z.boolean().default(true),
   /** Décision implicite de rejet (silence de l'administration) : pas de document à transmettre, délai vérifié par l'avocat. */
   implicite: z.boolean().default(false),
@@ -655,8 +655,8 @@ export const CAS_DEFAUT: Cas[] = [
   {
     code: "RENDEZ_VOUS_IMPOSSIBLE",
     libelle: "Impossibilité d'obtenir un rendez-vous ou de déposer sa demande en préfecture",
-    voieClient: "Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire",
-    procedure: "BLOCAGE_SIMPLE",
+    voieClient: "Référé mesures utiles devant le tribunal administratif",
+    procedure: "BLOCAGE_EMPLOI",
     situationOQTF: null,
     visaType: null,
     naturalisationIssue: null,
@@ -666,14 +666,14 @@ export const CAS_DEFAUT: Cas[] = [
     delai: "Pas de délai de recours ; le référé suppose des tentatives répétées et documentées sur plusieurs semaines.",
     refere: "MESURES_UTILES",
     demarche: true,
-    demanderUrgence: true,
+    demanderUrgence: false,
     implicite: false,
     complements: [],
     modele: "REFERE_MESURES_UTILES",
     pieces: ["Captures d'écran datées des tentatives de prise de rendez-vous", "Courriels ou courriers adressés à la préfecture", "Titre ou récépissé en cours, le cas échéant", IDENTITE],
     vigilance: [
       "Le juge des référés peut enjoindre au préfet de fixer un rendez-vous lorsque l'impossibilité est établie par des tentatives répétées.",
-      "Sans preuve de tentatives ni urgence particulière, commencer par la mise en demeure.",
+      "Les mises en demeure restant sans réponse, le référé est engagé directement ; joindre une demande écrite de l'avocat à la préfecture si le dossier n'en comporte aucune.",
       "Vérifier que la mesure demandée ne fait obstacle à aucune décision administrative (condition du référé mesures utiles).",
     ],
     actif: true,
@@ -681,8 +681,8 @@ export const CAS_DEFAUT: Cas[] = [
   {
     code: "RECEPISSE_NON_DELIVRE",
     libelle: "Récépissé ou attestation de prolongation non délivré ou non renouvelé",
-    voieClient: "Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire",
-    procedure: "BLOCAGE_SIMPLE",
+    voieClient: "Référé mesures utiles devant le tribunal administratif",
+    procedure: "BLOCAGE_EMPLOI",
     situationOQTF: null,
     visaType: null,
     naturalisationIssue: null,
@@ -692,7 +692,7 @@ export const CAS_DEFAUT: Cas[] = [
     delai: "Pas de délai de recours ; urgence caractérisée si l'emploi, les droits sociaux ou les études sont menacés.",
     refere: "MESURES_UTILES",
     demarche: true,
-    demanderUrgence: true,
+    demanderUrgence: false,
     implicite: false,
     complements: [],
     modele: "REFERE_MESURES_UTILES",
@@ -706,8 +706,8 @@ export const CAS_DEFAUT: Cas[] = [
   {
     code: "TITRE_NON_REMIS",
     libelle: "Titre de séjour accordé mais non remis",
-    voieClient: "Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire",
-    procedure: "BLOCAGE_SIMPLE",
+    voieClient: "Référé mesures utiles devant le tribunal administratif",
+    procedure: "BLOCAGE_EMPLOI",
     situationOQTF: null,
     visaType: null,
     naturalisationIssue: null,
@@ -717,7 +717,7 @@ export const CAS_DEFAUT: Cas[] = [
     delai: "Pas de délai de recours.",
     refere: "MESURES_UTILES",
     demarche: true,
-    demanderUrgence: true,
+    demanderUrgence: false,
     implicite: false,
     complements: [],
     modele: "REFERE_MESURES_UTILES",
@@ -729,8 +729,8 @@ export const CAS_DEFAUT: Cas[] = [
   {
     code: "NATURALISATION_SANS_SUITE",
     libelle: "Demande de naturalisation restée sans suite",
-    voieClient: "Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire",
-    procedure: "BLOCAGE_SIMPLE",
+    voieClient: "Référé mesures utiles devant le tribunal administratif",
+    procedure: "BLOCAGE_EMPLOI",
     situationOQTF: null,
     visaType: null,
     naturalisationIssue: null,
@@ -744,12 +744,12 @@ export const CAS_DEFAUT: Cas[] = [
     demanderUrgence: false,
     implicite: false,
     complements: [],
-    modele: "MISE_EN_DEMEURE",
+    modele: "REFERE_MESURES_UTILES",
     pieces: ["Attestation de dépôt ANEF et captures d'écran datées du suivi du dossier", "Récépissé de complétude, s'il a été délivré", "Échanges avec la plateforme de naturalisation", IDENTITE],
     vigilance: [
       "Statut « dossier envoyé » : pas de récépissé de complétude, donc pas de point de départ du délai de dix-huit ou douze mois et pas de rejet implicite. L'objet de la démarche est d'obtenir l'examen du dossier et la délivrance du récépissé.",
       "Si un récépissé a été délivré (statut « en instruction » ou ultérieur) et que le délai est expiré, un rejet implicite est né : recours préalable obligatoire auprès du ministre, à proposer par avenant.",
-      "Le référé mesures utiles suppose une urgence (concours, emploi réservé aux nationaux, situation familiale) : à défaut, s'en tenir à la mise en demeure.",
+      "Caractériser l'urgence et l'utilité de la mesure (délai anormal d'instruction, concours, emploi réservé aux nationaux, situation familiale) ; joindre une demande écrite de l'avocat si le dossier n'en comporte aucune.",
     ],
     actif: true,
   },
@@ -912,6 +912,7 @@ export function vueCas(c: (Cas & { libre: boolean }) | undefined) {
         demanderUrgence: c.demanderUrgence,
         implicite: c.implicite,
         libre: c.libre,
+        pieces: c.pieces,
       }
     : null;
 }

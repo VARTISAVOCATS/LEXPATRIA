@@ -24,6 +24,8 @@ export interface Contexte {
   procedure: CodeProcedure;
   algerien: boolean | null;
   avisOuDiagnostic: boolean;
+  /** Blocages : pièces propres au cas reconnu (référentiel), à la place de la liste générique. */
+  pieces?: string[];
 }
 
 const FAMILLE: [string, string][] = [
@@ -140,7 +142,7 @@ export function questions(c: Contexte, r: Reponses): Question[] {
 
   if (blocage || p === "REFUS_IMPLICITE") {
     Q.push({ id: "prefecture", libelle: "Quelle préfecture est concernée ?", type: "liste", options: PREFECTURES.map(([, l]) => [l, l]), brut: true, aide: "Celle de votre département de résidence." });
-    if (blocage) Q.push({ id: "depuis", libelle: "Depuis quand essayez-vous d'obtenir un rendez-vous ou un récépissé ?", type: "date", aide: "Une date approximative suffit." });
+    if (blocage) Q.push({ id: "depuis", libelle: "Depuis quand votre démarche est-elle bloquée ?", type: "date", aide: "Une date approximative suffit." });
   }
 
   if (sejour) {
@@ -245,8 +247,12 @@ export function piecesDemandees(c: Contexte, r: Reponses): PieceDemandee[] {
   }
   if (r.rapoForme === "oui") ajouter("RECOURS_FORME", "Le recours déjà envoyé et son accusé de réception", "Recevabilité");
   if (p === "BLOCAGE_EMPLOI" || p === "BLOCAGE_SIMPLE") {
-    ajouter("BLOCAGE", "Captures d'écran datées des tentatives de rendez-vous, ou récépissé expiré", "Preuve du blocage");
-    if (p === "BLOCAGE_EMPLOI") ajouter("EMPLOYEUR", "Attestation de l'employeur sur le risque de rupture", "Urgence");
+    const propres = (c.pieces ?? []).filter((x) => !/^passeport$/i.test(x.trim()));
+    if (propres.length) propres.forEach((x, i) => ajouter(`BLOCAGE_${i + 1}`, x, "Preuve du blocage"));
+    else {
+      ajouter("BLOCAGE", "Captures d'écran datées des tentatives de rendez-vous, ou récépissé expiré", "Preuve du blocage");
+      if (p === "BLOCAGE_EMPLOI") ajouter("EMPLOYEUR", "Attestation de l'employeur sur le risque de rupture", "Urgence");
+    }
   }
   if (p === "REFUS_IMPLICITE") ajouter("DEMANDE_DEPOSEE", "La demande déposée et son accusé de réception", "Point de départ du silence");
   if (p === "PROCEDURE_EN_COURS") {
