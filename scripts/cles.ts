@@ -7,6 +7,7 @@ import { PROCEDURES, type CodeProcedure } from "../src/lib/procedures";
 import { SITUATIONS } from "../src/lib/situations";
 import { CAS_DEFAUT } from "../src/lib/cas";
 import { LIBELLES_STATUT } from "../src/lib/statuts";
+import { toutesPhrasesSuite } from "../src/lib/deroule";
 
 const cles = new Set<string>();
 const ajouter = (x: unknown) => {
@@ -145,8 +146,15 @@ for (const f of ["src/lib/accueil.ts", "src/app/depot/Parcours.tsx"]) {
   "10 fichiers au plus par envoi.",
   "Aucun fichier.",
   "Dossier {ref}",
+  // Message de confirmation après paiement
+  "Bonjour Madame {nom},",
+  "Bonjour Monsieur {nom},",
+  "Pour que votre avocat prépare votre dossier sans attendre, transmettez dès maintenant depuis votre espace :",
+  "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la preuve de votre demande et de vos démarches, puis vos autres documents.",
+  "Vous suivez l'avancement de votre dossier dans votre espace et pouvez y écrire à votre avocat à tout moment.",
 ].forEach((k) => cles.add(k));
 Object.values(LIBELLES_STATUT).forEach((k) => cles.add(k));
+toutesPhrasesSuite().forEach((k) => cles.add(k));
 const liste = [...cles].filter((k) => k.trim() && !/^(LEXPATRIA|Me |https?:)/.test(k)).sort();
 writeFileSync("src/i18n/cles.json", JSON.stringify(liste, null, 1));
 console.log(liste.length, "clés");

@@ -1,7 +1,7 @@
 // Logique serveur du paiement : offre, acceptation de la convention, intention de paiement Stripe,
 // confirmation (idempotente) et attribution du dossier.
 
-import { estLangue, traduire } from "@/i18n";
+import { estLangue, traduire, type Langue } from "@/i18n";
 import { and, eq, inArray } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, conventions, dossiers, echeancier, paiements, pieces, utilisateurs } from "@/db/schema";
@@ -13,7 +13,7 @@ import { empreinteTexte, journaliser } from "@/lib/journal";
 import { composerOffre, estRecoursPrealable, LIBELLES_DILIGENCE, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { signer } from "@/lib/jeton";
 import { carteCouvre, dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
-import { etapesDeroule } from "@/lib/deroule";
+import { phrasesSuite } from "@/lib/deroule";
 import { stripe } from "@/lib/stripe";
 import { attribuer } from "./attribution";
 import { valeur } from "./connexions";
@@ -227,66 +227,94 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
   }
   await attribuer(d, dossierId, dos.traitement === "URGENCE");
   await confirmerAuClient(d, dossierId);
-  // Second message : le déroulé de la procédure, étape par étape.
-  await envoyerDeroule(d, dossierId).catch(() => undefined);
 }
 
-/** E-mail « Ce qui va se passer » : les étapes de la procédure que le client doit connaître, dans sa langue. */
-export async function envoyerDeroule(d: Base, dossierId: string) {
-  const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
-  if (!dos || dos.dossierParentId) return;
-  const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
-  if (!cli?.email) return;
-  const etapes = etapesDeroule(dos.procedure, dos.avisPrealable);
-  if (!etapes.length) return;
-  const langue = estLangue(cli.langue) ? cli.langue : "fr";
-  const delai = traduire(langue, dos.traitement === "URGENCE" && !dos.avisPrealable ? "10 heures ouvrées" : "48 heures ouvrées");
-  const lignes = etapes.map((e, i) => `${i + 1}. ${traduire(langue, e, { delai })}`).join("\n\n");
-  await envoyer({
-    canal: "EMAIL",
-    destinataire: cli.email,
-    sujet: traduire(langue, "Ce qui va se passer — dossier {ref}", { ref: dos.reference }),
-    texte: `${traduire(langue, "Bonjour,")}\n\n${traduire(langue, "Voici comment se déroule votre procédure.")}\n\n${lignes}\n\nLEXPATRIA Avocats`,
-  });
+const DECISION_PIECE = /^La décision complète/;
+
+/** Liste « - pièce » dans la langue du client, la décision retirée si elle est déjà jointe. */
+function listePieces(langue: Langue, liste: string[], decisionRecue: boolean) {
+  return liste
+    .filter((p) => !(decisionRecue && DECISION_PIECE.test(p)))
+    .map((p) => `- ${traduire(langue, p)}`)
+    .join("\n");
 }
 
-/** E-mail de confirmation au client après paiement : avocat attribué, lien vers l'espace, pièces à transmettre. */
+/**
+ * Message de confirmation après paiement, rédigé pour le dossier : la situation telle que l'IA l'a comprise,
+ * l'avocat et le délai de prise de contact, les pièces propres au cas, puis la suite de la procédure en texte suivi.
+ */
 async function confirmerAuClient(d: Base, dossierId: string) {
   const [dos] = await d.select().from(dossiers).where(eq(dossiers.id, dossierId));
   if (!dos) return;
   const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
   if (!cli?.email) return;
   const [av] = dos.avocatId ? await d.select().from(utilisateurs).where(eq(utilisateurs.id, dos.avocatId)) : [];
-  const langue = estLangue(cli.langue) ? cli.langue : "fr";
-  const delai = traduire(langue, dos.traitement === "URGENCE" ? "10 heures ouvrées" : "48 heures ouvrées");
-  const suite = av
+  const langue: Langue = estLangue(cli.langue) ? cli.langue : "fr";
+  const avis = dos.avisPrealable || dos.procedure === "DIAGNOSTIC";
+  const delai = traduire(langue, dos.traitement === "URGENCE" && !dos.avisPrealable ? "10 heures ouvrées" : "48 heures ouvrées");
+  const cas = await casDuDossier(d, dos);
+  const triage = (dos.triage ?? {}) as { procedure?: string; noteClient?: string; traduction?: { langue?: string; note?: string } | null };
+
+  const salutation =
+    cli.nom && (cli.civilite === "MADAME" || cli.civilite === "MONSIEUR")
+      ? traduire(langue, cli.civilite === "MADAME" ? "Bonjour Madame {nom}," : "Bonjour Monsieur {nom},", { nom: cli.nom })
+      : traduire(langue, "Bonjour,");
+
+  // La note de l'analyse, seulement si elle porte sur la procédure réglée et qu'elle existe dans la langue du client.
+  const noteValable = !avis && (cas || triage.procedure === dos.procedure);
+  const note = !noteValable
+    ? ""
+    : langue === "fr"
+      ? (triage.noteClient ?? "").trim()
+      : triage.traduction?.langue === langue
+        ? (triage.traduction.note ?? "").trim()
+        : "";
+
+  const prise = av
     ? traduire(langue, "Votre dossier sera traité par Maître {nom}, qui prendra attache avec vous sous {delai}.", { nom: `${av.prenom} ${av.nom}`, delai })
     : traduire(langue, "Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai });
+
   const origine = process.env.URL_PUBLIQUE ?? "https://lexpatria.fr";
   // Lien direct vers la suite du dépôt (pièces et questionnaire), valable 14 jours ; il ne montre aucune donnée du dossier.
   const lienSuite = `${origine}/depot/merci?ref=${encodeURIComponent(dos.reference)}&suite=${encodeURIComponent(signer(dos.id, 24 * 14))}`;
   const decisionRecue = (await d.select({ fichiers: pieces.fichiers }).from(pieces).where(and(eq(pieces.dossierId, dos.id), eq(pieces.type, "DECISION")))).some(
     (x) => Array.isArray(x.fichiers) && x.fichiers.length > 0,
   );
-  const aJoindre =
-    dos.avisPrealable || dos.procedure === "DIAGNOSTIC"
-      ? ""
-      : "\n\n" +
-        traduire(
+  const sansDecision = cas?.implicite || ["REFUS_IMPLICITE", "BLOCAGE_EMPLOI", "BLOCAGE_SIMPLE"].includes(dos.procedure);
+  let documents = "";
+  if (!avis) {
+    const liste = cas?.pieces.length ? listePieces(langue, cas.pieces, decisionRecue) : "";
+    documents = liste
+      ? `${traduire(langue, "Pour que votre avocat prépare votre dossier sans attendre, transmettez dès maintenant depuis votre espace :")}\n${liste}`
+      : traduire(
           langue,
-          decisionRecue
-            ? "Votre décision a bien été jointe au dossier. Pour que votre avocat avance dès maintenant, ajoutez dans votre espace l'enveloppe ou la preuve de notification, puis vos autres documents."
-            : "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.",
-        ) +
-        "\n" +
-        traduire(langue, "Transmettre mes documents : {lien}", { lien: lienSuite });
+          sansDecision
+            ? "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la preuve de votre demande et de vos démarches, puis vos autres documents."
+            : decisionRecue
+              ? "Votre décision a bien été jointe au dossier. Pour que votre avocat avance dès maintenant, ajoutez dans votre espace l'enveloppe ou la preuve de notification, puis vos autres documents."
+              : "Pour que votre avocat avance dès maintenant, ajoutez dans votre espace la décision contestée (toutes les pages) et l'enveloppe ou la preuve de notification, puis vos autres documents.",
+        );
+    documents += "\n" + traduire(langue, "Transmettre mes documents : {lien}", { lien: lienSuite });
+  }
+
+  const suite = phrasesSuite({ procedure: dos.procedure, avisPrealable: dos.avisPrealable, cas: cas?.code, refere: cas?.refere, complements: cas?.complements })
+    .map((x) => traduire(langue, x, { delai }))
+    .join(" ");
+
+  const paragraphes = [
+    salutation,
+    `${traduire(langue, "Votre paiement est confirmé.")} ${prise}`,
+    note,
+    documents,
+    suite,
+    `${traduire(langue, "Vous suivez l'avancement de votre dossier dans votre espace et pouvez y écrire à votre avocat à tout moment.")}\n${traduire(langue, "Votre espace : {lien} (connexion par un code reçu à cette adresse).", { lien: `${origine}/espace` })}`,
+    "LEXPATRIA Avocats",
+  ].filter(Boolean);
   await envoyer({
     canal: "EMAIL",
     destinataire: cli.email,
     sujet: traduire(langue, "Paiement confirmé — dossier {ref}", { ref: dos.reference }),
-    texte:
-      `${traduire(langue, "Bonjour,")}\n\n${traduire(langue, "Votre paiement est confirmé.")} ${suite}${aJoindre}\n\n` +
-      `${traduire(langue, "Votre espace : {lien} (connexion par un code reçu à cette adresse).", { lien: `${origine}/espace` })}\n\nLEXPATRIA Avocats`,
+    texte: paragraphes.join("\n\n"),
   });
 }
 
