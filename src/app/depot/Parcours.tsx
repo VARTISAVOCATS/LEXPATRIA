@@ -16,7 +16,7 @@ import { composerOffre, estRecoursPrealable, formatEuros, LIBELLES_REFERE, memeF
 import { dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
 import type { ResultatTriage } from "@/lib/triage";
 import { ChoixLangue, useLangue, useT } from "@/i18n/client";
-import { fichiersEnAttente } from "./fichiers";
+import { fichiersEnAttente, recitEnAttente } from "./fichiers";
 import PaiementIntegre from "./PaiementIntegre";
 import { EnteteParcours } from "../composants/Entete";
 import { useDictee } from "./dictee";
@@ -120,7 +120,7 @@ async function enBase64(f: File): Promise<{ mime: string; base64: string }> {
   return { mime: "image/jpeg", base64: c.toDataURL("image/jpeg", 0.82).split(",")[1] };
 }
 
-export default function Parcours({ modePhoto, source, reprise }: { modePhoto: boolean; source?: string; reprise?: string }) {
+export default function Parcours({ modePhoto, modeRecit, source, reprise }: { modePhoto: boolean; modeRecit?: boolean; source?: string; reprise?: string }) {
   const t = useT();
   const langueEcran = useLangue();
   const { tarifs, avocats, echeancier: reglesEch, conventions: modelesConvention } = useContenus();
@@ -131,7 +131,7 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
     initiales: a.nom.replace(/^Me\s+/, "").split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase(),
   }));
   localeCourante = useLangue();
-  const [etape, setEtape] = useState<Etape>(modePhoto ? "ANALYSE" : "RECIT");
+  const [etape, setEtape] = useState<Etape>(modePhoto || modeRecit ? "ANALYSE" : "RECIT");
   const [erreur, setErreur] = useState<string | null>(null);
 
   // Récit
@@ -194,7 +194,12 @@ export default function Parcours({ modePhoto, source, reprise }: { modePhoto: bo
       fichiersEnAttente.length = 0;
       setFichiers(f);
       void analyser("", f);
-    } else if (modePhoto) setEtape("RECIT");
+    } else if (modeRecit && recitEnAttente.texte) {
+      const r = recitEnAttente.texte;
+      recitEnAttente.texte = "";
+      setRecit(r);
+      void analyser(r, []);
+    } else if (modePhoto || modeRecit) setEtape("RECIT");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

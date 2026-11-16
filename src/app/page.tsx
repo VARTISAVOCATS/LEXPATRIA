@@ -8,6 +8,7 @@ import { SITUATIONS } from "@/lib/situations";
 import { tServeur } from "@/i18n/serveur";
 import { BASE, cabinetLd, ld, meta, NOM } from "@/lib/seo";
 import BoutonsAccueil from "./BoutonsAccueil";
+import SaisieAccueil from "./SaisieAccueil";
 import { EnteteSite } from "./composants/Entete";
 import PiedSite from "./composants/PiedSite";
 
@@ -65,8 +66,26 @@ export default async function Accueil() {
               <p className="acc-eye">{t("Avocats au barreau de Paris · Droit des étrangers")}</p>
               <h1>{t(accueil.titre)}</h1>
               <p className="acc-sub">{t(accueil.sousTitre)}</p>
-              <div className="h-cta ph-cta">
-                <BoutonsAccueil />
+              <div className="acc-equipe-m" aria-hidden>
+                <div className="acc-visages">
+                  {AVOCATS.map((a) => (
+                    <span key={a.nom} className="acc-v">
+                      <Visage nom={a.nom} photo={a.photo} />
+                    </span>
+                  ))}
+                </div>
+                <span>{t("Avocats au barreau de Paris")}</span>
+              </div>
+              <SaisieAccueil />
+              <div className="acc-equipe">
+                <div className="acc-visages" aria-hidden>
+                  {AVOCATS.map((a) => (
+                    <span key={a.nom} className="acc-v">
+                      <Visage nom={a.nom} photo={a.photo} />
+                    </span>
+                  ))}
+                </div>
+                <p>{t("Votre dossier est confié à un avocat du cabinet.")}</p>
               </div>
               <ul className="acc-eng">
                 <li>{t("Prise en charge sous 48 heures ouvrées")}</li>
@@ -74,16 +93,6 @@ export default async function Accueil() {
                 <li>{t("Paiement en 3 fois sans frais")}</li>
               </ul>
             </div>
-            <aside className="acc-mot">
-              <div className="acc-visages" aria-hidden>
-                {AVOCATS.map((a) => (
-                  <span key={a.nom} className="acc-v">
-                    <Visage nom={a.nom} photo={a.photo} />
-                  </span>
-                ))}
-              </div>
-              <blockquote>{t("Le délai de recours court dès la notification de la décision. Transmettez-la sans attendre.")}</blockquote>
-            </aside>
           </div>
         </section>
 

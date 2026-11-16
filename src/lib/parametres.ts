@@ -52,9 +52,8 @@ const schemaRemuneration = z.object({
 });
 
 export const ACCUEIL_DEFAUT = {
-  titre: "Vous avez reçu une OQTF ou un refus de la préfecture ?",
-  sousTitre:
-    "Le cabinet étudie votre situation et forme votre recours devant l'administration ou le tribunal administratif.",
+  titre: "Une OQTF, un refus ou une démarche bloquée ?",
+  sousTitre: "Décrivez votre situation : la procédure adaptée et votre délai vous seront indiqués.",
 };
 
 export const PARAMETRES = {
