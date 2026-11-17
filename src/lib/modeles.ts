@@ -163,6 +163,16 @@ const FAMILLE: Record<string, string> = {
   concubinage: "vit en concubinage",
   separe: "divorcé(e) ou séparé(e)",
 };
+const CONJOINT: Record<string, string> = {
+  francais: "est de nationalité française",
+  regulier: "séjourne régulièrement en France",
+  sans_titre: "est dépourvu de titre de séjour",
+};
+const ANCIENNETE: Record<string, string> = {
+  moins1: "depuis moins d'un an",
+  "1a3": "depuis un à trois ans",
+  plus3: "depuis plus de trois ans",
+};
 const ACTIVITE: Record<string, string> = {
   cdi: "salarié(e) en contrat à durée indéterminée",
   cdd: "salarié(e) en contrat à durée déterminée",
@@ -170,6 +180,7 @@ const ACTIVITE: Record<string, string> = {
   independant: "exerce une activité indépendante",
   etudiant: "est étudiant(e)",
   sans: "est sans activité professionnelle",
+  aucune: "est sans activité professionnelle",
 };
 
 function identite(d: DonneesActe) {
@@ -191,9 +202,12 @@ function faits(d: DonneesActe) {
   const lignes: string[] = [];
   lignes.push(`${identite(d)} est entré(e) en France le ${fr(r.entree)}${visaEntree(r.modeEntree)}.`);
   if (r.titreAnt === "oui") lignes.push(`Il/elle a été titulaire d'un titre de séjour (${v(libelleListe([...TITRES, ...CERTIFICATS], r.dernierTitre) ?? r.dernierTitre)}), expiré le ${fr(r.finTitre)}.`);
-  if (r.famille) lignes.push(`Sur le plan familial, il/elle est ${FAMILLE[r.famille] ?? r.famille}${r.conjoint ? ` ; son conjoint ${r.conjoint}` : ""}.`);
-  if (r.enfants && r.enfants !== "0") lignes.push(`Il/elle a ${r.enfants} enfant(s)${r.scolarises === "oui" ? ", scolarisé(s) en France" : ""}.`);
-  if (r.activite) lignes.push(`Il/elle ${ACTIVITE[r.activite] ?? r.activite}${r.anciennete ? ` depuis ${r.anciennete}` : ""}.`);
+  if (r.famille) lignes.push(`Sur le plan familial, il/elle est ${FAMILLE[r.famille] ?? r.famille}${r.conjoint ? ` ; son conjoint ${CONJOINT[r.conjoint] ?? r.conjoint}` : ""}.`);
+  if (r.enfants && r.enfants !== "0") {
+    const un = r.enfants === "1";
+    lignes.push(`Il/elle a ${un ? "un enfant" : `${r.enfants} enfants`}${r.scolarises === "oui" ? (un ? ", scolarisé en France" : ", scolarisés en France") : ""}.`);
+  }
+  if (r.activite) lignes.push(`Il/elle ${ACTIVITE[r.activite] ?? r.activite}${r.anciennete && r.activite !== "aucune" ? ` ${ANCIENNETE[r.anciennete] ?? `depuis ${r.anciennete}`}` : ""}.`);
   lignes.push(
     `Par une décision du ${fr(d.dateDecision)}, notifiée le ${fr(d.dateNotification)}, le ${prefet(d.prefecture)} a ${objetDecision(d)}.`,
   );
@@ -252,7 +266,7 @@ et tous autres à produire, déduire ou suppléer, au besoin d'office, ${identit
 }
 
 function bordereau(d: DonneesActe) {
-  const liste = ["Décision attaquée", ...d.pieces.filter((p) => !/d[ée]cision attaqu/i.test(p))];
+  const liste = ["Décision attaquée", ...d.pieces.filter((p) => !/d[ée]cision (attaqu|contest)/i.test(p))];
   return `BORDEREAU DES PIÈCES\n${liste.map((p, i) => `Pièce n° ${i + 1} : ${p}`).join("\n")}`;
 }
 
@@ -269,7 +283,22 @@ Ayant pour avocat : ${avocatConstitue(d)}
 CONTRE : la décision du ${prefet(d.prefecture)} du ${fr(d.dateDecision)}`;
 }
 
+/** Accorde le texte au genre de la personne (« né(e) », « il/elle », « l'intéressé(e) »…) quand la civilité est connue. */
+export function accorder(texte: string, civilite?: string | null): string {
+  if (civilite !== "MADAME" && civilite !== "MONSIEUR") return texte;
+  const f = civilite === "MADAME";
+  return texte
+    .replace(/\bIl\/elle\b/g, f ? "Elle" : "Il")
+    .replace(/\bil\/elle\b/g, f ? "elle" : "il")
+    .replace(/\b([A-Za-zÀ-ÿ]+)\(ne\)/g, (_, m: string) => (f ? `${m}ne` : m))
+    .replace(/\b([A-Za-zÀ-ÿ]+)\(e\)/g, (_, m: string) => (f ? `${m}e` : m));
+}
+
 export function genererModele(code: CodeModele, d: DonneesActe): string {
+  return accorder(genererModeleBrut(code, d), d.civilite);
+}
+
+function genererModeleBrut(code: CodeModele, d: DonneesActe): string {
   switch (code) {
     case "REQUETE_OQTF":
       return `${enTete(d, "REQUÊTE EN ANNULATION", "(articles L. 614-1 et suivants du code de l'entrée et du séjour des étrangers et du droit d'asile)")}
@@ -643,6 +672,10 @@ export const VARIABLES: VariableModele[] = [
 
 /** Remplit un modèle du cabinet : {{variable}} → donnée du dossier, sinon XXX. */
 export function remplirModele(texte: string, d: DonneesActe): string {
+  return accorder(remplirModeleBrut(texte, d), d.civilite);
+}
+
+function remplirModeleBrut(texte: string, d: DonneesActe): string {
   const parNom = new Map(VARIABLES.map((x) => [x.nom, x]));
   return texte.replace(/\{\{\s*([A-Za-z_]+)\s*\}\}/g, (_, nom: string) => {
     const x = parNom.get(nom);

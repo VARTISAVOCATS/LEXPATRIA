@@ -2,6 +2,7 @@
 // Poste de travail de l'avocat : analyse de l'IA, projet d'acte, revue humaine, contrôle croisé, attestation, assistant.
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import ApercuPieces, { type PieceApercu } from "./ApercuPieces";
 
 interface Point {
   id: string;
@@ -41,6 +42,7 @@ export interface ProprietesPoste {
   priseEnCharge: { le: string } | null;
   dateLimiteVerifiee: boolean;
   avisTransmisLe: string | null;
+  pieces: PieceApercu[];
 }
 
 async function poster(corps: object) {
@@ -277,6 +279,7 @@ export default function PosteTravail(p: ProprietesPoste) {
         </div>
 
         <aside className="pt-cote">
+          <ApercuPieces pieces={p.pieces} />
           {/* ----- Contrôle croisé ----- */}
           <section className="card">
             <h2>Contrôle avant dépôt</h2>

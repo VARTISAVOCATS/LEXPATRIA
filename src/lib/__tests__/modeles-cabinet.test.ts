@@ -20,7 +20,7 @@ async function docx(paragraphes: string[]) {
 describe("variables des modèles", () => {
   it("remplit les variables et met XXX pour une donnée absente ou une variable inconnue", () => {
     const t = remplirModele("TRIBUNAL ADMINISTRATIF DE {{TRIBUNAL}}\nPOUR : {{client}}, né(e) le {{date_naissance}}, demeurant {{adresse}}\nCONTRE : {{prefet}} {{inconnue}}", DONNEES_EXEMPLE);
-    expect(t).toBe("TRIBUNAL ADMINISTRATIF DE MELUN\nPOUR : Madame Nadia EXEMPLE, né(e) le XXX, demeurant 12 rue de la Paix, 94000 Créteil\nCONTRE : préfet du Val-de-Marne XXX");
+    expect(t).toBe("TRIBUNAL ADMINISTRATIF DE MELUN\nPOUR : Madame Nadia EXEMPLE, née le XXX, demeurant 12 rue de la Paix, 94000 Créteil\nCONTRE : préfet du Val-de-Marne XXX");
     expect(variablesInconnues("{{client}} {{ inconnue }} {{faits}}")).toEqual(["inconnue"]);
   });
 });

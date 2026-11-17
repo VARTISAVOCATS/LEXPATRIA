@@ -14,3 +14,19 @@ describe("appels à l'IA", () => {
     expect(messageErreurIA(new SyntaxError("Unexpected end"))).toMatch(/n'a pas répondu/);
   });
 });
+
+import { accorder, genererModele } from "@/lib/modeles";
+describe("accord des actes", () => {
+  it("accorde le projet au genre de la personne", () => {
+    expect(accorder("Il/elle est né(e), ressortissant(e) algérien(ne) ; l'intéressé(e)", "MADAME")).toBe("Elle est née, ressortissante algérienne ; l'intéressée");
+    expect(accorder("il/elle est entré(e)", "MONSIEUR")).toBe("il est entré");
+    const t = genererModele("REQUETE_OQTF", {
+      civilite: "MADAME", prenom: "Zaina", nom: "Test", procedure: "OQTF", avocat: null, pieces: ["La décision contestée (toutes les pages)"], reference: "D1",
+      reponses: { entree: "2020-09-14", famille: "marie", conjoint: "regulier", enfants: "3", scolarises: "oui", activite: "cdi", anciennete: "1a3" },
+    });
+    expect(t).not.toMatch(/\(e\)|il\/elle|1a3|conjoint regulier/i);
+    expect(t).toContain("depuis un à trois ans");
+    expect(t).toContain("3 enfants, scolarisés en France");
+    expect(t.match(/Pièce n° \d/g)).toHaveLength(1);
+  });
+});

@@ -15,7 +15,12 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
   poweredByHeader: false,
   async headers() {
-    return [{ source: "/:chemin*", headers: entetesSecurite }];
+    // Les fichiers de pièces s'affichent dans l'aperçu du poste de travail : cadre autorisé depuis le site lui-même uniquement.
+    const pieces = entetesSecurite.map((h) => (h.key === "X-Frame-Options" ? { ...h, value: "SAMEORIGIN" } : h));
+    return [
+      { source: "/((?!api/fichier).*)", headers: entetesSecurite },
+      { source: "/api/fichier", headers: pieces },
+    ];
   },
 };
 

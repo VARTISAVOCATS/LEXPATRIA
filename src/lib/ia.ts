@@ -20,7 +20,7 @@ export function listeTolerante(x: unknown, max: number): string[] {
 export function messageErreurIA(e: unknown): string {
   const err = e as { status?: number; message?: string; error?: { error?: { type?: string; message?: string } } };
   const detail = `${err?.error?.error?.message ?? ""} ${err?.message ?? ""}`.toLowerCase();
-  console.error("Appel IA en échec :", err?.status ?? "", err?.error?.error?.type ?? "", err?.error?.error?.message ?? err?.message ?? e);
+  console.error("Appel IA en échec :", err?.status ?? "", err?.error?.error?.type ?? "", err?.error?.error?.message ?? err?.message ?? e, err?.status ? "" : (e as Error)?.stack ?? "");
   if (/credit balance|billing|crédit/.test(detail)) return "Crédit du compte Anthropic épuisé : rechargez-le sur console.anthropic.com (Billing), puis réessayez.";
   if (err?.status === 401 || /api key|authentication/.test(detail)) return "Clé Anthropic refusée : vérifiez-la dans Back office › Connexions.";
   if (err?.status === 404) return "Modèle d'IA introuvable : vérifiez le modèle indiqué dans Back office › Connexions.";

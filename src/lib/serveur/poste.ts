@@ -13,6 +13,7 @@ import { empreinteTexte, journaliser } from "@/lib/journal";
 import {
   compterManquants,
   genererModele,
+  accorder,
   JURIDICTIONNELS,
   LIBELLES_MODELE,
   modelesPour,
@@ -196,7 +197,8 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
       dates: { decision: x.dateDecision, notification: x.dateNotification, limiteEstimee: x.dateLimite },
       pieces: x.pieces,
     };
-    const rep = await new Anthropic({ apiKey: cle }).messages.create({
+    const rep = await new Anthropic({ apiKey: cle }).messages
+      .stream({
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 6000,
       system:
@@ -204,9 +206,16 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
       messages: [
         { role: "user", content: JSON.stringify(contexte) },
       ],
-    });
-    base = AnalyseIA.parse(extraireJson(rep.content));
-    source = "IA";
+    })
+      .finalMessage();
+    // Réponse illisible (JSON tronqué ou mal formé) : analyse de secours plutôt qu'un échec.
+    try {
+      base = AnalyseIA.parse(extraireJson(rep.content));
+      source = "IA";
+    } catch (e) {
+      console.error("Analyse IA illisible :", rep.stop_reason, e instanceof Error ? e.message : e);
+      base = analyseSimulee(dos, x);
+    }
   } else {
     base = analyseSimulee(dos, x);
   }
@@ -238,6 +247,14 @@ export async function trancher(d: Base, m: Membre, dos: Dossier, pointId: string
 
 // ---------- Projets d'actes ----------
 
+const REDACTION_ACTE = [
+  "Tu rédiges, pour un avocat au barreau de Paris en droit des étrangers, un acte complet, détaillé et argumenté, prêt à être relu puis déposé. Le modèle de départ ne donne que le plan, les mentions obligatoires et la signature : un acte sommaire n'est pas acceptable.",
+  "Faits et procédure : un récit chronologique précis et rédigé, qui reprend chaque élément concret du dossier (entrée en France, durée de présence, titres détenus, démarches, situation familiale, enfants et scolarité, emploi et ancienneté, insertion, décision contestée et ses mesures).",
+  "Discussion : pour chaque moyen retenu, rédige plusieurs paragraphes : le texte applicable, cité avec précision (article et code ou convention : CESEDA, code des relations entre le public et l'administration, code de justice administrative, convention européenne des droits de l'homme, convention internationale des droits de l'enfant, accord franco-algérien le cas échéant), puis son application détaillée aux faits du dossier, puis la conclusion sur l'illégalité. Les moyens de légalité externe (compétence du signataire, motivation, examen particulier, procédure contradictoire) sont présentés comme à vérifier sur la décision. Développe longuement les moyens de légalité interne que le dossier nourrit (vie privée et familiale, intérêt supérieur de l'enfant, erreur manifeste d'appréciation, droit au séjour, catégories protégées) ; écarte ceux que rien dans le dossier ne soutient.",
+  "Conclusions : complètes et adaptées à la procédure (annulation, injonction de délivrer un titre ou de réexaminer avec délai et astreinte, frais de l'article L. 761-1 du code de justice administrative).",
+  "Règles absolues : n'invente aucun fait, aucune date, aucun nom ; ne cite aucune décision de justice (numéro, date, juridiction) sauf si elle figure dans un acte de référence fourni ; écris « XXX » partout où une information manque. Accorde tout le texte au genre de la personne d'après la civilité (jamais « il/elle » ni « né(e) »). Style juridique sobre, phrases complètes, sans formules creuses. Renvoie uniquement le texte de l'acte, sans commentaire.",
+].join(" ");
+
 export async function dernierActe(d: Base, dossierId: string) {
   const [a] = await d.select().from(actes).where(eq(actes.dossierId, dossierId)).orderBy(desc(actes.creeLe), desc(actes.version)).limit(1);
   return a ?? null;
@@ -254,26 +271,29 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   // Actes déjà rédigés par le cabinet pour ce type d'acte (back office) : exemples de plan, de style et de moyens.
   const references = cle ? await referencesPour(d, modele) : [];
   if (cle) {
-    const rep = await new Anthropic({ apiKey: cle }).messages.create({
-      model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
-      max_tokens: 6000,
-      system:
-        "Tu prépares un projet d'acte pour un avocat au barreau de Paris (droit des étrangers). Tu reçois un modèle et les éléments du dossier. Complète le modèle en développant les moyens à partir des seuls éléments fournis. Règles : n'invente aucun fait, aucune date, aucune référence de jurisprudence ; laisse « XXX » partout où l'information manque ; conserve la structure, les intitulés et la signature ; ton juridique sobre. Renvoie uniquement le texte de l'acte." +
-        (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction mot pour mot et ne remplace que les « XXX » que les éléments du dossier permettent de compléter." : "") +
-        (references.length
-          ? " Tu reçois aussi des ACTES DE RÉFÉRENCE déjà rédigés par le cabinet pour ce type d'acte : inspire-toi de leur plan, de leur style, de leurs formulations et des moyens qui conviennent à ce dossier. N'en reprends jamais les faits, les noms, les dates, les lieux ni les références propres à l'ancienne affaire."
-          : ""),
-      messages: [
-        {
-          role: "user",
-          content:
-            `MODÈLE :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, analyse: dos.analyse })}` +
-            references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join(""),
-        },
-      ],
-    });
+    // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
+    const rep = await new Anthropic({ apiKey: cle }).messages
+      .stream({
+        model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
+        max_tokens: 16000,
+        system:
+          REDACTION_ACTE +
+          (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction, son plan et ses intitulés ; développe les moyens et remplace les « XXX » que les éléments du dossier permettent de compléter." : "") +
+          (references.length
+            ? " Tu reçois aussi des ACTES DE RÉFÉRENCE déjà rédigés par le cabinet pour ce type d'acte : inspire-toi de leur plan, de leur style, de leurs formulations et des moyens qui conviennent à ce dossier. N'en reprends jamais les faits, les noms, les dates, les lieux ni les références propres à l'ancienne affaire."
+            : ""),
+        messages: [
+          {
+            role: "user",
+            content:
+              `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
+              references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join(""),
+          },
+        ],
+      })
+      .finalMessage();
     const texte = rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
-    if (texte.length > 200) projet = texte;
+    if (texte.length > 200) projet = accorder(texte, x.civilite);
   }
   const precedent = await dernierActe(d, dos.id);
   const version = precedent && precedent.type === modele ? precedent.version + 1 : 1;

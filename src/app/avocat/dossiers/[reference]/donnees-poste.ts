@@ -1,11 +1,12 @@
 // Données du poste de travail, préparées côté serveur pour le composant PosteTravail.
 import { desc, eq } from "drizzle-orm";
 import type { Base } from "@/db";
-import { actes } from "@/db/schema";
+import { actes, pieces } from "@/db/schema";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import type { Dossier } from "@/lib/serveur/dossiers";
 import { attestationValide, controleCroise, modelesDuDossier, texteAttestation, type Analyse } from "@/lib/serveur/poste";
 import type { Membre } from "@/lib/serveur/session";
+import type { FichierStocke } from "@/lib/serveur/stockage";
 import { frDateHeure } from "@/lib/statuts";
 import type { ProprietesPoste } from "./PosteTravail";
 
@@ -15,6 +16,7 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
   const memeType = acte ? tous.filter((a) => a.type === acte.type) : [];
   const att = await attestationValide(d, acte);
   const pc = dos.priseEnCharge as { le: string } | null;
+  const lesPieces = await d.select().from(pieces).where(eq(pieces.dossierId, dos.id)).orderBy(pieces.numero, pieces.creeLe);
   return {
     reference: dos.reference,
     analyse: (dos.analyse as Analyse | null) ?? null,
@@ -30,5 +32,12 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
     priseEnCharge: pc ? { le: frDateHeure(new Date(pc.le)) } : null,
     dateLimiteVerifiee: dos.dateLimiteVerifiee,
     avisTransmisLe: dos.avisTransmisLe ? frDateHeure(dos.avisTransmisLe) : null,
+    pieces: lesPieces
+      .map((x) => ({
+        id: x.id,
+        libelle: `${x.numero ? `${x.numero}. ` : ""}${x.libelle}`,
+        fichiers: ((x.fichiers as FichierStocke[] | null) ?? []).map((f, i) => ({ i, nom: f.nom, mime: f.mime })),
+      }))
+      .filter((x) => x.fichiers.length > 0),
   };
 }
