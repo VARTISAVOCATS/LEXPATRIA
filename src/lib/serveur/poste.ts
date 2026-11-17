@@ -255,10 +255,24 @@ type BlocPiece =
 
 const IMAGES_LUES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
 
-/** Pièces jointes à la demande faite à l'IA (photos et PDF) : toutes les pièces du dossier, décision en tête, pour
- *  qu'elle en tire dates, autorité, signataire, motifs, tribunal compétent et éléments de situation. Transmission
- *  encadrée par le contrat du prestataire (sous-traitant, sans entraînement). Plafonds : 12 fichiers, 5 Mo par image,
- *  18 Mo au total ; la décision et sa notification passent en premier. */
+/** Photo réduite pour la lecture par l'IA : 2 000 pixels au plus sur le grand côté, JPEG, orientation corrigée.
+ *  Le texte d'une décision reste lisible et le poids tombe sous le plafond de 5 Mo de l'API. Sans l'outil de
+ *  traitement d'image, la photo d'origine est gardée si elle passe sous le plafond. */
+async function reduirePhoto(donnees: Buffer): Promise<{ data: Buffer; mime: "image/jpeg" } | null> {
+  try {
+    const sharp = (await import("sharp")).default;
+    const data = await sharp(donnees).rotate().resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 82 }).toBuffer();
+    return { data, mime: "image/jpeg" };
+  } catch (e) {
+    console.error("Réduction de photo impossible :", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+/** Pièces jointes à la demande faite à l'IA (photos et PDF) : toutes les pièces du dossier, décision et notification en
+ *  tête, pour qu'elle en tire dates, autorité, signataire, motifs, tribunal compétent et éléments de situation.
+ *  Transmission encadrée par le contrat du prestataire (sous-traitant, sans entraînement). Les photos sont réduites
+ *  avant l'envoi ; plafonds : 20 fichiers et 20 Mo transmis au total (limite d'une demande : 32 Mo après encodage). */
 export async function blocsPieces(d: Base, dos: Dossier): Promise<BlocPiece[]> {
   const rangPiece = (t: string) => (t === "DECISION" ? 0 : t === "ENVELOPPE" ? 1 : 2);
   const liste = (await d.select().from(pieces).where(eq(pieces.dossierId, dos.id)).orderBy(pieces.numero, pieces.creeLe)).sort((a, b) => rangPiece(a.type) - rangPiece(b.type));
@@ -267,21 +281,28 @@ export async function blocsPieces(d: Base, dos: Dossier): Promise<BlocPiece[]> {
   let n = 0;
   for (const p of liste) {
     for (const f of (p.fichiers as FichierStocke[] | null) ?? []) {
-      if (n >= 12) break;
-      const image = (IMAGES_LUES as readonly string[]).includes(f.mime);
+      if (n >= 20) break;
+      const image = f.mime.startsWith("image/");
       const pdf = f.mime === "application/pdf";
       if (!image && !pdf) continue;
-      if ((image && f.taille > 5_000_000) || total + f.taille > 18_000_000) continue;
-      const donnees = await lire(f.cle).catch(() => null);
-      if (!donnees) continue;
-      total += donnees.length;
+      const brut = await lire(f.cle).catch(() => null);
+      if (!brut) continue;
+      let bloc: BlocPiece;
+      let poids: number;
+      if (image) {
+        const reduite = await reduirePhoto(brut);
+        const garde = reduite ?? ((IMAGES_LUES as readonly string[]).includes(f.mime) && brut.length <= 4_500_000 ? { data: brut, mime: f.mime as (typeof IMAGES_LUES)[number] } : null);
+        if (!garde) continue;
+        bloc = { type: "image", source: { type: "base64", media_type: garde.mime, data: garde.data.toString("base64") } };
+        poids = garde.data.length;
+      } else {
+        bloc = { type: "document", source: { type: "base64", media_type: "application/pdf", data: brut.toString("base64") } };
+        poids = brut.length;
+      }
+      if (total + poids > 20_000_000) continue;
+      total += poids;
       n++;
-      blocs.push({ type: "text", text: `PIÈCE : ${p.libelle} (${f.nom})` });
-      blocs.push(
-        image
-          ? { type: "image", source: { type: "base64", media_type: f.mime as (typeof IMAGES_LUES)[number], data: donnees.toString("base64") } }
-          : { type: "document", source: { type: "base64", media_type: "application/pdf", data: donnees.toString("base64") } },
-      );
+      blocs.push({ type: "text", text: `PIÈCE : ${p.libelle} (${f.nom})` }, bloc);
     }
   }
   return blocs;
