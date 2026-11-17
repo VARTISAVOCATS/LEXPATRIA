@@ -32,6 +32,7 @@ import { casDuTriage } from "@/lib/cas";
 import { lireParametre } from "./parametres";
 import { valeur } from "./connexions";
 import { modeleActif } from "./modeles-cabinet";
+import { lire, type FichierStocke } from "./stockage";
 import type { Dossier } from "./dossiers";
 import { envoyer } from "./notifications";
 import type { Membre } from "./session";
@@ -202,9 +203,9 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 6000,
       system:
-        "Tu assistes un avocat au barreau de Paris en droit des étrangers. À partir des éléments du dossier, produis une analyse pour l'avocat seul : résumé factuel, questions juridiques soulevées, points d'appui, stratégie suggérée, points de vigilance. N'invente aucun fait ; signale ce qui manque. Réponds UNIQUEMENT en JSON : {\"resume\":\"\",\"questions\":[],\"appuis\":[],\"strategie\":\"\",\"vigilance\":[]}",
+        "Tu assistes un avocat au barreau de Paris en droit des étrangers. À partir des éléments du dossier et des pièces jointes (lis la décision contestée : autorité, signataire, date, motifs, mesures, voies et délais de recours, tribunal compétent), produis une analyse pour l'avocat seul : résumé factuel, questions juridiques soulevées, points d'appui, stratégie suggérée, points de vigilance. N'invente aucun fait ; signale ce qui manque. Réponds UNIQUEMENT en JSON : {\"resume\":\"\",\"questions\":[],\"appuis\":[],\"strategie\":\"\",\"vigilance\":[]}",
       messages: [
-        { role: "user", content: JSON.stringify(contexte) },
+        { role: "user", content: [...(await blocsPieces(d, dos)), { type: "text", text: `ÉLÉMENTS DU DOSSIER : ${JSON.stringify(contexte)}` }] },
       ],
     })
       .finalMessage();
@@ -247,10 +248,47 @@ export async function trancher(d: Base, m: Membre, dos: Dossier, pointId: string
 
 // ---------- Projets d'actes ----------
 
+type BlocPiece =
+  | { type: "text"; text: string }
+  | { type: "image"; source: { type: "base64"; media_type: "image/jpeg" | "image/png" | "image/webp" | "image/gif"; data: string } }
+  | { type: "document"; source: { type: "base64"; media_type: "application/pdf"; data: string } };
+
+const IMAGES_LUES = ["image/jpeg", "image/png", "image/webp", "image/gif"] as const;
+
+/** Pièces du dossier jointes à la demande faite à l'IA (photos et PDF), pour qu'elle en tire dates, autorité, motifs,
+ *  tribunal compétent et identité. Plafonds : 12 fichiers, 5 Mo par image, 18 Mo au total. */
+export async function blocsPieces(d: Base, dos: Dossier): Promise<BlocPiece[]> {
+  const liste = await d.select().from(pieces).where(eq(pieces.dossierId, dos.id)).orderBy(pieces.numero, pieces.creeLe);
+  const blocs: BlocPiece[] = [];
+  let total = 0;
+  let n = 0;
+  for (const p of liste) {
+    for (const f of (p.fichiers as FichierStocke[] | null) ?? []) {
+      if (n >= 12) break;
+      const image = (IMAGES_LUES as readonly string[]).includes(f.mime);
+      const pdf = f.mime === "application/pdf";
+      if (!image && !pdf) continue;
+      if ((image && f.taille > 5_000_000) || total + f.taille > 18_000_000) continue;
+      const donnees = await lire(f.cle).catch(() => null);
+      if (!donnees) continue;
+      total += donnees.length;
+      n++;
+      blocs.push({ type: "text", text: `PIÈCE : ${p.libelle} (${f.nom})` });
+      blocs.push(
+        image
+          ? { type: "image", source: { type: "base64", media_type: f.mime as (typeof IMAGES_LUES)[number], data: donnees.toString("base64") } }
+          : { type: "document", source: { type: "base64", media_type: "application/pdf", data: donnees.toString("base64") } },
+      );
+    }
+  }
+  return blocs;
+}
+
 const REDACTION_ACTE = [
   "Tu rédiges, pour un avocat au barreau de Paris en droit des étrangers, un acte complet, détaillé et argumenté, prêt à être relu puis déposé. Le modèle de départ ne donne que le plan, les mentions obligatoires et la signature : un acte sommaire n'est pas acceptable.",
   "Faits et procédure : un récit chronologique précis et rédigé, qui reprend chaque élément concret du dossier (entrée en France, durée de présence, titres détenus, démarches, situation familiale, enfants et scolarité, emploi et ancienneté, insertion, décision contestée et ses mesures).",
   "Discussion : pour chaque moyen retenu, rédige plusieurs paragraphes : le texte applicable, cité avec précision (article et code ou convention : CESEDA, code des relations entre le public et l'administration, code de justice administrative, convention européenne des droits de l'homme, convention internationale des droits de l'enfant, accord franco-algérien le cas échéant), puis son application détaillée aux faits du dossier, puis la conclusion sur l'illégalité. Les moyens de légalité externe (compétence du signataire, motivation, examen particulier, procédure contradictoire) sont présentés comme à vérifier sur la décision. Développe longuement les moyens de légalité interne que le dossier nourrit (vie privée et familiale, intérêt supérieur de l'enfant, erreur manifeste d'appréciation, droit au séjour, catégories protégées) ; écarte ceux que rien dans le dossier ne soutient.",
+  "Exploite toutes les informations disponibles : les PIÈCES JOINTES (décision contestée, enveloppe ou accusé de réception, passeport, titres, justificatifs de vie familiale, d'emploi et de scolarité) et les éléments du dossier. Tire des pièces : l'autorité et le signataire de la décision, sa date et celle de la notification, ses motifs et les textes qu'elle vise, les mesures qui l'accompagnent (délai de départ, interdiction de retour, pays de destination), l'identité, la date et le lieu de naissance, la nationalité et l'adresse du requérant, et toute autre donnée utile. Le tribunal administratif compétent est celui qu'indique la mention des voies et délais de recours de la décision, ou à défaut celui du ressort de la préfecture auteur de la décision : renseigne-le dans l'en-tête. Discute précisément les motifs de la décision tels qu'ils y figurent. Une donnée lue dans une pièce n'est pas un fait inventé.",
   "Conclusions : complètes et adaptées à la procédure (annulation, injonction de délivrer un titre ou de réexaminer avec délai et astreinte, frais de l'article L. 761-1 du code de justice administrative).",
   "Règles absolues : n'invente aucun fait, aucune date, aucun nom ; ne cite aucune décision de justice (numéro, date, juridiction) sauf si elle figure dans un acte de référence fourni ; écris « XXX » partout où une information manque. Accorde tout le texte au genre de la personne d'après la civilité (jamais « il/elle » ni « né(e) »). Style juridique sobre, phrases complètes, sans formules creuses. Renvoie uniquement le texte de l'acte, sans commentaire.",
 ].join(" ");
@@ -271,6 +309,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   // Actes déjà rédigés par le cabinet pour ce type d'acte (back office) : exemples de plan, de style et de moyens.
   const references = cle ? await referencesPour(d, modele) : [];
   if (cle) {
+    const joints = await blocsPieces(d, dos);
     // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
     const rep = await new Anthropic({ apiKey: cle }).messages
       .stream({
@@ -285,9 +324,15 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
         messages: [
           {
             role: "user",
-            content:
-              `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
+            content: [
+              ...joints,
+              {
+                type: "text",
+                text:
+              `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, identite: { prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, nationalite: x.nationalite, adresse: x.adresse }, prefecture: x.prefecture, tribunalEstime: x.prefecture ? tribunalCompetent(x.prefecture) : null, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
               references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join(""),
+              },
+            ],
           },
         ],
       })
