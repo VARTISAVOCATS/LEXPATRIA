@@ -31,16 +31,3 @@ describe("accord des actes", () => {
   });
 });
 
-import { pieceTransmissibleIA } from "@/lib/ia";
-describe("pièces transmises à l'IA", () => {
-  it("seules la décision, la notification et les pièces de procédure partent", () => {
-    expect(pieceTransmissibleIA("DECISION", "La décision contestée (toutes les pages)")).toBe(true);
-    expect(pieceTransmissibleIA("ENVELOPPE", "L'enveloppe ou la preuve de notification")).toBe(true);
-    expect(pieceTransmissibleIA("CAS_1", "Jugement et courrier de notification")).toBe(true);
-    expect(pieceTransmissibleIA("IDENTITE", "Passeport ou pièce d'identité")).toBe(false);
-    expect(pieceTransmissibleIA("SALAIRES", "Trois derniers bulletins de salaire")).toBe(false);
-    expect(pieceTransmissibleIA("BLOCAGE_2", "Copie du passeport ou du titre retenu")).toBe(false);
-    expect(pieceTransmissibleIA("AUTRE", "Pièce ajoutée par l'avocat")).toBe(false);
-    expect(pieceTransmissibleIA("AUTRE", "Décision de refus de séjour")).toBe(true);
-  });
-});

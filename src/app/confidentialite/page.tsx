@@ -42,8 +42,9 @@ const SECTIONS: SectionJuridique[] = [
   {
     titre: "Intelligence artificielle",
     paragraphes: [
-      "Des outils d'intelligence artificielle aident à orienter votre demande, à lire la décision et à préparer les projets d'actes. Aucune décision n'est prise de manière automatisée : chaque acte et chaque avis sont relus et validés par un avocat du cabinet.",
-      "Les données transmises au modèle d'intelligence artificielle sont limitées au strict nécessaire et ne sont pas réutilisées pour l'entraînement des modèles. Le prestataire est établi aux États-Unis ; ce transfert est encadré par les clauses contractuelles types de la Commission européenne.",
+      "Des outils d'intelligence artificielle aident à orienter votre demande, à lire votre décision et vos documents et à préparer les projets d'actes. Aucune décision n'est prise de manière automatisée : chaque acte et chaque avis sont relus et validés par un avocat du cabinet.",
+      "Pour ces seules tâches, votre récit, vos réponses et les documents que vous transmettez sont communiqués au prestataire d'intelligence artificielle. Il agit pour le compte du cabinet en qualité de sous-traitant, est tenu à la confidentialité et ne les utilise pas pour entraîner ses modèles. Il ne les conserve que pour la durée limitée prévue au contrat.",
+      "Le prestataire est établi aux États-Unis ; ce transfert est encadré par les clauses contractuelles types de la Commission européenne.",
     ],
   },
   {
