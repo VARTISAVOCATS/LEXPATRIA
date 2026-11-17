@@ -28,3 +28,15 @@ export function messageErreurIA(e: unknown): string {
   if (err?.status === 529 || err?.status === 503 || /overloaded/.test(detail)) return "Le service d'IA est momentanément surchargé : réessayez dans quelques minutes.";
   return "Le service d'intelligence artificielle n'a pas répondu. Réessayez.";
 }
+
+/** Pièces dont le contenu est transmis à l'IA : seulement celles qui fondent le recours (décision, notification,
+ *  demande, procédure). Jamais les pièces d'identité ni les justificatifs personnels, dont seul le libellé est transmis. */
+const TYPES_TRANSMIS = new Set(["DECISION", "ENVELOPPE", "DEMANDE_DEPOSEE", "RECOURS_FORME", "ECRITURES", "COURRIERS_TRIBUNAL"]);
+const PERSONNEL = /passeport|identit|carte de s[ée]jour|titre de s[ée]jour|bulletin|salaire|naissance|scolarit|mariage|pacs|domicile|avis d'imposition|m[ée]dical|sant[ée]/i;
+export function pieceTransmissibleIA(type: string, libelle: string): boolean {
+  if (TYPES_TRANSMIS.has(type)) return true;
+  if (/^(CAS|BLOCAGE)_\d+$/.test(type) || type === "BLOCAGE") return !PERSONNEL.test(libelle);
+  // Pièce ajoutée depuis un espace : transmise seulement si son libellé désigne la décision ou sa notification.
+  if (type === "AUTRE") return /d[ée]cision|notification|enveloppe|accus[ée] de r[ée]ception|jugement|arr[êe]t[ée]|oqtf|refus/i.test(libelle) && !PERSONNEL.test(libelle);
+  return false;
+}
