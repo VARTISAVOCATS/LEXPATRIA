@@ -3,7 +3,7 @@
 // Règles fixes : l'analyse de l'IA n'est jamais transmise au client ; aucun dépôt sans attestation
 // de l'avocat liée à la version exacte de l'acte ; toute modification ultérieure exige une nouvelle attestation.
 
-import { extraireJson } from "@/lib/ia";
+import { extraireJson, listeTolerante } from "@/lib/ia";
 import Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -94,12 +94,13 @@ export interface Analyse {
   le: string;
 }
 
+// Lecture tolérante : un champ absent ou trop long ne fait pas échouer l'analyse.
 const AnalyseIA = z.object({
-  resume: z.string(),
-  questions: z.array(z.string()).max(8),
-  appuis: z.array(z.string()).max(10),
-  strategie: z.string(),
-  vigilance: z.array(z.string()).max(10),
+  resume: z.string().catch(""),
+  questions: z.unknown().transform((x) => listeTolerante(x, 8)),
+  appuis: z.unknown().transform((x) => listeTolerante(x, 10)),
+  strategie: z.string().catch(""),
+  vigilance: z.unknown().transform((x) => listeTolerante(x, 10)),
 });
 
 /** Points de vigilance que le code impose toujours, quelle que soit l'analyse. */
@@ -197,7 +198,7 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
     };
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
-      max_tokens: 2000,
+      max_tokens: 6000,
       system:
         "Tu assistes un avocat au barreau de Paris en droit des étrangers. À partir des éléments du dossier, produis une analyse pour l'avocat seul : résumé factuel, questions juridiques soulevées, points d'appui, stratégie suggérée, points de vigilance. N'invente aucun fait ; signale ce qui manque. Réponds UNIQUEMENT en JSON : {\"resume\":\"\",\"questions\":[],\"appuis\":[],\"strategie\":\"\",\"vigilance\":[]}",
       messages: [

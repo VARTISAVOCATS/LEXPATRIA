@@ -1,5 +1,6 @@
 // Poste de travail de l'avocat : analyse, projets, versions, attestation, transmission, assistant.
 import { NextResponse } from "next/server";
+import { messageErreurIA } from "@/lib/ia";
 import { z } from "zod";
 import { db } from "@/db";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
@@ -52,7 +53,7 @@ export async function POST(req: Request) {
                     ? await transmettreAvis(d, m, dos)
                     : await poste.signerPriseEnCharge(d, m, dos);
     return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ erreur: r.erreur }, { status: 422 });
-  } catch {
-    return NextResponse.json({ erreur: "Le service d'intelligence artificielle n'a pas répondu. Réessayez." }, { status: 502 });
+  } catch (e) {
+    return NextResponse.json({ erreur: messageErreurIA(e) }, { status: 502 });
   }
 }

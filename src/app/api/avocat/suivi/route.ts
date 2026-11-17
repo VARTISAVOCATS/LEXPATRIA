@@ -1,5 +1,6 @@
 // Questions des clients (réponse proposée, puis validée) et remise des avis écrits.
 import { NextResponse } from "next/server";
+import { messageErreurIA } from "@/lib/ia";
 import { z } from "zod";
 import { db } from "@/db";
 import { compterManquants } from "@/lib/modeles";
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     }
     const r = await transmettreAvis(d, m, dos);
     return r.ok ? NextResponse.json({ ok: true }) : NextResponse.json({ erreur: r.erreur }, { status: 422 });
-  } catch {
-    return NextResponse.json({ erreur: "Le service d'intelligence artificielle n'a pas répondu. Réessayez." }, { status: 502 });
+  } catch (e) {
+    return NextResponse.json({ erreur: messageErreurIA(e) }, { status: 502 });
   }
 }
