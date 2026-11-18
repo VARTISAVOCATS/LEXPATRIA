@@ -1,154 +1,116 @@
-// Lot 3 : « Ma journée » — dossiers à accepter, dates limites à vérifier, échéances, messages des clients.
+// « Ma journée » : une seule liste de ce qui est à faire, classée par urgence.
+// Aucune échéance manquée sans noyer l'avocat : l'urgent en tête, la semaine ensuite, le reste replié.
 import Link from "next/link";
 import { db } from "@/db";
 import { PROCEDURES, type CodeProcedure } from "@/lib/procedures";
-import { consultations, questionsEnAttente } from "@/lib/serveur/agenda";
-import { journee } from "@/lib/serveur/cabinet";
-import { compteurs } from "@/lib/serveur/dossiers";
-import { frDate, frDateHeure } from "@/lib/statuts";
+import { tachesDuJour } from "@/lib/serveur/cabinet";
+import { frDate } from "@/lib/statuts";
+import type { Niveau, Tache } from "@/lib/taches";
 import { Cadre } from "./cadre";
 
 export const metadata = { title: "Espace cabinet — LEXPATRIA", robots: { index: false } };
 
-const LIB_ECH: Record<string, string> = {
-  DATE_LIMITE: "Date limite du recours",
-  MEMOIRE_COMPLEMENTAIRE: "Mémoire complémentaire",
-  AUDIENCE: "Audience",
-  CLOTURE: "Clôture de l'instruction",
-  APPEL: "Date limite d'appel",
-  REPONSE_MOTIFS: "Réponse de l'administration",
-};
 const proc = (p: string) => PROCEDURES[p as CodeProcedure]?.libelle ?? p;
+const JOURS = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Paris" });
 
-export default function MaJournee() {
+function quand(t: Tache, aujourdhui: string): { texte: string; classe: string } {
+  if (!t.echeance) return { texte: "à faire", classe: "n" };
+  const j = Math.round((new Date(`${t.echeance}T12:00:00Z`).getTime() - new Date(`${aujourdhui}T12:00:00Z`).getTime()) / 86_400_000);
+  const heure = t.heure ? ` à ${t.heure.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Paris" })}` : "";
+  if (j < 0) return { texte: `en retard (${frDate(t.echeance)})`, classe: "bad" };
+  if (j === 0) return { texte: `aujourd'hui${heure}`, classe: "bad" };
+  if (j === 1) return { texte: `demain${heure}`, classe: "warn" };
+  return { texte: `${frDate(t.echeance)} · dans ${j} jours`, classe: j <= 7 ? "warn" : "n" };
+}
+
+function Liste({ taches, aujourdhui, cabinet }: { taches: Tache[]; aujourdhui: string; cabinet: boolean }) {
+  return (
+    <ul className="mj-liste">
+      {taches.map((t, i) => {
+        const q = quand(t, aujourdhui);
+        return (
+          <li key={`${t.ref}-${t.libelle}-${i}`}>
+            <Link href={`/avocat/dossiers/${t.ref}?onglet=${t.onglet}`}>
+              <span className="mj-quoi">{t.libelle}</span>
+              <span className="mj-qui">
+                {t.ref} · {t.client} · {proc(t.procedure)}
+                {cabinet && t.avocat ? ` · ${t.avocat}` : ""}
+              </span>
+            </Link>
+            <span className={`pill ${q.classe}`}>{q.texte}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+const TITRES: Record<Niveau, [string, string]> = {
+  URGENT: ["À traiter maintenant", "Échéance dépassée, aujourd'hui ou demain, et dossiers payés en urgence."],
+  SEMAINE: ["Cette semaine", "Échéances des sept prochains jours et suites à donner."],
+  SUIVI: ["À suivre", "Plus lointain : rien ne presse, rien n'est oublié."],
+};
+
+export default async function MaJournee({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+  const vueCabinet = (await searchParams).vue === "cabinet";
   return (
     <Cadre actif="journee">
       {async (m) => {
         const d = await db();
-        const [j, c, avis, questions] = await Promise.all([journee(d, m), compteurs(d, m), consultations(d, m, "a_rendre"), questionsEnAttente(d, m)]);
-        const maintenant = new Date();
+        const { taches, enCours, tout } = await tachesDuJour(d, m, vueCabinet);
+        const aujourdhui = new Date().toISOString().slice(0, 10);
+        const par = (n: Niveau) => taches.filter((t) => t.niveau === n);
+        const urgent = par("URGENT");
+        const semaine = par("SEMAINE");
+        const suivi = par("SUIVI");
+        const salut = m.role === "SECRETARIAT" ? `Bonjour ${m.prenom}` : `Bonjour Maître ${m.nom}`;
         return (
-          <div className="cab-grille">
-            <section className="cab-kpi">
-              <Link href="/avocat/dossiers?filtre=a_prendre" className="kpi">
-                <b>{c.aPrendre}</b>
-                <span>À prendre en charge</span>
-              </Link>
-              <Link href="/avocat/dossiers?filtre=en_cours" className="kpi">
-                <b>{c.enCours}</b>
-                <span>En cours</span>
-              </Link>
-              <Link href="/avocat/dossiers?filtre=termines" className="kpi">
-                <b>{c.termines}</b>
-                <span>Terminés</span>
-              </Link>
-              <Link href="/avocat/questions" className="kpi">
-                <b>{questions.length}</b>
-                <span>Questions en attente</span>
-              </Link>
-              <Link href="/avocat/consultations" className="kpi">
-                <b>{avis.length}</b>
-                <span>Avis à rendre</span>
-              </Link>
-            </section>
-
-            <section className="card">
-              <h2>Dossiers à accepter</h2>
-              {j.aAccepter.length === 0 ? (
-                <p className="vide">Aucun dossier en attente.</p>
-              ) : (
-                <ul className="esp-lignes">
-                  {j.aAccepter.map(({ dos, cli }) => {
-                    const retard = dos.acceptationAvant && dos.acceptationAvant < new Date();
-                    return (
-                      <li key={dos.id}>
-                        <Link href={`/avocat/dossiers/${dos.reference}`}>
-                          <b>{dos.reference}</b> · {cli.prenom} {cli.nom} · {proc(dos.procedure)}
-                        </Link>
-                        <span className={`pill ${retard ? "bad" : dos.traitement === "URGENCE" ? "warn" : "n"}`}>
-                          {dos.traitement === "URGENCE" ? "Urgent · " : ""}
-                          {dos.acceptationAvant ? `à accepter avant ${frDateHeure(dos.acceptationAvant)}` : "à accepter"}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
+          <div className="mj">
+            <header className="mj-tete">
+              <div>
+                <h1>{salut}</h1>
+                <p>
+                  {JOURS.format(new Date())} · {enCours} dossier{enCours > 1 ? "s" : ""} en cours{tout ? " au cabinet" : ""}
+                </p>
+              </div>
+              {m.role === "ASSOCIE" && (
+                <nav className="mj-vue" aria-label="Périmètre">
+                  <Link href="/avocat" className={!vueCabinet ? "on" : ""}>
+                    Mes dossiers
+                  </Link>
+                  <Link href="/avocat?vue=cabinet" className={vueCabinet ? "on" : ""}>
+                    Tout le cabinet
+                  </Link>
+                </nav>
               )}
+            </header>
+
+            <section className={`card mj-bloc ${urgent.length ? "mj-urgent" : ""}`}>
+              <h2>
+                {TITRES.URGENT[0]} <span className={`pill ${urgent.length ? "bad" : "ok"}`}>{urgent.length || "rien"}</span>
+              </h2>
+              {urgent.length ? <Liste taches={urgent} aujourdhui={aujourdhui} cabinet={tout} /> : <p className="vide">Rien d&apos;urgent. Aucune échéance dans les 48 heures.</p>}
             </section>
 
-            {avis.length > 0 && (
-              <section className="card">
-                <h2>Avis à rendre</h2>
-                <p className="note">Sous 48 heures ouvrées après le paiement.</p>
-                <ul className="esp-lignes">
-                  {avis.slice(0, 8).map((x) => (
-                    <li key={x.dos.id}>
-                      <Link href={`/avocat/dossiers/${x.dos.reference}?onglet=travail`}>
-                        <b>{x.dos.reference}</b> · {x.cli.prenom} {x.cli.nom}
-                      </Link>
-                      <span className={`pill ${x.rendreAvant && x.rendreAvant < maintenant ? "bad" : "warn"}`}>
-                        {x.rendreAvant ? `avant ${frDateHeure(x.rendreAvant)}` : "paiement non reçu"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
+            <section className="card mj-bloc">
+              <h2>
+                {TITRES.SEMAINE[0]} <span className="pill n">{semaine.length}</span>
+              </h2>
+              <p className="note">{TITRES.SEMAINE[1]}</p>
+              {semaine.length ? <Liste taches={semaine} aujourdhui={aujourdhui} cabinet={tout} /> : <p className="vide">Rien d&apos;autre cette semaine.</p>}
+            </section>
+
+            {suivi.length > 0 && (
+              <details className="card mj-bloc mj-suivi">
+                <summary>
+                  <h2>
+                    {TITRES.SUIVI[0]} <span className="pill n">{suivi.length}</span>
+                  </h2>
+                </summary>
+                <p className="note">{TITRES.SUIVI[1]}</p>
+                <Liste taches={suivi} aujourdhui={aujourdhui} cabinet={tout} />
+              </details>
             )}
-
-            <section className="card">
-              <h2>Dates limites à vérifier</h2>
-              <p className="note">Une date limite estimée ne vaut pas date vérifiée : aucun dépôt avant vérification.</p>
-              {j.nonVerifiees.length === 0 ? (
-                <p className="vide">Toutes les dates limites de vos dossiers en cours sont vérifiées.</p>
-              ) : (
-                <ul className="esp-lignes">
-                  {j.nonVerifiees.map((x) => (
-                    <li key={x.ref}>
-                      <Link href={`/avocat/dossiers/${x.ref}`}>
-                        <b>{x.ref}</b> · {proc(x.procedure)}
-                      </Link>
-                      <span className="pill warn">estimée au {frDate(x.dateLimite)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="card">
-              <h2>Échéances des 14 prochains jours</h2>
-              {j.prochaines.length === 0 ? (
-                <p className="vide">Aucune échéance.</p>
-              ) : (
-                <ul className="esp-lignes">
-                  {j.prochaines.map(({ e, ref, procedure }) => (
-                    <li key={e.id}>
-                      <Link href={`/avocat/dossiers/${ref}`}>
-                        <b>{ref}</b> · {LIB_ECH[e.type] ?? e.type} · {proc(procedure)}
-                      </Link>
-                      <span className={`pill ${e.date <= j.aujourdhui ? "bad" : "n"}`}>{frDate(e.date)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-
-            <section className="card">
-              <h2>Messages des clients</h2>
-              {j.messagesClients.length === 0 ? (
-                <p className="vide">Aucun message non lu.</p>
-              ) : (
-                <ul className="esp-lignes">
-                  {j.messagesClients.map((x) => (
-                    <li key={x.ref}>
-                      <Link href={`/avocat/dossiers/${x.ref}?onglet=echanges`}>
-                        <b>{x.ref}</b>
-                      </Link>
-                      <span className="pill ai">{Number(x.n)} non lu(s)</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
           </div>
         );
       }}

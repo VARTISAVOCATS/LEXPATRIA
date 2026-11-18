@@ -209,3 +209,56 @@ export async function equipe(d: Base) {
 export async function journalDossier(d: Base, dossierId: string) {
   return d.select().from(journal).where(eq(journal.dossierId, dossierId)).orderBy(desc(journal.le)).limit(40);
 }
+
+// ---------- Ma journée : tâches classées par urgence ----------
+
+/** Tâches du jour d'un membre (ou de tout le cabinet pour un associé qui le demande, et pour le secrétariat). */
+export async function tachesDuJour(d: Base, m: Membre, vueCabinet: boolean) {
+  const { calculerTaches } = await import("@/lib/taches");
+  const { consultations } = await import("./agenda");
+  const tout = m.role === "SECRETARIAT" || (m.role === "ASSOCIE" && vueCabinet);
+  const portee = tout ? sql`true` : sql`${dossiers.avocatId} = ${m.id}`;
+  const actifs = ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE", "DEPOSE", "ENREGISTRE", "INSTRUCTION", "AUDIENCE", "JUGE"] as Statut[];
+  const lignes = await d
+    .select({
+      dos: dossiers,
+      cli: { prenom: clients.prenom, nom: clients.nom },
+      avocat: { prenom: utilisateurs.prenom, nom: utilisateurs.nom },
+      aVerifier: sql<number>`(select count(*) from ${pieces} where ${pieces.dossierId} = ${dossiers.id} and ${pieces.verifiee} = false and ${pieces.manquante} = false and jsonb_array_length(${pieces.fichiers}) > 0)`,
+      manquantes: sql<number>`(select count(*) from ${pieces} where ${pieces.dossierId} = ${dossiers.id} and ${pieces.manquante} = true)`,
+      nonLus: sql<number>`(select count(*) from ${messages} where ${messages.dossierId} = ${dossiers.id} and ${messages.auteur} = 'CLIENT' and ${messages.luLe} is null)`,
+    })
+    .from(dossiers)
+    .innerJoin(clients, eq(clients.id, dossiers.clientId))
+    .leftJoin(utilisateurs, eq(utilisateurs.id, dossiers.avocatId))
+    .where(and(inArray(dossiers.statut, actifs), portee));
+  const nomAvocat = (a: { prenom: string | null; nom: string | null } | null) => (a?.nom ? `Me ${a.prenom ?? ""} ${a.nom}`.trim() : null);
+  const actifsT = lignes.map((l) => ({
+    ref: l.dos.reference,
+    client: `${l.cli.prenom ?? ""} ${(l.cli.nom ?? "").toUpperCase()}`.trim(),
+    procedure: l.dos.procedure,
+    statut: l.dos.statut,
+    urgence: l.dos.traitement === "URGENCE",
+    avis: l.dos.avisPrealable || l.dos.procedure === "DIAGNOSTIC" || l.dos.procedure === "CONSULTATION",
+    dateLimite: l.dos.dateLimite,
+    acceptationAvant: l.dos.acceptationAvant,
+    transmis: !!l.dos.transmisSecretariatLe,
+    avocat: nomAvocat(l.avocat),
+    piecesAVerifier: Number(l.aVerifier),
+    piecesManquantes: Number(l.manquantes),
+    messagesNonLus: Number(l.nonLus),
+  }));
+  const ids = lignes.map((l) => l.dos.id);
+  const dans30 = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+  const ech = ids.length
+    ? await d
+        .select({ ref: dossiers.reference, type: echeances.type, date: echeances.date })
+        .from(echeances)
+        .innerJoin(dossiers, eq(dossiers.id, echeances.dossierId))
+        .where(and(eq(echeances.faite, false), inArray(echeances.dossierId, ids), sql`${echeances.date} <= ${dans30}`))
+    : [];
+  const avis = (await consultations(d, m, "a_rendre"))
+    .filter((x) => tout || x.dos.avocatId === m.id)
+    .map((x) => ({ ref: x.dos.reference, client: `${x.cli.prenom ?? ""} ${(x.cli.nom ?? "").toUpperCase()}`.trim(), avocat: nomAvocat(x.avocat), rendreAvant: x.rendreAvant }));
+  return { taches: calculerTaches(actifsT, ech, avis, m.role), enCours: actifsT.length, tout };
+}

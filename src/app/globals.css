@@ -288,3 +288,26 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 .pt-visu-corps .note { padding: 24px; }
 @media (max-width: 900px) { .pt-visu { width: 100vw; } }
 .pt-vigilance li.fait span { text-decoration: line-through; color: var(--ink-2); }
+
+/* Ma journée */
+.mj { display: grid; gap: 16px; }
+.mj-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.mj-tete h1 { font-size: clamp(24px, 3vw, 30px); margin: 0; }
+.mj-tete p { margin: 4px 0 0; color: var(--ink-2); text-transform: none; }
+.mj-tete p::first-letter { text-transform: uppercase; }
+.mj-vue { display: flex; border: 1px solid var(--rule); border-radius: 999px; overflow: hidden; }
+.mj-vue a { padding: 6px 14px; font-size: 13.5px; text-decoration: none; color: var(--ink-2); }
+.mj-vue a.on { background: var(--ink); color: #FFFFFF; }
+.mj-bloc h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 19px; }
+.mj-urgent { border-color: #E7B4AC; border-left: 4px solid var(--red-v, #D9412E); }
+.mj-suivi summary { cursor: pointer; list-style: none; }
+.mj-suivi summary::-webkit-details-marker { display: none; }
+.mj-suivi summary h2::after { content: "▾"; font-size: 14px; color: var(--ink-3); }
+.mj-suivi[open] summary h2::after { content: "▴"; }
+.mj-liste { list-style: none; margin: 4px 0 0; padding: 0; }
+.mj-liste li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.mj-liste li:last-child { border-bottom: 0; }
+.mj-liste a { display: grid; gap: 2px; text-decoration: none; color: inherit; min-width: 0; flex: 1 1 320px; }
+.mj-liste a:hover .mj-quoi { text-decoration: underline; }
+.mj-quoi { font-weight: 600; font-size: 15px; }
+.mj-qui { font-size: 13px; color: var(--ink-2); }
