@@ -1882,3 +1882,6 @@ main.acc { padding-top: 0; }
   .acc-equipe p { font-size: 21px; }
   .acc-eng { font-size: 15.5px; }
 }
+.merci-espace { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin: 16px 0 20px; padding: 14px 16px; border: 1px solid var(--rule); border-radius: 12px; background: var(--parch, #F7F5F0); }
+.merci-espace > div { display: grid; gap: 3px; flex: 1 1 280px; min-width: 0; }
+.merci-espace span { font-size: 14px; color: var(--ink-2); }

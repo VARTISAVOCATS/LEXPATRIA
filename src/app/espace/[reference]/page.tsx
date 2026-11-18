@@ -284,6 +284,14 @@ export default async function DossierClient({ params, searchParams }: { params: 
                       <span className={`pill ${p.statut === "PAYE" ? "ok" : p.statut === "REMBOURSE" ? "n" : "warn"}`}>
                         {t(p.statut === "PAYE" ? "Payé" : p.statut === "REMBOURSE" ? "Remboursé" : p.statut === "ECHOUE" ? "Échoué" : "En attente")}
                       </span>
+                      {(p.statut === "PAYE" || p.statut === "REMBOURSE") && p.stripeIntentId && (
+                        <>
+                          {" "}
+                          <a className="btn sm ghost" href={`/api/recu?paiement=${p.id}`} target="_blank" rel="noreferrer">
+                            {t("Voir le reçu")}
+                          </a>
+                        </>
+                      )}
                     </b>
                   </li>
                 ))}

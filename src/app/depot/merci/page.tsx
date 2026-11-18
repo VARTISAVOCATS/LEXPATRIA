@@ -71,10 +71,18 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
                 : t("Votre dossier est transmis au cabinet : un avocat prendra attache avec vous sous {delai}.", { delai: t(delaiPriseEnCharge) })}
             </h1>
             <p className="aide">{t("Dossier {ref}. Un e-mail de confirmation vous est envoyé.", { ref: frais.reference })}</p>
+            <div className="merci-espace">
+              <div>
+                <b>{t("Votre espace personnel")}</b>
+                <span>{t("Suivez votre dossier, transmettez vos documents et écrivez à votre avocat. Connexion par un code envoyé à votre adresse e-mail.")}</span>
+              </div>
+              <Link href="/espace" className="btn">
+                {t("Accéder à mon espace")}
+              </Link>
+            </div>
 
-            {frais.avisPrealable || frais.procedure === "DIAGNOSTIC" ? (
-              <p>{t("Vous recevrez l'avis écrit dans votre espace sous 48 heures ouvrées.")}</p>
-            ) : (
+            {(frais.avisPrealable || frais.procedure === "DIAGNOSTIC") && <p>{t("Vous recevrez l'avis écrit dans votre espace sous 48 heures ouvrées.")}</p>}
+            {(
               <>
             <Collecte
               reference={frais.reference}
@@ -82,7 +90,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
               contexte={{
                 procedure: frais.procedure as CodeProcedure,
                 algerien: client?.algerien ?? null,
-                avisOuDiagnostic: false,
+                avisOuDiagnostic: frais.avisPrealable || frais.procedure === "DIAGNOSTIC",
                 cas: cas?.code,
                 pieces: cas?.pieces.length ? cas.pieces : undefined,
                 implicite: !!cas?.implicite,
