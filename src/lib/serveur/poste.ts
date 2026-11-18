@@ -97,18 +97,18 @@ export interface Analyse {
 }
 
 // Lecture tolérante : un champ absent ou trop long ne fait pas échouer l'analyse.
-const AnalyseIA = z.object({
-  resume: z.string().catch(""),
-  questions: z.unknown().transform((x) => listeTolerante(x, 8)),
-  appuis: z.unknown().transform((x) => listeTolerante(x, 10)),
-  strategie: z.string().catch(""),
-  vigilance: z.unknown().transform((x) => listeTolerante(x, 10)),
-});
+// Avis court de l'agent juridique : l'avis et ses fondements ; le développement est réservé au projet d'acte.
+const AnalyseIA = z
+  .object({
+    avis: z.string().catch(""),
+    fondements: z.unknown().transform((x) => listeTolerante(x, 6)),
+    vigilance: z.unknown().transform((x) => listeTolerante(x, 6)),
+  })
+  .transform((a) => ({ resume: a.avis, questions: [] as string[], appuis: a.fondements, strategie: "", vigilance: a.vigilance }));
 
 /** Points de vigilance que le code impose toujours, quelle que soit l'analyse. */
 async function vigilanceSysteme(d: Base, dos: Dossier, x: DonneesActe): Promise<string[]> {
   const v: string[] = [];
-  if (!dos.dateLimiteVerifiee) v.push("Date limite calculée automatiquement : vérifiez-la sur la mention des voies et délais de recours de la décision.");
   if (!dos.dateNotification) v.push("Date de notification non établie : vérifiez-la sur l'enveloppe ou l'accusé de réception.");
   const manquantes = await d.select().from(pieces).where(and(eq(pieces.dossierId, dos.id), eq(pieces.manquante, true)));
   if (manquantes.length) v.push(`Pièces non transmises par le client : ${manquantes.map((p) => p.libelle).join(", ")}.`);
@@ -203,7 +203,8 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 6000,
       system:
-        "Tu assistes un avocat au barreau de Paris en droit des étrangers. À partir des éléments du dossier et des pièces jointes (lis la décision contestée : autorité, signataire, date, motifs, mesures, voies et délais de recours, tribunal compétent), produis une analyse pour l'avocat seul : résumé factuel, questions juridiques soulevées, points d'appui, stratégie suggérée, points de vigilance. N'invente aucun fait ; signale ce qui manque. Réponds UNIQUEMENT en JSON : {\"resume\":\"\",\"questions\":[],\"appuis\":[],\"strategie\":\"\",\"vigilance\":[]}",
+        "Tu es l'agent juridique d'un cabinet d'avocats au barreau de Paris en droit des étrangers. Lis les pièces jointes (décision contestée : autorité, signataire, date, motifs, mesures, voies et délais, tribunal compétent) et les éléments du dossier, puis donne à l'avocat ton AVIS : court, net, comme une note d'avocat à un confrère. Réponds UNIQUEMENT en JSON : {\"avis\":\"\",\"fondements\":[],\"vigilance\":[]}. « avis » : quatre à six phrases au plus, qui disent la voie à suivre et les moyens les plus solides au vu des motifs de la décision et de la situation. « fondements » : trois à six lignes, chacune un texte précis (article et code ou convention) suivi en quelques mots de la raison pour laquelle il s'applique. « vigilance » : deux à cinq points concrets que l'avocat doit trancher ou vérifier avant le dépôt. Pas de développement : il viendra dans la requête. N'invente aucun fait ni aucune jurisprudence.",
+
       messages: [
         { role: "user", content: [...(await blocsPieces(d, dos)), { type: "text", text: `ÉLÉMENTS DU DOSSIER : ${JSON.stringify(contexte)}` }] },
       ],
@@ -313,6 +314,7 @@ const REDACTION_ACTE = [
   "Faits et procédure : un récit chronologique précis et rédigé, qui reprend chaque élément concret du dossier (entrée en France, durée de présence, titres détenus, démarches, situation familiale, enfants et scolarité, emploi et ancienneté, insertion, décision contestée et ses mesures).",
   "Discussion : pour chaque moyen retenu, rédige plusieurs paragraphes : le texte applicable, cité avec précision (article et code ou convention : CESEDA, code des relations entre le public et l'administration, code de justice administrative, convention européenne des droits de l'homme, convention internationale des droits de l'enfant, accord franco-algérien le cas échéant), puis son application détaillée aux faits du dossier, puis la conclusion sur l'illégalité. Les moyens de légalité externe (compétence du signataire, motivation, examen particulier, procédure contradictoire) sont présentés comme à vérifier sur la décision. Développe longuement les moyens de légalité interne que le dossier nourrit (vie privée et familiale, intérêt supérieur de l'enfant, erreur manifeste d'appréciation, droit au séjour, catégories protégées) ; écarte ceux que rien dans le dossier ne soutient.",
   "Exploite toutes les informations disponibles : les PIÈCES JOINTES (décision contestée, preuve de notification, pièce d'identité, titres de séjour, justificatifs de vie familiale, d'emploi, de scolarité et de présence, pièces de procédure) et les éléments du dossier (identité, adresse, réponses au questionnaire, récit). Tire de la décision : l'autorité et le signataire, sa date et celle de la notification, ses motifs et les textes qu'elle vise, les mesures qui l'accompagnent (délai de départ, interdiction de retour, pays de destination). Tire des autres pièces l'identité complète (date et lieu de naissance, nationalité), l'historique du séjour et tous les éléments concrets de situation, et renvoie à chaque pièce utile dans la discussion. Le tribunal administratif compétent est celui qu'indique la mention des voies et délais de recours de la décision, ou à défaut celui du ressort de la préfecture auteur de la décision : renseigne-le dans l'en-tête. Discute précisément les motifs de la décision tels qu'ils y figurent. Une donnée lue dans une pièce n'est pas un fait inventé.",
+  "L'acte doit être complet de bout en bout : en-tête, faits et procédure, discussion avec tous les moyens, « PAR CES MOTIFS » suivi de toutes les demandes, signature, bordereau des pièces. Ne t'arrête jamais avant les conclusions.",
   "Conclusions : complètes et adaptées à la procédure (annulation, injonction de délivrer un titre ou de réexaminer avec délai et astreinte, frais de l'article L. 761-1 du code de justice administrative).",
   "Règles absolues : n'invente aucun fait, aucune date, aucun nom ; ne cite aucune décision de justice (numéro, date, juridiction) sauf si elle figure dans un acte de référence fourni ; écris « XXX » partout où une information manque. Accorde tout le texte au genre de la personne d'après la civilité (jamais « il/elle » ni « né(e) »). Style juridique sobre, phrases complètes, sans formules creuses. Renvoie uniquement le texte de l'acte, sans commentaire.",
 ].join(" ");
@@ -334,34 +336,46 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const references = cle ? await referencesPour(d, modele) : [];
   if (cle) {
     const joints = await blocsPieces(d, dos);
-    // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
-    const rep = await new Anthropic({ apiKey: cle }).messages
-      .stream({
-        model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
-        max_tokens: 16000,
-        system:
+    const client = new Anthropic({ apiKey: cle });
+    const modeleIA = (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5";
+    const systeme =
           REDACTION_ACTE +
           (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction, son plan et ses intitulés ; développe les moyens et remplace les « XXX » que les éléments du dossier permettent de compléter." : "") +
           (references.length
             ? " Tu reçois aussi des ACTES DE RÉFÉRENCE déjà rédigés par le cabinet pour ce type d'acte : inspire-toi de leur plan, de leur style, de leurs formulations et des moyens qui conviennent à ce dossier. N'en reprends jamais les faits, les noms, les dates, les lieux ni les références propres à l'ancienne affaire."
-            : ""),
-        messages: [
-          {
-            role: "user",
-            content: [
-              ...joints,
-              {
-                type: "text",
-                text:
+            : "");
+    const demande =
               `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, identite: { prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, nationalite: x.nationalite, adresse: x.adresse }, prefecture: x.prefecture, tribunalEstime: x.prefecture ? tribunalCompetent(x.prefecture) : null, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
-              references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join(""),
-              },
-            ],
-          },
-        ],
+              references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join("");
+    // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
+    const rep = await client.messages
+      .stream({
+        model: modeleIA,
+        max_tokens: 20000,
+        system: systeme,
+        messages: [{ role: "user", content: [...joints, { type: "text", text: demande }] }],
       })
       .finalMessage();
-    const texte = rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+    let texte = rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+    // Réponse coupée ou acte inachevé (sans conclusions) : l'IA poursuit là où elle s'est arrêtée, deux fois au plus.
+    let dernier = rep;
+    for (let tour = 0; tour < 2 && texte.length > 200 && (dernier.stop_reason === "max_tokens" || !/PAR CES MOTIFS/i.test(texte)); tour++) {
+      dernier = await client.messages
+        .stream({
+          model: modeleIA,
+          max_tokens: 16000,
+          system: systeme,
+          messages: [
+            { role: "user", content: [...joints, { type: "text", text: demande }] },
+            { role: "assistant", content: texte },
+            { role: "user", content: "L'acte est inachevé. Poursuis la rédaction exactement là où tu t'es arrêté, sans rien répéter, jusqu'aux conclusions (« PAR CES MOTIFS » et les demandes), la signature et le bordereau des pièces. Renvoie uniquement la suite du texte." },
+          ],
+        })
+        .finalMessage();
+      texte = `${texte}\n${dernier.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim()}`;
+    }
+    // Filet : si les conclusions manquent encore, celles du modèle de départ sont ajoutées pour relecture.
+    if (texte.length > 200 && !/PAR CES MOTIFS/i.test(texte) && /PAR CES MOTIFS/.test(projet)) texte += `\n\n${projet.slice(projet.indexOf("PAR CES MOTIFS"))}`;
     if (texte.length > 200) projet = accorder(texte, x.civilite);
   }
   const precedent = await dernierActe(d, dos.id);
@@ -423,12 +437,11 @@ export async function controleCroise(d: Base, dos: Dossier): Promise<Controle[]>
   // Un avis écrit (consultation) n'est pas déposé : pas de contrôle de date limite du recours.
   const avis = acte?.type === "AVIS_ECRIT";
   if (!avis) {
-    lignes.push({ libelle: "Date limite vérifiée par l'avocat", ok: dos.dateLimiteVerifiee });
     lignes.push({ libelle: dos.dateLimite ? `Dépôt avant la date limite du ${dos.dateLimite.split("-").reverse().join("/")}` : "Dépôt avant la date limite", ok: !!dos.dateLimite && aujourdhui <= dos.dateLimite });
   }
   lignes.push({ libelle: "Aucune mention XXX restante", ok: !!acte && compterManquants(acte.contenu) === 0 });
   lignes.push({ libelle: avis ? "Avocat signataire nommé" : "Avocat constitué nommé", ok: !!acte && !!x.avocat && acte.contenu.includes(`${x.avocat.prenom} ${x.avocat.nom}`) });
-  lignes.push({ libelle: "Points de vigilance tranchés", ok: avis ? !analyse || analyse.vigilance.every((p) => p.tranche) : !!analyse && analyse.vigilance.every((p) => p.tranche) });
+  lignes.push({ libelle: "Points à trancher cochés", ok: avis ? !analyse || analyse.vigilance.every((p) => p.tranche) : !!analyse && analyse.vigilance.every((p) => p.tranche) });
   return lignes;
 }
 
@@ -468,7 +481,6 @@ export async function transmettre(d: Base, m: Membre, dos: Dossier): Promise<Res
 /** Attestation de prise en charge remise au client, après vérification des dates. */
 export async function signerPriseEnCharge(d: Base, m: Membre, dos: Dossier): Promise<Resultat> {
   if (!estAvocat(m) || !peutTravailler(m, dos)) return refus("Seul l'avocat en charge du dossier signe l'attestation.");
-  if (!dos.dateLimiteVerifiee) return refus("Vérifiez d'abord la date de notification et la date limite.");
   if (dos.priseEnCharge) return refus("L'attestation est déjà signée.");
   const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
   const le = new Date();

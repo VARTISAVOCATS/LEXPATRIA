@@ -151,7 +151,7 @@ export default function PosteTravail(p: ProprietesPoste) {
           {/* ----- Analyse ----- */}
           <section className="card">
             <div className="cx-tete">
-              <h2>Analyse</h2>
+              <h2>Avis de l&apos;agent juridique</h2>
               <div className="cx-badges">
                 <span className="pill ai">{p.analyse?.source === "IA" ? "Avis de l'IA · pour vous, non transmis" : p.analyse ? "Analyse d'essai (sans clé IA)" : "Pour vous, non transmise au client"}</span>
                 <button className="btn sm ghost" disabled={!!envoi} onClick={() => agir("analyser")}>
@@ -160,7 +160,7 @@ export default function PosteTravail(p: ProprietesPoste) {
               </div>
             </div>
             {!p.analyse ? (
-              <p className="vide">Aucune analyse. L&apos;IA lit le récit, le questionnaire et les pièces, puis propose une première analyse.</p>
+              <p className="vide">Aucun avis. L&apos;agent juridique lit la décision, les pièces et le questionnaire, puis donne son avis et ses fondements.</p>
             ) : (
               <>
                 <p>{p.analyse.resume}</p>
@@ -176,7 +176,7 @@ export default function PosteTravail(p: ProprietesPoste) {
                 )}
                 {p.analyse.appuis.length > 0 && (
                   <>
-                    <h3>Points d&apos;appui</h3>
+                    <h3>{p.analyse.questions.length || p.analyse.strategie ? "Points d'appui" : "Fondements"}</h3>
                     <ul>
                       {p.analyse.appuis.map((q, i) => (
                         <li key={i}>{q}</li>
@@ -184,15 +184,19 @@ export default function PosteTravail(p: ProprietesPoste) {
                     </ul>
                   </>
                 )}
-                <h3>Stratégie suggérée</h3>
-                <p>{p.analyse.strategie}</p>
+                {p.analyse.strategie && (
+                  <>
+                    <h3>Stratégie suggérée</h3>
+                    <p>{p.analyse.strategie}</p>
+                  </>
+                )}
                 <h3>
-                  Points de vigilance {pointsOuverts > 0 ? <span className="pill warn">{pointsOuverts} à trancher</span> : <span className="pill ok">tous tranchés</span>}
+                  Points à trancher {pointsOuverts > 0 ? <span className="pill warn">{pointsOuverts} restant{pointsOuverts > 1 ? "s" : ""}</span> : <span className="pill ok">tous tranchés</span>}
                 </h3>
-                <p className="note">Cochez chaque point une fois tranché : l&apos;attestation n&apos;est possible qu&apos;ensuite.</p>
+                <p className="note">Cochez chaque point une fois tranché ; décochez-le s&apos;il reste à faire.</p>
                 <ul className="pt-vigilance">
                   {p.analyse.vigilance.map((v) => (
-                    <li key={v.id}>
+                    <li key={v.id} className={estTranche(v) ? "fait" : ""}>
                       <label>
                         <input
                           type="checkbox"
@@ -344,9 +348,9 @@ export default function PosteTravail(p: ProprietesPoste) {
               <p className="note">Signée le {p.priseEnCharge.le} et mise à disposition du client dans son espace.</p>
             ) : (
               <>
-                <p className="note">À signer après vérification de la date de notification et de la date limite : elle est alors remise au client.</p>
-                <button className="btn sm" disabled={!p.dateLimiteVerifiee || !p.peutAttester || !!envoi} onClick={() => agir("priseEnCharge")}>
-                  Dates vérifiées — signer l&apos;attestation
+                <p className="note">Une fois signée, elle est remise au client dans son espace.</p>
+                <button className="btn sm" disabled={!p.peutAttester || !!envoi} onClick={() => agir("priseEnCharge")}>
+                  Signer l&apos;attestation
                 </button>
               </>
             )}
