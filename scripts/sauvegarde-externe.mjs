@@ -39,7 +39,7 @@ async function configuration() {
       await pool.end();
     }
   }
-  const lire = (n) => v[n] || process.env[n];
+  const lire = (n) => (v[n] || process.env[n] || "").trim() || undefined;
   return { endpoint: lire("S3_ENDPOINT"), region: lire("S3_REGION") ?? "gra", bucket: lire("S3_BUCKET"), ak: lire("S3_ACCESS_KEY"), sk: lire("S3_SECRET_KEY") };
 }
 

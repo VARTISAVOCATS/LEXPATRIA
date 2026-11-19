@@ -189,12 +189,42 @@ export async function testerConnexion(d: Base, service: string, par: string): Pr
         break;
       }
       case "stockage": {
-        const [endpoint, region, bucket, ak, sk] = await Promise.all(["S3_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"].map(v));
+        const [endpoint, region, bucket, ak, sk] = (await Promise.all(["S3_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"].map(v))).map((x) => x?.trim());
         if (!endpoint || !bucket || !ak || !sk) throw new Error("Paramètres incomplets.");
-        const { S3Client, HeadBucketCommand } = await import("@aws-sdk/client-s3");
-        const client = new S3Client({ region: region ?? "gra", endpoint, credentials: { accessKeyId: ak, secretAccessKey: sk }, forcePathStyle: true });
-        await client.send(new HeadBucketCommand({ Bucket: bucket }));
-        res = { ok: true, message: `Conteneur « ${bucket} » accessible.` };
+        if (!/^https:\/\//.test(endpoint)) {
+          res = { ok: false, message: "Le point d'accès doit commencer par https:// (par exemple https://s3.gra.io.cloud.ovh.net)." };
+          break;
+        }
+        const { S3Client, HeadBucketCommand, PutObjectCommand, DeleteObjectCommand } = await import("@aws-sdk/client-s3");
+        const client = new S3Client({ region: region || "gra", endpoint, credentials: { accessKeyId: ak, secretAccessKey: sk }, forcePathStyle: true });
+        try {
+          await client.send(new HeadBucketCommand({ Bucket: bucket }));
+          // Écriture d'essai : la sauvegarde et les pièces ont besoin du droit d'écrire.
+          await client.send(new PutObjectCommand({ Bucket: bucket, Key: "essai-connexion.txt", Body: "ok" }));
+          await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: "essai-connexion.txt" })).catch(() => undefined);
+          res = { ok: true, message: `Conteneur « ${bucket} » accessible en lecture et en écriture.` };
+        } catch (e) {
+          const err = e as { name?: string; Code?: string; message?: string; $metadata?: { httpStatusCode?: number } };
+          const code = `${err.Code ?? err.name ?? ""}`;
+          const statut = err.$metadata?.httpStatusCode;
+          const m = `${code} ${err.message ?? ""}`;
+          res = {
+            ok: false,
+            message: /InvalidAccessKeyId/i.test(m)
+              ? "Clé d'accès inconnue d'OVH : recopiez la clé d'accès de l'utilisateur S3."
+              : /SignatureDoesNotMatch/i.test(m)
+                ? "Clé secrète incorrecte : recopiez la clé secrète de l'utilisateur S3, sans espace."
+                : /NoSuchBucket/i.test(m) || statut === 404
+                  ? `Conteneur « ${bucket} » introuvable à ce point d'accès : vérifiez son nom exact et que la région du point d'accès est celle du conteneur.`
+                  : statut === 301 || /PermanentRedirect|AuthorizationHeaderMalformed|region/i.test(m)
+                    ? "Le conteneur est dans une autre région : adaptez le point d'accès et la région (gra, sbg, de, uk, waw, bhs, eu-west-par…)."
+                    : statut === 403 || /AccessDenied|Forbidden/i.test(m)
+                      ? "Accès refusé : dans OVH, donnez à l'utilisateur S3 les droits lecture et écriture sur ce conteneur."
+                      : /ENOTFOUND|getaddrinfo|fetch failed|ECONNREFUSED|timeout/i.test(m)
+                        ? "Point d'accès injoignable : vérifiez l'adresse (par exemple https://s3.gra.io.cloud.ovh.net)."
+                        : `OVH refuse la connexion (${code || "erreur"}${statut ? `, code ${statut}` : ""}).`,
+          };
+        }
         break;
       }
       case "microsoft365": {

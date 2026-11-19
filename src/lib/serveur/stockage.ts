@@ -24,7 +24,7 @@ export function typeAccepte(mime: string) {
 
 // Paramètres lus au back office (rubrique Connexions) ou dans le .env.
 async function conf() {
-  const [endpoint, region, bucket, ak, sk] = await Promise.all(["S3_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"].map(valeur));
+  const [endpoint, region, bucket, ak, sk] = (await Promise.all(["S3_ENDPOINT", "S3_REGION", "S3_BUCKET", "S3_ACCESS_KEY", "S3_SECRET_KEY"].map(valeur))).map((x) => x?.trim() || undefined);
   return { endpoint, region: region ?? "gra", bucket, ak, sk };
 }
 
