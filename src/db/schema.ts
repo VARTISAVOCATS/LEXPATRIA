@@ -57,6 +57,7 @@ export const utilisateurs = pgTable("utilisateurs", {
   avisHT: integer("avis_ht"), // montant par avis ou consultation (centimes HT) ; vide : 15 €
   validationAssocie: boolean("validation_associe").notNull().default(false),
   attributionOuverte: boolean("attribution_ouverte").notNull().default(true),
+  visionCabinet: boolean("vision_cabinet").notNull().default(false), // accès à tous les dossiers (accordé par un associé)
   reouvertureLe: timestamp("reouverture_le", { withTimezone: true }),
   charteIAAccepteeLe: timestamp("charte_ia_acceptee_le", { withTimezone: true }),
   entraId: text("entra_id").unique(), // compte Microsoft 365

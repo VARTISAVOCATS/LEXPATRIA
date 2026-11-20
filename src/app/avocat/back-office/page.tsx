@@ -268,6 +268,7 @@ export default async function BackOffice({ searchParams }: { searchParams: Promi
                       avis: e(u.avisHT),
                       validationAssocie: u.validationAssocie,
                       attributionOuverte: u.attributionOuverte,
+                      visionCabinet: u.visionCabinet,
                       actif: u.actif,
                       moi: u.id === m.id,
                     }))}

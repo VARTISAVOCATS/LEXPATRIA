@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculerTaches, type DossierTache } from "@/lib/taches";
+import { alertesAbsence, calculerTaches, type DossierTache } from "@/lib/taches";
 
 const base: DossierTache = { ref: "D1", client: "A B", procedure: "OQTF", statut: "EN_REDACTION", urgence: false, avis: false, dateLimite: null, acceptationAvant: null, transmis: false, avocat: "Me X", piecesAVerifier: 0, piecesManquantes: 0, messagesNonLus: 0 };
 const J = "2026-11-18";
@@ -47,5 +47,18 @@ describe("Ma journée", () => {
       J,
     );
     expect(t.map((x) => x.libelle)).toEqual(["Déposer le recours", "Relancer le client : une pièce manquante"]);
+  });
+});
+
+describe("Alertes d'absence", () => {
+  const e = { ref: "D1", client: "A B", procedure: "OQTF", avocatId: "u1", avocat: "Me X", libelle: "Date limite" };
+  const abs = [{ avocatId: "u1", debut: "2026-11-23", fin: "2026-11-27", motif: "CONGES" }];
+  it("signale une échéance qui tombe pendant l'absence de l'avocat du dossier", () => {
+    const r = alertesAbsence([{ ...e, date: "2026-11-24" }, { ...e, ref: "D2", date: "2026-11-30" }, { ...e, ref: "D3", avocatId: "u2", date: "2026-11-24" }], abs, J);
+    expect(r.map((x) => x.ref)).toEqual(["D1"]);
+    expect(r[0].absence.fin).toBe("2026-11-27");
+  });
+  it("ignore les échéances déjà passées", () => {
+    expect(alertesAbsence([{ ...e, date: "2026-11-10" }], [{ ...abs[0], debut: "2026-11-01" }], J)).toHaveLength(0);
   });
 });

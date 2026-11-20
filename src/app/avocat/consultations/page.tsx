@@ -5,6 +5,7 @@ import { PROCEDURES, type CodeProcedure } from "@/lib/procedures";
 import { consultations, type OngletConsultations } from "@/lib/serveur/agenda";
 import { frDateHeure, LIBELLES_STATUT, type Statut } from "@/lib/statuts";
 import { ActionForm } from "../Actions";
+import { voitTout } from "@/lib/serveur/dossiers";
 import { Cadre } from "../cadre";
 
 export const metadata = { title: "Consultations — Espace cabinet", robots: { index: false } };
@@ -22,7 +23,7 @@ export default function Consultations({ searchParams }: { searchParams: Promise<
         const { onglet: o } = await searchParams;
         const onglet = (ONGLETS.find(([k]) => k === o)?.[0] ?? "a_rendre") as OngletConsultations;
         const lignes = await consultations(await db(), m, onglet);
-        const tous = m.role === "ASSOCIE" || m.role === "SECRETARIAT";
+        const tous = voitTout(m);
         const maintenant = new Date();
         return (
           <>

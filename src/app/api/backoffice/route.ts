@@ -45,6 +45,7 @@ const Corps = z.discriminatedUnion("action", [
     avis: z.number().min(0).max(10_000).nullable().default(null),
     validationAssocie: z.boolean().default(false),
     attributionOuverte: z.boolean().default(true),
+    visionCabinet: z.boolean().default(false),
   }),
   z.object({ action: z.literal("casLibre"), id: z.string().max(40), decision: z.enum(["ajouter", "ecarter"]) }),
   z.object({ action: z.literal("remunerationMembre"), id: z.string().max(40), mode: z.enum(["A_L_ACTE", "COLLABORATEUR_FIXE_VARIABLE", "AUCUNE"]) }),
@@ -122,6 +123,7 @@ export async function POST(req: Request) {
       avisHT: x.remuneration === "A_L_ACTE" ? cents(x.avis) : null,
       validationAssocie: x.validationAssocie,
       attributionOuverte: x.attributionOuverte,
+      visionCabinet: QUALITES[x.qualite].role === "AVOCAT" && x.visionCabinet,
     };
     if (x.id) {
       const maj = await d.update(schema.utilisateurs).set(champs).where(eq(schema.utilisateurs.id, x.id)).returning({ id: schema.utilisateurs.id });
@@ -129,7 +131,7 @@ export async function POST(req: Request) {
     } else {
       await d.insert(schema.utilisateurs).values({ id: createId(), ...champs });
     }
-    await journaliser(d, { acteur: m.id, action: x.id ? "MEMBRE_MODIFIE" : "MEMBRE_ENREGISTRE", details: { email, qualite: x.qualite, remuneration: x.remuneration } });
+    await journaliser(d, { acteur: m.id, action: x.id ? "MEMBRE_MODIFIE" : "MEMBRE_ENREGISTRE", details: { email, qualite: x.qualite, remuneration: x.remuneration, visionCabinet: champs.visionCabinet } });
     return NextResponse.json({ ok: true });
   }
   if (x.action === "remunerationMembre") {

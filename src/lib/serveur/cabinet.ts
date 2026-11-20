@@ -210,15 +210,17 @@ export async function journalDossier(d: Base, dossierId: string) {
   return d.select().from(journal).where(eq(journal.dossierId, dossierId)).orderBy(desc(journal.le)).limit(40);
 }
 
-// ---------- Ma journée : tâches classées par urgence ----------
+// ---------- Tableau de bord ----------
 
-/** Tâches du jour d'un membre (ou de tout le cabinet pour un associé qui le demande, et pour le secrétariat). */
-export async function tachesDuJour(d: Base, m: Membre, vueCabinet: boolean) {
+const ACTIFS = ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE", "DEPOSE", "ENREGISTRE", "INSTRUCTION", "AUDIENCE", "JUGE"] as Statut[];
+const nomAvocat = (a: { prenom: string | null; nom: string | null } | null) => (a?.nom ? `Me ${a.prenom ?? ""} ${a.nom.toUpperCase()}`.trim() : null);
+const nomClient = (c: { prenom: string | null; nom: string | null }) => `${c.prenom ?? ""} ${(c.nom ?? "").charAt(0).toUpperCase()}.`.trim();
+
+/** Tâches classées par urgence : celles d'un membre, ou celles de tout le cabinet (vision du cabinet). */
+export async function tachesDuJour(d: Base, m: Membre, tout: boolean) {
   const { calculerTaches } = await import("@/lib/taches");
   const { consultations } = await import("./agenda");
-  const tout = m.role === "SECRETARIAT" || (m.role === "ASSOCIE" && vueCabinet);
   const portee = tout ? sql`true` : sql`${dossiers.avocatId} = ${m.id}`;
-  const actifs = ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE", "DEPOSE", "ENREGISTRE", "INSTRUCTION", "AUDIENCE", "JUGE"] as Statut[];
   const lignes = await d
     .select({
       dos: dossiers,
@@ -231,11 +233,10 @@ export async function tachesDuJour(d: Base, m: Membre, vueCabinet: boolean) {
     .from(dossiers)
     .innerJoin(clients, eq(clients.id, dossiers.clientId))
     .leftJoin(utilisateurs, eq(utilisateurs.id, dossiers.avocatId))
-    .where(and(inArray(dossiers.statut, actifs), portee));
-  const nomAvocat = (a: { prenom: string | null; nom: string | null } | null) => (a?.nom ? `Me ${a.prenom ?? ""} ${a.nom}`.trim() : null);
+    .where(and(inArray(dossiers.statut, ACTIFS), portee));
   const actifsT = lignes.map((l) => ({
     ref: l.dos.reference,
-    client: `${l.cli.prenom ?? ""} ${(l.cli.nom ?? "").toUpperCase()}`.trim(),
+    client: nomClient(l.cli),
     procedure: l.dos.procedure,
     statut: l.dos.statut,
     urgence: l.dos.traitement === "URGENCE",
@@ -259,6 +260,153 @@ export async function tachesDuJour(d: Base, m: Membre, vueCabinet: boolean) {
     : [];
   const avis = (await consultations(d, m, "a_rendre"))
     .filter((x) => tout || x.dos.avocatId === m.id)
-    .map((x) => ({ ref: x.dos.reference, client: `${x.cli.prenom ?? ""} ${(x.cli.nom ?? "").toUpperCase()}`.trim(), avocat: nomAvocat(x.avocat), rendreAvant: x.rendreAvant }));
-  return { taches: calculerTaches(actifsT, ech, avis, m.role), enCours: actifsT.length, tout };
+    .map((x) => ({ ref: x.dos.reference, client: nomClient(x.cli), avocat: nomAvocat(x.avocat), rendreAvant: x.rendreAvant }));
+  // Le secrétariat garde sa propre liste ; les autres membres voient leurs tâches d'avocat, y compris en vision du cabinet.
+  const role = m.role === "SECRETARIAT" ? "SECRETARIAT" : "AVOCAT";
+  const taches = calculerTaches(actifsT, ech, avis, role);
+  // Vision du cabinet : les dépôts attendus du secrétariat font partie des urgences de l'équipe.
+  if (tout && role === "AVOCAT") {
+    const depots = calculerTaches(actifsT, [], [], "SECRETARIAT").filter((t) => t.libelle === "Déposer le recours");
+    taches.push(...depots.map((t) => ({ ...t, avocat: "Secrétariat" })));
+    const rang = { URGENT: 0, SEMAINE: 1, SUIVI: 2 } as const;
+    taches.sort((a, b) => rang[a.niveau] - rang[b.niveau] || (a.echeance ?? "9999").localeCompare(b.echeance ?? "9999") || a.ref.localeCompare(b.ref));
+  }
+  return { taches, enCours: actifsT.length, lignes };
+}
+
+/** Données du tableau de bord : bandeau des nouveaux dossiers, tâches, rendez-vous, et pour la vision du cabinet les alertes et l'équipe. */
+export async function tableauDeBord(d: Base, m: Membre, vueCabinet: boolean) {
+  const { jourParis } = await import("./agenda");
+  const { alertesAbsence } = await import("@/lib/taches");
+  const cabinet = vueCabinet && voitTout(m) && m.role !== "SECRETARIAT";
+  const aujourdhui = jourParis();
+  const { taches, enCours, lignes } = await tachesDuJour(d, m, cabinet);
+
+  // Nouveaux dossiers payés, en attente d'acceptation (le bandeau les porte : ils sortent de la liste des tâches).
+  const nouveaux = lignes
+    .filter((l) => l.dos.statut === "PAYE")
+    .map((l) => ({
+      ref: l.dos.reference,
+      client: nomClient(l.cli),
+      procedure: l.dos.procedure,
+      urgence: l.dos.traitement === "URGENCE",
+      avant: l.dos.acceptationAvant,
+      avocat: nomAvocat(l.avocat),
+    }))
+    .sort((a, b) => (a.avant?.getTime() ?? Infinity) - (b.avant?.getTime() ?? Infinity));
+  const liste = taches.filter((t) => t.libelle !== "Accepter le dossier");
+
+  // Rendez-vous du jour du membre (consultations en visio).
+  const rdv = lignes
+    .filter((l) => l.dos.avocatId === m.id && l.dos.rendezVous)
+    .map((l) => ({ ref: l.dos.reference, client: nomClient(l.cli), debut: new Date((l.dos.rendezVous as { debut: string }).debut) }))
+    .filter((r) => !isNaN(r.debut.getTime()) && jourParis(r.debut) === aujourdhui)
+    .sort((a, b) => a.debut.getTime() - b.debut.getTime());
+
+  if (!cabinet) return { cabinet, aujourdhui, enCours, nouveaux, taches: liste, rdv, alertes: null, equipe: null };
+
+  // Vision du cabinet : dossiers payés sans avocat, échéances pendant une absence, charge de l'équipe.
+  const sansAvocat = (
+    await d
+      .select({ ref: dossiers.reference, procedure: dossiers.procedure, cli: { prenom: clients.prenom, nom: clients.nom }, majLe: dossiers.majLe })
+      .from(dossiers)
+      .innerJoin(clients, eq(clients.id, dossiers.clientId))
+      .where(and(eq(dossiers.statut, "PAYE"), sql`${dossiers.avocatId} is null`))
+  ).map((x) => ({ ref: x.ref, procedure: x.procedure, client: nomClient(x.cli), recuLe: x.majLe }));
+
+  const absences = (
+    await d
+      .select({ a: indisponibilites })
+      .from(indisponibilites)
+      .where(gte(indisponibilites.fin, new Date()))
+  ).map(({ a }) => ({ avocatId: a.avocatId, debut: jourParis(a.debut), fin: jourParis(a.fin), motif: a.motif }));
+  const avantDepot = ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE"];
+  const echAvocat = lignes
+    .filter((l) => l.dos.avocatId && l.dos.dateLimite && avantDepot.includes(l.dos.statut))
+    .map((l) => ({ ref: l.dos.reference, client: nomClient(l.cli), procedure: l.dos.procedure, avocatId: l.dos.avocatId!, avocat: nomAvocat(l.avocat), libelle: "Date limite", date: l.dos.dateLimite! }));
+  const parRef = new Map(lignes.map((l) => [l.dos.reference, l]));
+  const ids = lignes.map((l) => l.dos.id);
+  if (ids.length) {
+    const autres = await d
+      .select({ ref: dossiers.reference, type: echeances.type, date: echeances.date })
+      .from(echeances)
+      .innerJoin(dossiers, eq(dossiers.id, echeances.dossierId))
+      .where(and(eq(echeances.faite, false), inArray(echeances.dossierId, ids), gte(echeances.date, aujourdhui), sql`${echeances.type} <> 'DATE_LIMITE'`));
+    const { LIBELLES_ECHEANCE } = await import("./agenda");
+    for (const e of autres) {
+      const l = parRef.get(e.ref);
+      if (l?.dos.avocatId) echAvocat.push({ ref: e.ref, client: nomClient(l.cli), procedure: l.dos.procedure, avocatId: l.dos.avocatId, avocat: nomAvocat(l.avocat), libelle: LIBELLES_ECHEANCE[e.type] ?? e.type, date: e.date });
+    }
+  }
+  const pendantAbsence = alertesAbsence(echAvocat, absences, aujourdhui);
+
+  const membres = await d
+    .select({ id: utilisateurs.id, prenom: utilisateurs.prenom, nom: utilisateurs.nom })
+    .from(utilisateurs)
+    .where(and(eq(utilisateurs.actif, true), inArray(utilisateurs.role, ["ASSOCIE", "AVOCAT"])))
+    .orderBy(utilisateurs.nom);
+  const equipe = membres.map((u) => {
+    const nom = nomAvocat(u);
+    const abs = absences.filter((a) => a.avocatId === u.id).sort((a, b) => a.debut.localeCompare(b.debut))[0] ?? null;
+    return {
+      nom,
+      dossiers: lignes.filter((l) => l.dos.avocatId === u.id).length,
+      urgent: liste.filter((t) => t.niveau === "URGENT" && t.avocat === nom).length,
+      absence: abs,
+    };
+  });
+
+  return { cabinet, aujourdhui, enCours, nouveaux, taches: liste, rdv, alertes: { sansAvocat, pendantAbsence }, equipe };
+}
+
+/** Tableau de bord du secrétariat : dépôts à faire, pièces à relancer, audiences à venir. */
+export async function tableauSecretariat(d: Base) {
+  const { jourParis } = await import("./agenda");
+  const aujourdhui = jourParis();
+  const aDeposer = (
+    await d
+      .select({ dos: dossiers, cli: { prenom: clients.prenom, nom: clients.nom }, avocat: { prenom: utilisateurs.prenom, nom: utilisateurs.nom } })
+      .from(dossiers)
+      .innerJoin(clients, eq(clients.id, dossiers.clientId))
+      .leftJoin(utilisateurs, eq(utilisateurs.id, dossiers.avocatId))
+      .where(and(eq(dossiers.statut, "ACTE_ATTESTE"), sql`${dossiers.transmisSecretariatLe} is not null`))
+  )
+    .map((l) => ({
+      ref: l.dos.reference,
+      client: nomClient(l.cli),
+      procedure: l.dos.procedure,
+      tribunal: l.dos.tribunal,
+      dateLimite: l.dos.dateLimite,
+      transmisLe: l.dos.transmisSecretariatLe,
+      avocat: nomAvocat(l.avocat),
+    }))
+    .sort((a, b) => (a.dateLimite ?? "9999").localeCompare(b.dateLimite ?? "9999"));
+
+  const relances = (
+    await d
+      .select({
+        ref: dossiers.reference,
+        cli: { prenom: clients.prenom, nom: clients.nom },
+        dateLimite: dossiers.dateLimite,
+        n: sql<number>`count(*)`,
+      })
+      .from(pieces)
+      .innerJoin(dossiers, eq(dossiers.id, pieces.dossierId))
+      .innerJoin(clients, eq(clients.id, dossiers.clientId))
+      .where(and(eq(pieces.manquante, true), inArray(dossiers.statut, ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE"])))
+      .groupBy(dossiers.reference, clients.prenom, clients.nom, dossiers.dateLimite)
+  )
+    .map((x) => ({ ref: x.ref, client: nomClient(x.cli), dateLimite: x.dateLimite, n: Number(x.n) }))
+    .sort((a, b) => (a.dateLimite ?? "9999").localeCompare(b.dateLimite ?? "9999"));
+
+  const audiences = await d
+    .select({ ref: dossiers.reference, date: echeances.date, tribunal: dossiers.tribunal, avocat: { prenom: utilisateurs.prenom, nom: utilisateurs.nom } })
+    .from(echeances)
+    .innerJoin(dossiers, eq(dossiers.id, echeances.dossierId))
+    .leftJoin(utilisateurs, eq(utilisateurs.id, dossiers.avocatId))
+    .where(and(eq(echeances.type, "AUDIENCE"), eq(echeances.faite, false), gte(echeances.date, aujourdhui)))
+    .orderBy(echeances.date)
+    .limit(20);
+
+  return { aujourdhui, aDeposer, relances, audiences: audiences.map((a) => ({ ...a, avocat: nomAvocat(a.avocat) })) };
 }

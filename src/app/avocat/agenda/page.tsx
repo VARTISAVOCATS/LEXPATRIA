@@ -6,6 +6,7 @@ import { absencesEquipe, agenda, type ElementAgenda } from "@/lib/serveur/agenda
 import { equipe, MOTIFS_ABSENCE } from "@/lib/serveur/cabinet";
 import { frDate, frDateHeure } from "@/lib/statuts";
 import { ActionForm } from "../Actions";
+import { voitTout } from "@/lib/serveur/dossiers";
 import { Cadre } from "../cadre";
 
 export const metadata = { title: "Agenda — Espace cabinet", robots: { index: false } };
@@ -48,7 +49,7 @@ export default function Agenda() {
     <Cadre actif="agenda">
       {async (m) => {
         const d = await db();
-        const tous = m.role === "ASSOCIE" || m.role === "SECRETARIAT";
+        const tous = voitTout(m);
         const [a, absences, membres] = await Promise.all([agenda(d, m), absencesEquipe(d, m), m.role === "ASSOCIE" ? equipe(d) : Promise.resolve([])]);
         const avocats = (m.role === "ASSOCIE" ? membres : [m]).filter((u) => u.actif && (u.role === "AVOCAT" || u.role === "ASSOCIE"));
         return (

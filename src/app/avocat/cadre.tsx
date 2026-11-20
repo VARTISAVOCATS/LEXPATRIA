@@ -18,7 +18,7 @@ export async function Cadre({ actif, children }: { actif: string; children: (m: 
     [nQuestions, nAvis] = await Promise.all([questionsEnAttente(d, m).then((q) => q.length), compterAvisARendre(d, m)]);
   }
   const onglets: [string, string, string, number?][] = [
-    ["journee", "Ma journée", "/avocat"],
+    ["journee", "Tableau de bord", "/avocat"],
     ["dossiers", "Dossiers", "/avocat/dossiers"],
     ["agenda", "Agenda", "/avocat/agenda"],
     ["questions", "Questions", "/avocat/questions", nQuestions],

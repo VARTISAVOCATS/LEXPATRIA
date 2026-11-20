@@ -44,8 +44,9 @@ export async function accesClient(d: Base, email: string, reference: string): Pr
   return r?.dos ?? null;
 }
 
+/** Accès à tous les dossiers : associés, secrétariat, et membres à qui un associé a donné la vision du cabinet. */
 export function voitTout(m: Membre) {
-  return m.role === "ASSOCIE" || m.role === "SECRETARIAT";
+  return m.role === "ASSOCIE" || m.role === "SECRETARIAT" || !!m.visionCabinet;
 }
 
 export async function accesEquipe(d: Base, m: Membre, reference: string): Promise<Dossier | null> {

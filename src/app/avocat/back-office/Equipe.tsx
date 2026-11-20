@@ -23,6 +23,7 @@ export interface MembreBO {
   avis: number | null;
   validationAssocie: boolean;
   attributionOuverte: boolean;
+  visionCabinet: boolean;
   actif: boolean;
   moi: boolean;
 }
@@ -44,6 +45,7 @@ const VIDE: Omit<MembreBO, "id" | "actif" | "moi"> & { id?: string } = {
   avis: null,
   validationAssocie: false,
   attributionOuverte: true,
+  visionCabinet: false,
 };
 
 const eur = (v: number) => `${v.toLocaleString("fr-FR")} €`;
@@ -113,6 +115,7 @@ export default function Equipe({ membres, acteCabinet }: { membres: MembreBO[]; 
               <small>
                 {u.actif ? (u.attributionOuverte ? "Reçoit des dossiers" : "Attribution suspendue") : "Compte désactivé"}
                 {u.validationAssocie ? " · actes validés par un associé" : ""}
+                {u.qualite === "ASSOCIE" || u.qualite === "SECRETARIAT" ? " · voit tous les dossiers" : u.visionCabinet ? " · vision du cabinet" : " · ses dossiers seulement"}
               </small>
             </div>
             <div className="bo-eq-act">
@@ -264,6 +267,14 @@ export default function Equipe({ membres, acteCabinet }: { membres: MembreBO[]; 
               <input type="checkbox" checked={fiche.validationAssocie} onChange={(e) => maj({ validationAssocie: e.target.checked })} />
               Ses actes sont validés par un associé avant dépôt
             </label>
+            {fiche.qualite === "ASSOCIE" || fiche.qualite === "SECRETARIAT" ? (
+              <p className="note">Vision du cabinet : tous les dossiers sont visibles pour {fiche.qualite === "ASSOCIE" ? "un associé" : "le secrétariat"}.</p>
+            ) : (
+              <label className="chk">
+                <input type="checkbox" checked={fiche.visionCabinet} onChange={(e) => maj({ visionCabinet: e.target.checked })} />
+                Vision du cabinet : voit tous les dossiers, les urgences de l&apos;équipe et les alertes (sinon ses dossiers seulement)
+              </label>
+            )}
           </fieldset>
 
           {erreur && <p className="erreur">{erreur}</p>}

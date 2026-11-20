@@ -104,3 +104,33 @@ export function calculerTaches(
   const rang: Record<Niveau, number> = { URGENT: 0, SEMAINE: 1, SUIVI: 2 };
   return t.sort((a, b) => rang[a.niveau] - rang[b.niveau] || (a.echeance ?? "9999").localeCompare(b.echeance ?? "9999") || a.ref.localeCompare(b.ref));
 }
+
+export interface EcheanceAvocat {
+  ref: string;
+  client: string;
+  procedure: string;
+  avocatId: string;
+  avocat: string | null;
+  libelle: string;
+  date: string; // AAAA-MM-JJ
+}
+export interface Absence {
+  avocatId: string;
+  debut: string; // AAAA-MM-JJ
+  fin: string;
+  motif: string;
+}
+export interface AlerteAbsence extends EcheanceAvocat {
+  absence: Absence;
+}
+
+/** Échéances qui tombent pendant une absence de l'avocat chargé du dossier : à réattribuer ou à anticiper. */
+export function alertesAbsence(echeances: EcheanceAvocat[], absences: Absence[], aujourdhui = jour(new Date())): AlerteAbsence[] {
+  const res: AlerteAbsence[] = [];
+  for (const e of echeances) {
+    if (e.date < aujourdhui) continue;
+    const a = absences.find((x) => x.avocatId === e.avocatId && x.debut <= e.date && e.date <= x.fin);
+    if (a) res.push({ ...e, absence: a });
+  }
+  return res.sort((a, b) => a.date.localeCompare(b.date) || a.ref.localeCompare(b.ref));
+}
