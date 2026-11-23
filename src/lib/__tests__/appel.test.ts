@@ -83,7 +83,7 @@ describe("espace appel", () => {
       dateNotification: "2026-10-05",
       appel: { tribunal: "Melun", numero: "2601234", referencePremiere: parent.reference },
     });
-    expect(t.startsWith("COUR ADMINISTRATIVE D'APPEL DE PARIS")).toBe(true);
+    expect(t.startsWith("À : Monsieur le Président, Mesdames et Messieurs les Conseillers composant la cour administrative d'appel de Paris.")).toBe(true);
     expect(t).toContain("jugement n° 2601234 du tribunal administratif de Melun du 01/10/2026");
   });
 

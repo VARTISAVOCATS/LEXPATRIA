@@ -32,7 +32,7 @@ describe("modèles d'actes", () => {
       pieces: ["Passeport"],
       reference: "D1",
     });
-    expect(t.startsWith("TRIBUNAL ADMINISTRATIF DE MELUN")).toBe(true);
+    expect(t.startsWith("À : Monsieur le Président, Mesdames et Messieurs les Conseillers composant le tribunal administratif de Melun.")).toBe(true);
     expect(t).toContain("10/01/2018");
     expect(t).toContain("article 3-1 de la convention internationale des droits de l'enfant");
     expect(t).toContain("Maître Boualem Kachi");

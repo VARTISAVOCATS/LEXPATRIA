@@ -27,7 +27,9 @@ describe("accord des actes", () => {
     expect(t).not.toMatch(/\(e\)|il\/elle|1a3|conjoint regulier/i);
     expect(t).toContain("depuis un à trois ans");
     expect(t).toContain("3 enfants, scolarisés en France");
-    expect(t.match(/Pièce n° \d/g)).toHaveLength(1);
+    expect(t.match(/Pièce n° \d/g)).toHaveLength(3); // en-tête, rappel des faits et bordereau
+    expect(t).toContain("À l'honneur de vous exposer");
+    expect(t).toContain("À titre subsidiaire");
   });
 });
 
