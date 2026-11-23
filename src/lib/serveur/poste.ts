@@ -274,10 +274,24 @@ async function reduirePhoto(donnees: Buffer): Promise<{ data: Buffer; mime: "ima
  *  tête, pour qu'elle en tire dates, autorité, signataire, motifs, tribunal compétent et éléments de situation.
  *  Transmission encadrée par le contrat du prestataire (sous-traitant, sans entraînement). Les photos sont réduites
  *  avant l'envoi ; plafonds : 20 fichiers et 20 Mo transmis au total (limite d'une demande : 32 Mo après encodage). */
+/**
+ * Pièces médicales : jamais transmises au prestataire d'IA (données de santé, non couvertes par son accord de traitement).
+ * L'avocat les lit lui-même ; l'IA est seulement informée de leur existence.
+ */
+export const estPieceMedicale = (p: { type: string; libelle: string }) =>
+  p.type === "MEDICAL" || /m[ée]dic|sant[ée]|maladie|handicap|invalidit|hospital|hôpital|soins|ordonnance|mdph|psych|th[ée]rap|diagnost|pathologie|grossesse/i.test(p.libelle);
+
 export async function blocsPieces(d: Base, dos: Dossier): Promise<BlocPiece[]> {
   const rangPiece = (t: string) => (t === "DECISION" ? 0 : t === "ENVELOPPE" ? 1 : 2);
-  const liste = (await d.select().from(pieces).where(eq(pieces.dossierId, dos.id)).orderBy(pieces.numero, pieces.creeLe)).sort((a, b) => rangPiece(a.type) - rangPiece(b.type));
+  const toutes = (await d.select().from(pieces).where(eq(pieces.dossierId, dos.id)).orderBy(pieces.numero, pieces.creeLe)).sort((a, b) => rangPiece(a.type) - rangPiece(b.type));
+  const medicales = toutes.filter((p) => estPieceMedicale(p) && ((p.fichiers as FichierStocke[] | null) ?? []).length > 0);
+  const liste = toutes.filter((p) => !estPieceMedicale(p));
   const blocs: BlocPiece[] = [];
+  if (medicales.length)
+    blocs.push({
+      type: "text",
+      text: `PIÈCES MÉDICALES NON TRANSMISES (lues par l'avocat seul) : ${medicales.map((p) => p.libelle).join(" ; ")}. N'en déduis aucun élément de santé : écris « XXX » là où l'état de santé serait utile.`,
+    });
   let total = 0;
   let n = 0;
   for (const p of liste) {

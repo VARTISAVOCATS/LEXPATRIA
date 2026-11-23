@@ -43,8 +43,8 @@ const SECTIONS: SectionJuridique[] = [
     titre: "Intelligence artificielle",
     paragraphes: [
       "Des outils d'intelligence artificielle aident à orienter votre demande, à lire votre décision et vos documents et à préparer les projets d'actes. Aucune décision n'est prise de manière automatisée : chaque acte et chaque avis sont relus et validés par un avocat du cabinet.",
-      "Pour ces seules tâches, votre récit, vos réponses et les documents que vous transmettez sont communiqués au prestataire d'intelligence artificielle. Il agit pour le compte du cabinet en qualité de sous-traitant, est tenu à la confidentialité et ne les utilise pas pour entraîner ses modèles. Il ne les conserve que pour la durée limitée prévue au contrat.",
-      "Le prestataire est établi aux États-Unis ; ce transfert est encadré par les clauses contractuelles types de la Commission européenne.",
+      "Pour ces seules tâches, votre récit, vos réponses et vos documents, à l'exception des documents médicaux, sont communiqués au prestataire d'intelligence artificielle, Anthropic Ireland Limited. Il agit pour le compte du cabinet en qualité de sous-traitant, est tenu à la confidentialité et ne peut pas les utiliser pour entraîner ses modèles.",
+      "Les données peuvent être traitées aux États-Unis ; ce transfert est encadré par les clauses contractuelles types de la Commission européenne.",
     ],
   },
   {
@@ -56,7 +56,7 @@ const SECTIONS: SectionJuridique[] = [
         "OVH SAS (France) : hébergement de la plateforme et des pièces.",
         "Stripe Payments Europe (Irlande) : paiement en ligne.",
         "Brevo (France) : envoi des e-mails.",
-        "Anthropic (États-Unis) : outils d'intelligence artificielle.",
+        "Anthropic Ireland Limited (traitement possible aux États-Unis) : outils d'intelligence artificielle.",
         "Microsoft (Union européenne) : prise de rendez-vous et visioconférence pour les consultations.",
         "Pennylane (France) : facturation.",
       ],

@@ -33,3 +33,14 @@ describe("accord des actes", () => {
   });
 });
 
+
+describe("pièces médicales", () => {
+  it("ne sont jamais transmises à l'IA", async () => {
+    const { estPieceMedicale } = await import("@/lib/serveur/poste");
+    expect(estPieceMedicale({ type: "DEMANDEE", libelle: "Certificat médical du néphrologue" })).toBe(true);
+    expect(estPieceMedicale({ type: "AUTRE", libelle: "Carte mobilité inclusion (handicap)" })).toBe(true);
+    expect(estPieceMedicale({ type: "MEDICAL", libelle: "Pièce" })).toBe(true);
+    expect(estPieceMedicale({ type: "SALAIRES", libelle: "Trois derniers bulletins de salaire" })).toBe(false);
+    expect(estPieceMedicale({ type: "DECISION", libelle: "La décision contestée (toutes les pages)" })).toBe(false);
+  });
+});
