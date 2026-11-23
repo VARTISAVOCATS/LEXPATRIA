@@ -257,6 +257,11 @@ export async function testerConnexion(d: Base, service: string, par: string): Pr
         res = { ok: true, message: `Identifiants acceptés par Maileva (${c.bac ? "environnement de test : aucun courrier réel" : "production"}).` };
         break;
       }
+      case "piste": {
+        const { testerPiste } = await import("./integrations/jurisprudence");
+        res = await testerPiste();
+        break;
+      }
       case "autre": {
         const url = await v("AUTRE_API_URL");
         if (!url || !/^https:\/\//.test(url)) throw new Error("Adresse HTTPS absente.");

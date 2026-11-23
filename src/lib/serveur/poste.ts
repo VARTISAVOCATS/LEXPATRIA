@@ -317,7 +317,7 @@ const REDACTION_ACTE = [
   "Suis le plan et les intitulés du modèle de départ, qui reprennent l'usage du cabinet. Pour une requête : en-tête « À / POUR / CONTRE », puis « À l'honneur de vous exposer » ; dans le rappel des faits, chaque élément est suivi de la pièce qui l'établit, sur sa propre ligne (« Pièce n° 4 : Titre de séjour de l'épouse »), avec une numérotation identique à celle du bordereau, et le récit se clôt par « C'est dans cet état que se présente cette affaire. » ; la discussion examine chaque décision séparément (refus de séjour, obligation de quitter le territoire, pays de renvoi), en A. légalité externe puis B. légalité interne, et chaque moyen est rédigé en deux temps : « En droit » (le texte cité entre guillemets) puis « En l'espèce » (son application aux faits et aux pièces) ; les conclusions distinguent « À titre principal », « À titre subsidiaire » et « En tout état de cause ».",
   "L'acte doit être complet de bout en bout : en-tête, faits et procédure, discussion avec tous les moyens, « PAR CES MOTIFS » suivi de toutes les demandes, signature, bordereau des pièces. Ne t'arrête jamais avant les conclusions.",
   "Conclusions : complètes et adaptées à la procédure (annulation, injonction de délivrer un titre ou de réexaminer avec délai et astreinte, frais de l'article L. 761-1 du code de justice administrative).",
-  "Règles absolues : n'invente aucun fait, aucune date, aucun nom ; ne cite aucune décision de justice (numéro, date, juridiction) sauf si elle figure dans le modèle de départ ou dans un acte de référence fourni ; écris « XXX » partout où une information manque. Accorde tout le texte au genre de la personne d'après la civilité (jamais « il/elle » ni « né(e) »). Style juridique sobre, phrases complètes, sans formules creuses. Renvoie uniquement le texte de l'acte, sans commentaire.",
+  "Règles absolues : n'invente aucun fait, aucune date, aucun nom ; ne cite aucune décision de justice (numéro, date, juridiction) sauf si elle figure dans la note de recherche, dans le modèle de départ ou dans un acte de référence fourni ; écris « XXX » partout où une information manque. Accorde tout le texte au genre de la personne d'après la civilité (jamais « il/elle » ni « né(e) »). Style juridique sobre, phrases complètes, sans formules creuses. Renvoie uniquement le texte de l'acte, sans commentaire.",
 ].join(" ");
 
 export async function dernierActe(d: Base, dossierId: string) {
@@ -335,6 +335,8 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const cle = await valeur("ANTHROPIC_API_KEY");
   // Actes déjà rédigés par le cabinet pour ce type d'acte (back office) : exemples de plan, de style et de moyens.
   const references = cle ? await referencesPour(d, modele) : [];
+  let sources: { titre: string; lien: string }[] = [];
+  let appelsRecherche = 0;
   if (cle) {
     const joints = await blocsPieces(d, dos);
     const client = new Anthropic({ apiKey: cle });
@@ -342,12 +344,26 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
     const systeme =
           REDACTION_ACTE +
           (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction, son plan et ses intitulés ; développe les moyens et remplace les « XXX » que les éléments du dossier permettent de compléter." : "") +
+          " Si une NOTE DE RECHERCHE est fournie, appuie chaque moyen sur la jurisprudence qu'elle retient, en reprenant exactement ses références (juridiction, date, numéro), et cite les articles dans la rédaction qu'elle a vérifiée ; elle prévaut sur le modèle de départ en cas de numérotation différente." +
           (references.length
             ? " Tu reçois aussi des ACTES DE RÉFÉRENCE déjà rédigés par le cabinet pour ce type d'acte : inspire-toi de leur plan, de leur style, de leurs formulations et des moyens qui conviennent à ce dossier. N'en reprends jamais les faits, les noms, les dates, les lieux ni les références propres à l'ancienne affaire."
             : "");
+    // Recherche de jurisprudence et vérification des textes (Légifrance, Judilibre) avant la rédaction, si PISTE est branché.
+    const { rechercherPourActe } = await import("./integrations/jurisprudence");
+    const recherche = await rechercherPourActe(
+      client,
+      modeleIA,
+      `Acte à préparer : ${LIBELLES_MODELE[modele] ?? modele}. Procédure : ${dos.procedure}.\nQualification : ${JSON.stringify((await qualificationDossier(d, dos)).pourIA)}\nAnalyse de la décision et du dossier : ${JSON.stringify(dos.analyse ?? null)}\nSituation (sans données d'identité) : ${JSON.stringify({ reponses: x.reponses, algerien: x.algerien, dates: { decision: x.dateDecision, notification: x.dateNotification } })}`,
+    ).catch((e) => {
+      console.error("Recherche de jurisprudence en échec :", e);
+      return null;
+    });
+    sources = recherche?.sources ?? [];
+    appelsRecherche = recherche?.appels ?? 0;
     const demande =
               `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, identite: { prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, nationalite: x.nationalite, adresse: x.adresse }, prefecture: x.prefecture, tribunalEstime: x.prefecture ? tribunalCompetent(x.prefecture) : null, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
-              references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join("");
+              references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join("") +
+              (recherche ? `\n\nNOTE DE RECHERCHE (jurisprudence et textes vérifiés sur Légifrance et Judilibre) :\n${recherche.note}` : "");
     // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
     const rep = await client.messages
       .stream({
@@ -381,9 +397,9 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   }
   const precedent = await dernierActe(d, dos.id);
   const version = precedent && precedent.type === modele ? precedent.version + 1 : 1;
-  await d.insert(actes).values({ dossierId: dos.id, type: modele, version, contenu: projet, texteIA: projet, auteurId: m.id });
+  await d.insert(actes).values({ dossierId: dos.id, type: modele, version, contenu: projet, texteIA: projet, sources: sources.length ? sources : null, auteurId: m.id });
   if (rang(dos.statut) < rang("EN_REDACTION")) await d.update(dossiers).set({ statut: "EN_REDACTION", majLe: new Date() }).where(eq(dossiers.id, dos.id));
-  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PROJET_GENERE", details: { modele, version, source: cle ? "IA" : "MODELE", modeleCabinet: !!duCabinet, references: references.length } });
+  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PROJET_GENERE", details: { modele, version, source: cle ? "IA" : "MODELE", modeleCabinet: !!duCabinet, references: references.length, recherche: appelsRecherche, sources: sources.length } });
   return { ok: true };
 }
 
@@ -401,6 +417,7 @@ export async function enregistrerVersion(d: Base, m: Membre, dos: Dossier, conte
     version: precedent.version + 1,
     contenu: texte,
     texteIA: base,
+    sources: precedent.sources,
     auteurId: m.id,
     motsModifies: motsModifies(base, texte),
     tempsRevueS: precedent.tempsRevueS + Math.max(0, Math.min(Math.round(secondes), 4 * 3600)),

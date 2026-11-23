@@ -25,6 +25,7 @@ interface ActeV {
   contenu: string;
   motsModifies: number;
   tempsRevueS: number;
+  sources: { titre: string; lien: string }[];
 }
 
 export interface ProprietesPoste {
@@ -248,6 +249,20 @@ export default function PosteTravail(p: ProprietesPoste) {
                     Ouvrir dans Word
                   </a>
                 </div>
+                {p.acte.sources.length > 0 && (
+                  <details className="pt-sources">
+                    <summary>Jurisprudence et textes consultés par l&apos;IA · {p.acte.sources.length} (à vérifier avant dépôt)</summary>
+                    <ul>
+                      {p.acte.sources.map((x) => (
+                        <li key={x.lien}>
+                          <a href={x.lien} target="_blank" rel="noopener noreferrer">
+                            {x.titre}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
                 {apercu ? (
                   <Surligne texte={texte} />
                 ) : (

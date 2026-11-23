@@ -122,6 +122,18 @@ export const CONNECTEURS: Connecteur[] = [
     test: true,
   },
   {
+    id: "piste",
+    nom: "Légifrance et Judilibre — jurisprudence",
+    usage: "Avant chaque projet d'acte, l'IA recherche la jurisprudence pertinente (Conseil d'État, cours administratives d'appel, Cour de cassation) et vérifie le texte en vigueur des articles cités. Seules des requêtes juridiques sont envoyées, jamais de donnée du client.",
+    ou: "piste.gouv.fr : créer une application, l'abonner aux API « Légifrance » et « JUDILIBRE » (accepter leurs conditions), puis copier l'identifiant et le secret OAuth de l'application.",
+    champs: [
+      { nom: "PISTE_CLIENT_ID", libelle: "Identifiant OAuth (client_id)", secret: false, requis: true },
+      { nom: "PISTE_CLIENT_SECRET", libelle: "Secret OAuth (client_secret)", secret: true, requis: true },
+      { nom: "PISTE_ENVIRONNEMENT", libelle: "Environnement : « production » pour les données réelles (sinon bac à sable)", secret: false },
+    ],
+    test: true,
+  },
+  {
     id: "autre",
     nom: "Autre API",
     usage: "Tout autre service que le cabinet souhaite brancher (l'agent de développement s'en sert pour l'intégrer).",

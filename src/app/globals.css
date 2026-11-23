@@ -289,6 +289,10 @@ ul.pieces .statut { color: var(--ink); font-weight: 600; }
 @media (max-width: 900px) { .pt-visu { width: 100vw; } }
 .pt-vigilance li.fait span { text-decoration: line-through; color: var(--ink-2); }
 
+.pt-sources { margin: 8px 0; font-size: 13.5px; }
+.pt-sources summary { cursor: pointer; color: var(--ai, #24557A); font-weight: 600; }
+.pt-sources ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 3px; }
+
 /* Tableau de bord */
 .tb { display: grid; gap: 18px; }
 .tb-tete { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }

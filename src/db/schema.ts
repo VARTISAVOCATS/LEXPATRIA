@@ -204,6 +204,7 @@ export const actes = pgTable("actes", {
   version: integer("version").notNull().default(1),
   contenu: text("contenu").notNull(),
   texteIA: text("texte_ia"), // projet tel que proposé par l'IA (base du compte des mots modifiés)
+  sources: jsonb("sources"), // jurisprudence et articles consultés par l'IA (Légifrance, Judilibre) : [{ titre, lien }]
   auteurId: text("auteur_id"),
   motsModifies: integer("mots_modifies").notNull().default(0),
   tempsRevueS: integer("temps_revue_s").notNull().default(0),
