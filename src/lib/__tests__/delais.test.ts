@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ECHEANCIER_DEFAUT } from "@/lib/echeancier";
 import { ajouterHeuresOuvrees, estFerie, estOuvre, jour, joursOuvresEntre } from "../calendrier";
-import { evaluerDelai } from "../delais";
+import { dateLimite, evaluerDelai } from "../delais";
 import { controlerTexte } from "../deontologie";
 import { formatEuros, troisFois, TARIFS_DEFAUT } from "../procedures";
 
@@ -156,5 +156,13 @@ describe("traductions", () => {
   it("aucune traduction n'emploie de mot interdit", () => {
     const interdits = /\b(free|guarantee[ds]?|specialist|gratis|gratuit[oa]|garantizad[oa]|especialista)\b|مجان|مضمون|متخصص/i;
     for (const d of [ar, en, es] as Record<string, string>[]) expect(Object.values(d).filter((v) => interdits.test(v))).toEqual([]);
+  });
+});
+
+describe("OQTF après rejet de l'asile", () => {
+  it("suit le délai de droit commun d'un mois (régime du 15 juillet 2024)", () => {
+    const ref = jour(2026, 3, 10);
+    expect(iso(dateLimite({ procedure: "OQTF", situationOQTF: "LIBRE_APRES_ASILE", dateReference: ref, aujourdhui: ref }))).toBe(iso(dateLimite({ procedure: "OQTF", situationOQTF: "LIBRE", dateReference: ref, aujourdhui: ref })));
+    expect(iso(dateLimite({ procedure: "OQTF", situationOQTF: "ASSIGNE", dateReference: ref, aujourdhui: ref }))).toBe("2026-03-17");
   });
 });

@@ -13,7 +13,6 @@ export interface ParametresDelais {
   oqtfAssigneJours: number; // 7
   oqtfDetentionJours: number; // 7
   oqtfRetentionHeures: number; // 48
-  oqtfApresAsileJours: number; // 7, délai de prudence
   refusTitreMois: number; // 2
   visaRecoursJours: number; // 30
   naturalisationMois: number; // 2
@@ -31,7 +30,6 @@ export const DELAIS_DEFAUT: ParametresDelais = {
   oqtfAssigneJours: 7,
   oqtfDetentionJours: 7,
   oqtfRetentionHeures: 48,
-  oqtfApresAsileJours: 7,
   refusTitreMois: 2,
   visaRecoursJours: 30,
   naturalisationMois: 2,
@@ -90,10 +88,12 @@ export function dateLimite(e: EntreeDelai, p: ParametresDelais = DELAIS_DEFAUT):
           return ajouterJours(ref, p.oqtfDetentionJours);
         case "RETENTION":
           return ajouterJours(ref, Math.ceil(p.oqtfRetentionHeures / 24));
+        // Depuis le 15 juillet 2024 (loi du 26 janvier 2024), l'OQTF après rejet de l'asile suit le droit commun
+        // (article L. 911-1 du CESEDA) : un mois, sauf mesure restrictive de liberté (assignation, détention : 7 jours ; rétention : 48 heures).
         case "LIBRE_APRES_ASILE":
-          return ajouterJours(ref, p.oqtfApresAsileJours);
+          return ajouterMois(ref, p.oqtfLibreMois);
         case "INCONNUE":
-          return ajouterJours(ref, Math.min(p.oqtfAssigneJours, p.oqtfApresAsileJours));
+          return ajouterJours(ref, p.oqtfAssigneJours); // situation inconnue : délai le plus court hors rétention, par prudence
       }
     }
     // falls through (inatteignable)

@@ -203,7 +203,7 @@ export const CAS_DEFAUT: Cas[] = [
     signes:
       "OQTF prise après le rejet définitif de la demande d'asile par l'OFPRA ou la CNDA (L. 611-1, 4°). Récit : « ma demande d'asile a été rejetée », « la CNDA a rejeté mon recours et j'ai reçu une OQTF », « débouté de l'asile ».",
     juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
-    delai: "Un mois à compter de la notification hors mesure restrictive de liberté selon le régime du 15 juillet 2024 ; la plateforme retient par prudence un délai de sept jours, que l'avocat vérifie.",
+    delai: "Un mois à compter de la notification (article L. 911-1 du CESEDA, régime en vigueur depuis le 15 juillet 2024) ; sept jours en cas d'assignation à résidence ou de détention et 48 heures en rétention (articles L. 921-1 et L. 921-2).",
     refere: null,
     demarche: true,
     demanderUrgence: true,
