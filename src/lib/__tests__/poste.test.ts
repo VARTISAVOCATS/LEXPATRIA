@@ -123,3 +123,30 @@ describe("adresses des recours préalables", () => {
     expect(genererModele("RAPO_NATURALISATION", { ...base, procedure: "NATURALISATION" })).toContain("12 rue Francis-Le-Carval\n44404 Rezé Cedex");
   });
 });
+
+describe("analyse de secours", () => {
+  it("produit une analyse de secours quand l'IA est indisponible, pour que l'avocat puisse trancher et attester", async () => {
+    const { vi } = await import("vitest");
+    const { viderCacheConnexions } = await import("@/lib/serveur/connexions");
+    const d = await db();
+    const [kachi] = await d.select().from(schema.utilisateurs).where(eq(schema.utilisateurs.email, "boualem.kachi@exemple.invalid"));
+    const [c] = await d.insert(schema.clients).values({ code: await prochainCodeClient(d), email: "secours@exemple.invalid", prenom: "Nadia", nom: "Test", civilite: "MADAME" }).returning();
+    const [dos] = await d
+      .insert(schema.dossiers)
+      .values({ reference: await prochaineReference(d), clientId: c.id, procedure: "OQTF", statut: "PAYE", avocatId: kachi.id, dateLimite: "2099-01-01" })
+      .returning();
+    process.env.ANTHROPIC_API_KEY = "essai";
+    viderCacheConnexions();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ type: "error", error: { type: "authentication_error", message: "invalid x-api-key" } }), { status: 401, headers: { "content-type": "application/json" } })));
+    try {
+      expect((await analyser(d, kachi, dos)).ok).toBe(true);
+      const a = (await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id)))[0].analyse as Analyse;
+      expect(a.source).toBe("SECOURS");
+      expect(a.vigilance.length).toBeGreaterThan(0);
+    } finally {
+      vi.unstubAllGlobals();
+      delete process.env.ANTHROPIC_API_KEY;
+      viderCacheConnexions();
+    }
+  });
+});

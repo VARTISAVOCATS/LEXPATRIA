@@ -15,7 +15,7 @@ interface AnalyseV {
   appuis: string[];
   strategie: string;
   vigilance: Point[];
-  source: "IA" | "SIMULATION";
+  source: "IA" | "SIMULATION" | "SECOURS";
   le: string;
 }
 interface ActeV {
@@ -154,7 +154,15 @@ export default function PosteTravail(p: ProprietesPoste) {
             <div className="cx-tete">
               <h2>Avis de l&apos;agent juridique</h2>
               <div className="cx-badges">
-                <span className="pill ai">{p.analyse?.source === "IA" ? "Avis de l'IA · pour vous, non transmis" : p.analyse ? "Analyse d'essai (sans clé IA)" : "Pour vous, non transmise au client"}</span>
+                <span className={p.analyse?.source === "SECOURS" ? "pill warn" : "pill ai"}>
+                  {p.analyse?.source === "IA"
+                    ? "Avis de l'IA · pour vous, non transmis"
+                    : p.analyse?.source === "SECOURS"
+                      ? "IA indisponible : analyse de secours · relancez-la plus tard"
+                      : p.analyse
+                        ? "Analyse d'essai (sans clé IA)"
+                        : "Pour vous, non transmise au client"}
+                </span>
                 <button className="btn sm ghost" disabled={!!envoi} onClick={() => agir("analyser")}>
                   {envoi === "analyser" ? "Analyse…" : p.analyse ? "Régénérer" : "Lancer l'analyse"}
                 </button>

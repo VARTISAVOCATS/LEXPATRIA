@@ -93,7 +93,8 @@ export interface Analyse {
   appuis: string[];
   strategie: string;
   vigilance: PointVigilance[];
-  source: "IA" | "SIMULATION";
+  /** IA ; SIMULATION sans clé ; SECOURS quand l'IA est indisponible (panne, clé refusée) : l'avocat peut trancher et attester. */
+  source: "IA" | "SIMULATION" | "SECOURS";
   le: string;
 }
 
@@ -199,6 +200,7 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
       dates: { decision: x.dateDecision, notification: x.dateNotification, limiteEstimee: x.dateLimite },
       pieces: x.pieces,
     };
+    // IA indisponible (surcharge, clé refusée, coupure réseau) : analyse de secours, pour qu'une panne extérieure ne bloque pas un dépôt.
     const rep = await new Anthropic({ apiKey: cle }).messages
       .stream({
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
@@ -210,9 +212,16 @@ export async function analyser(d: Base, m: Membre, dos: Dossier): Promise<Result
         { role: "user", content: [...(await blocsPieces(d, dos)), { type: "text", text: `ÉLÉMENTS DU DOSSIER : ${JSON.stringify(contexte)}` }] },
       ],
     })
-      .finalMessage();
+      .finalMessage()
+      .catch((e: unknown) => {
+        console.error("Analyse IA indisponible :", e instanceof Error ? e.message : e);
+        return null;
+      });
     // Réponse illisible (JSON tronqué ou mal formé) : analyse de secours plutôt qu'un échec.
-    try {
+    if (!rep) {
+      base = analyseSimulee(dos, x);
+      source = "SECOURS";
+    } else try {
       base = AnalyseIA.parse(extraireJson(rep.content));
       source = "IA";
     } catch (e) {
