@@ -33,24 +33,27 @@ export async function paquetTelerecours(d: Base, dos: Dossier): Promise<{ ok: tr
   const zip = new JSZip();
   const libelle = LIBELLES_MODELE[acte.type as CodeModele] ?? acte.type;
   zip.file(`Requete - ${dos.reference}.pdf`, await actePdf(acte.contenu, libelle));
+  // Même ordre que le bordereau de l'acte : la décision attaquée en pièce n° 1, puis les autres pièces.
+  const estDecision = (p: { type: string; libelle: string }) => p.type === "DECISION" || /d[ée]cision (attaqu|contest)/i.test(p.libelle);
   const lesPieces = (await d.select().from(pieces).where(and(eq(pieces.dossierId, dos.id), eq(pieces.manquante, false)))).sort(
-    (a, b) => (a.numero ?? 999) - (b.numero ?? 999) || a.creeLe.getTime() - b.creeLe.getTime(),
+    (a, b) => Number(estDecision(b)) - Number(estDecision(a)) || (a.numero ?? 999) - (b.numero ?? 999) || a.creeLe.getTime() - b.creeLe.getTime(),
   );
+  // Numérotation identique au bordereau de l'acte : la décision attaquée en pièce n° 1, puis chaque pièce dans l'ordre,
+  // y compris celles qu'il faut ajouter à la main (fichier absent ou non convertible), pour que les numéros ne se décalent pas.
   const ignores: string[] = [];
-  let n = 0;
-  for (const p of lesPieces) {
-    const fichiers = (p.fichiers as FichierStocke[]) ?? [];
-    if (!fichiers.length) continue;
-    // Un fichier illisible (format non convertible, fichier manquant) n'empêche pas de préparer le reste : il est signalé.
-    const contenus = await Promise.all(fichiers.map(async (f) => ({ mime: f.mime, donnees: new Uint8Array(await lire(f.cle)) }))).catch(() => null);
+  const decision = lesPieces.find(estDecision);
+  const autres = lesPieces.filter((p) => p !== decision);
+  const ajouter = async (n: number, p: (typeof lesPieces)[number] | undefined, libelle: string) => {
+    const fichiers = ((p?.fichiers as FichierStocke[]) ?? []);
+    const contenus = fichiers.length
+      ? await Promise.all(fichiers.map(async (f) => ({ mime: f.mime, donnees: new Uint8Array(await lire(f.cle)) }))).catch(() => null)
+      : null;
     const pdf = contenus ? await assembler(contenus).catch(() => null) : null;
-    if (!pdf) {
-      ignores.push(p.libelle);
-      continue;
-    }
-    n++;
-    zip.file(`Pieces/${n} - ${nomPropre(p.libelle)}.pdf`, pdf);
-  }
+    if (pdf) zip.file(`Pieces/${n} - ${nomPropre(libelle)}.pdf`, pdf);
+    else ignores.push(`Pièce n° ${n} : ${libelle}`);
+  };
+  await ajouter(1, decision, "Décision attaquée");
+  for (const [i, p] of autres.entries()) await ajouter(i + 2, p, p.libelle);
   if (ignores.length)
     zip.file("A LIRE - pieces a ajouter a la main.txt", `Pièces non converties en PDF, à ajouter à la main dans Télérecours :\r\n${ignores.map((x) => `- ${x}`).join("\r\n")}\r\n`);
   return { ok: true, zip: await zip.generateAsync({ type: "uint8array" }), nom: `Telerecours-${dos.reference}.zip`, ignores };

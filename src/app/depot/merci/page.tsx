@@ -9,10 +9,7 @@ import { db, schema } from "@/db";
 import { marquerPaye } from "@/lib/serveur/paiement";
 import { stripe } from "@/lib/stripe";
 import { verifier } from "@/lib/jeton";
-import { memeFamille, type CodeProcedure } from "@/lib/procedures";
-import { casDuTriage } from "@/lib/cas";
-import { lireParametre } from "@/lib/serveur/parametres";
-import type { Reponses } from "@/lib/questionnaire";
+import { donneesCollecte } from "@/lib/serveur/collecte";
 import Collecte from "./Collecte";
 
 export const metadata = { title: "Paiement validé — LEXPATRIA Avocats", robots: { index: false, follow: false } };
@@ -33,16 +30,9 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
     }
   }
   const [frais] = dos ? await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id)) : [];
-  // Cas reconnu à l'orientation (référentiel ou qualification libre) : questions et pièces propres à la situation.
-  const casDossier = frais ? casDuTriage(await lireParametre(d, "cas"), frais.triage as { cas?: string; casLibre?: unknown } | null) : undefined;
-  const cas = casDossier && memeFamille(casDossier.procedure, frais?.procedure) ? casDossier : undefined;
-  const qualif = (frais?.qualification ?? {}) as { prefecture?: string | null };
-  const [client] = frais ? await d.select().from(schema.clients).where(eq(schema.clients.id, frais.clientId)) : [];
-  const deposees = frais
-    ? (await d.select({ type: schema.pieces.type, fichiers: schema.pieces.fichiers }).from(schema.pieces).where(eq(schema.pieces.dossierId, frais.id)))
-        .filter((x) => Array.isArray(x.fichiers) && x.fichiers.length > 0)
-        .map((x) => x.type)
-    : [];
+  // Les éléments du dossier (faits, réponses, pièces) ne sont servis qu'avec le jeton : la référence seule ne donne accès à rien.
+  const jetonOk = !!(frais && p.suite && verifier(p.suite) === frais.id);
+  const collecte = jetonOk && frais ? await donneesCollecte(d, frais.id) : null;
   const [avocat] = frais?.avocatId ? await d.select().from(schema.utilisateurs).where(eq(schema.utilisateurs.id, frais.avocatId)) : [];
   const paye = frais && frais.statut !== "PRE_DOSSIER" && frais.statut !== "ATTENTE_PROCHE";
   const urgent = frais?.traitement === "URGENCE";
@@ -84,22 +74,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
             {(frais.avisPrealable || frais.procedure === "DIAGNOSTIC") && <p>{t("Vous recevrez l'avis écrit dans votre espace sous 48 heures ouvrées.")}</p>}
             {(
               <>
-            <Collecte
-              reference={frais.reference}
-              jetonServeur={p.suite && verifier(p.suite) === frais.id ? p.suite : null}
-              contexte={{
-                procedure: frais.procedure as CodeProcedure,
-                algerien: client?.algerien ?? null,
-                avisOuDiagnostic: frais.avisPrealable || frais.procedure === "DIAGNOSTIC",
-                cas: cas?.code,
-                pieces: cas?.pieces.length ? cas.pieces : undefined,
-                implicite: !!cas?.implicite,
-                prefectureConnue: !!qualif.prefecture,
-              }}
-              reponsesInitiales={((frais.qualification ?? {}) as { reponses?: Reponses }).reponses ?? {}}
-              faits={((frais.triage ?? {}) as { faits?: string[] }).faits ?? []}
-              deposees={deposees}
-            />
+            <Collecte reference={frais.reference} jetonServeur={jetonOk ? p.suite! : null} donnees={collecte} />
               </>
             )}
             {!frais.avisPrealable && frais.procedure !== "DIAGNOSTIC" && (

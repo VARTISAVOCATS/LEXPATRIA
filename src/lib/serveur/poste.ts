@@ -67,7 +67,8 @@ export async function donneesActe(d: Base, dos: Dossier): Promise<DonneesActe> {
     reference: dos.reference,
     adresse: cli ? adresseEnLignes(cli).join(", ") || null : null,
     dateNaissance: cli?.dateNaissance ?? null,
-    nationalite: cli?.nationalite ?? null,
+    // Le parcours ne demande la nationalité qu'aux ressortissants susceptibles de relever de l'accord franco-algérien.
+    nationalite: cli?.nationalite ?? (cli?.algerien ? "algérienne" : null),
     appel: await infoAppel(d, dos),
   };
 }

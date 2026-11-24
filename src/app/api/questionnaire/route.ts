@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db, schema } from "@/db";
 import { verifier } from "@/lib/jeton";
 import { COLLECTE_OUVERTE, type Statut } from "@/lib/statuts";
+import { donneesCollecte } from "@/lib/serveur/collecte";
 
 export const runtime = "nodejs";
 
@@ -34,4 +35,15 @@ export async function POST(req: Request) {
     })
     .where(eq(schema.dossiers.id, id));
   return NextResponse.json({ ok: true });
+}
+
+/** Données de la collecte après paiement, pour le seul détenteur du jeton du dossier. */
+export async function GET(req: Request) {
+  const id = verifier(new URL(req.url).searchParams.get("jeton") ?? "");
+  if (!id) return NextResponse.json({ erreur: "Session expirée." }, { status: 401 });
+  const d = await db();
+  const [dos] = await d.select({ statut: schema.dossiers.statut }).from(schema.dossiers).where(eq(schema.dossiers.id, id));
+  if (!dos || !COLLECTE_OUVERTE.includes(dos.statut as Statut)) return NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
+  const x = await donneesCollecte(d, id);
+  return x ? NextResponse.json(x) : NextResponse.json({ erreur: "Dossier introuvable." }, { status: 404 });
 }

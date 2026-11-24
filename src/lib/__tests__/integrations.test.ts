@@ -87,12 +87,14 @@ describe("Télérecours", () => {
     await attester(acte.id, kachi.id, contenu);
     const piece = await PDFDocument.create();
     piece.addPage();
+    // Pièce transmise avant la décision : la décision reste la pièce n° 1, comme au bordereau de l'acte.
+    await ajouterPiece(d, dos, "Passeport", [{ nom: "passeport.pdf", mime: "application/pdf", donnees: Buffer.from(await piece.save()) }], "CLIENT");
     await ajouterPiece(d, dos, "Décision attaquée", [{ nom: "decision.pdf", mime: "application/pdf", donnees: Buffer.from(await piece.save()) }], "CLIENT");
     const r = await paquetTelerecours(d, dos);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     const zip = await JSZip.loadAsync(r.zip);
-    expect(Object.keys(zip.files).sort()).toEqual(["Pieces/", "Pieces/1 - Decision attaquee.pdf", `Requete - ${dos.reference}.pdf`]);
+    expect(Object.keys(zip.files).sort()).toEqual(["Pieces/", "Pieces/1 - Decision attaquee.pdf", "Pieces/2 - Passeport.pdf", `Requete - ${dos.reference}.pdf`]);
     expect((await enregistrerNumero(d, kachi, dos, "2601234", "2026-10-22")).ok).toBe(true);
     const apres = await relire(dos.id);
     expect(apres.statut).toBe("ENREGISTRE");

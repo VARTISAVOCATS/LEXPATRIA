@@ -39,7 +39,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const langue = await langueServeur();
   const contenus = await contenusPublics(await db());
   return (
-    <html lang={langue} dir={sens(langue)}>
+    <html lang={langue} dir={sens(langue)} suppressHydrationWarning>
       <head>
         {/* L'interface distingue ordinateur et téléphone (libellés « Importer » / « Photographier »). */}
         <script

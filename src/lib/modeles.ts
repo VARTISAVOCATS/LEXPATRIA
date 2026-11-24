@@ -233,6 +233,9 @@ function objetDecision(d: DonneesActe) {
   }
 }
 
+/** Titre à délivrer : certificat de résidence pour un ressortissant algérien (accord franco-algérien du 27 décembre 1968). */
+const titreSejour = (d: DonneesActe) => (d.algerien ? "un certificat de résidence" : "un titre de séjour");
+
 function bordereau(d: DonneesActe, premiere: string | null = "Décision attaquée") {
   const liste = [...(premiere ? [premiere] : []), ...d.pieces.filter((p) => !/d[ée]cision (attaqu|contest)/i.test(p))];
   return `BORDEREAU DES PIÈCES\n${liste.map((p, i) => `Pièce n° ${i + 1} : ${p}`).join("\n")}`;
@@ -445,7 +448,7 @@ function conclusionsAnnulationCabinet(d: DonneesActe, oqtf: boolean, persistant 
     persistant,
     principal: [
       `Annuler la décision du ${fr(d.dateDecision)} du ${lePrefet} ${objetAttaque(d, oqtf)}`,
-      `Enjoindre au ${lePrefet} de délivrer à ${nomCourt(d)} un titre de séjour portant la mention « ${MANQUANT} » dans un délai d'un mois à compter de la notification du jugement`,
+      `Enjoindre au ${lePrefet} de délivrer à ${nomCourt(d)} ${titreSejour(d)} portant la mention « ${MANQUANT} » dans un délai d'un mois à compter de la notification du jugement`,
     ],
     subsidiaire: [`Enjoindre au ${lePrefet} de réexaminer sa situation dans un délai d'un mois à compter de la notification du jugement, en lui délivrant dans cette attente une autorisation provisoire de séjour`],
     astreinte: "le tout sous astreinte de 100 euros par jour de retard ;",
@@ -690,7 +693,7 @@ ${conclusionsActe({
   principal: [
     `Annuler le jugement n° ${v(a?.numero)} du tribunal administratif de ${tribunal} du ${fr(d.dateDecision)}`,
     `Annuler la décision du ${lePrefet} du ${MANQUANT}`,
-    `Enjoindre au ${lePrefet} de délivrer à ${nom} un titre de séjour portant la mention « ${MANQUANT} » dans un délai d'un mois à compter de la notification de l'arrêt`,
+    `Enjoindre au ${lePrefet} de délivrer à ${nom} ${titreSejour(d)} portant la mention « ${MANQUANT} » dans un délai d'un mois à compter de la notification de l'arrêt`,
   ],
   subsidiaire: [`Enjoindre au ${lePrefet} de réexaminer sa situation dans un délai d'un mois à compter de la notification de l'arrêt, en lui délivrant dans cette attente une autorisation provisoire de séjour`],
   astreinte: "le tout sous astreinte de 100 euros par jour de retard ;",

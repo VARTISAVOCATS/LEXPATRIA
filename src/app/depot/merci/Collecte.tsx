@@ -7,7 +7,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useT } from "@/i18n/client";
-import { piecesDemandees, type Contexte, type Reponses } from "@/lib/questionnaire";
+import { piecesDemandees, type Reponses } from "@/lib/questionnaire";
+import type { DonneesCollecte } from "@/lib/serveur/collecte";
 import { ConfirmationFaits, DepotPieces, QuestionnaireEcrans } from "../Questionnaire";
 
 // Ce qui permet à l'avocat de commencer, selon la procédure ; le reste vient après le questionnaire.
@@ -22,41 +23,52 @@ type Phase = "ESSENTIEL" | "FAITS" | "QUESTIONNAIRE" | "AUTRES" | "FIN";
 export default function Collecte({
   reference,
   jetonServeur,
-  contexte,
-  reponsesInitiales,
-  faits,
-  deposees = [],
+  donnees,
 }: {
   reference: string;
   jetonServeur: string | null;
-  contexte: Contexte;
-  reponsesInitiales: Reponses;
-  faits: string[];
-  /** Pièces déjà transmises avant le paiement (la décision photographiée) : elles ne sont pas redemandées. */
-  deposees?: string[];
+  /** Fournies par le serveur quand le lien porte un jeton valide ; sinon chargées avec le jeton de la session. */
+  donnees: DonneesCollecte | null;
 }) {
   const t = useT();
   const [jeton, setJeton] = useState<string | null>(jetonServeur);
-  const [pret, setPret] = useState(!!jetonServeur);
+  const [d, setD] = useState<DonneesCollecte | null>(donnees);
+  const [pret, setPret] = useState(!!jetonServeur && !!donnees);
   const [phase, setPhase] = useState<Phase>("ESSENTIEL");
-  const [reponses, setReponses] = useState<Reponses>(reponsesInitiales);
+  const [reponses, setReponses] = useState<Reponses>(donnees?.reponsesInitiales ?? {});
 
   useEffect(() => {
-    if (jetonServeur) return;
+    if (jetonServeur && donnees) return;
+    let j: string | null = jetonServeur;
     try {
-      setJeton(sessionStorage.getItem(`lexpatria-jeton:${reference}`));
+      j = j ?? sessionStorage.getItem(`lexpatria-jeton:${reference}`);
     } catch {
       /* stockage indisponible */
     }
-    setPret(true);
-  }, [jetonServeur, reference]);
+    if (!j) {
+      setPret(true);
+      return;
+    }
+    // Les éléments du dossier ne sont servis qu'au détenteur du jeton.
+    fetch(`/api/questionnaire?jeton=${encodeURIComponent(j)}`)
+      .then((r) => (r.ok ? (r.json() as Promise<DonneesCollecte>) : null))
+      .catch(() => null)
+      .then((x) => {
+        if (x) {
+          setJeton(j);
+          setD(x);
+          setReponses(x.reponsesInitiales);
+        }
+        setPret(true);
+      });
+  }, [jetonServeur, donnees, reference]);
 
   useEffect(() => {
     if (phase !== "ESSENTIEL") window.scrollTo({ top: 0 });
   }, [phase]);
 
   if (!pret) return null;
-  if (!jeton)
+  if (!jeton || !d)
     return (
       <>
         <p>{t("Transmettez vos documents depuis le lien reçu par e-mail ou depuis votre espace.")}</p>
@@ -66,6 +78,7 @@ export default function Collecte({
       </>
     );
 
+  const { contexte, faits, deposees } = d;
   const autres = piecesDemandees(contexte, reponses).some((p) => estAutre(p.type));
   const ordre: Phase[] = ["ESSENTIEL", ...(faits.length ? (["FAITS"] as Phase[]) : []), "QUESTIONNAIRE", ...(autres ? (["AUTRES"] as Phase[]) : []), "FIN"];
   const pourcent = Math.round((ordre.indexOf(phase) / (ordre.length - 1)) * 100);
