@@ -77,3 +77,151 @@ export async function assembler(fichiers: { mime: string; donnees: Uint8Array }[
   }
   return doc.getPageCount() ? doc.save() : null;
 }
+
+/**
+ * Acte mis en page sur le modèle du cabinet (même présentation que le fichier Word) : Times 12, texte justifié,
+ * titre encadré sur la première page, intitulés en gras et soulignés, pièces à droite, numéro de page centré.
+ */
+export async function actePdf(texte: string, titreDocument = "Acte"): Promise<Uint8Array> {
+  const { mettreEnForme } = await import("@/lib/miseEnForme");
+  const { titre, sousTitre, blocs } = mettreEnForme(compatible(texte.replace(/[\u00a0\u202f\u2009]/g, " ")));
+  const doc = await PDFDocument.create();
+  doc.setTitle(compatible(titreDocument));
+  doc.setProducer("LEXPATRIA Avocats");
+  const polices = {
+    n: await doc.embedFont(StandardFonts.TimesRoman),
+    g: await doc.embedFont(StandardFonts.TimesRomanBold),
+    i: await doc.embedFont(StandardFonts.TimesRomanItalic),
+    gi: await doc.embedFont(StandardFonts.TimesRomanBoldItalic),
+  };
+  const T = 11.5; // taille
+  const H = 15; // interligne
+  const MG = 70.85; // 2,5 cm
+  const HAUT = 60;
+  const BAS = 64;
+  const largeur = A4[0] - 2 * MG;
+  const noir = rgb(0, 0, 0);
+  const tw = (v?: number) => (v ?? 0) / 20;
+  const police = (m: { gras?: boolean; italique?: boolean }) => (m.gras && m.italique ? polices.gi : m.gras ? polices.g : m.italique ? polices.i : polices.n);
+
+  let page = doc.addPage(A4);
+  let y = A4[1] - HAUT;
+  const nouvellePage = () => {
+    page = doc.addPage(A4);
+    y = A4[1] - HAUT;
+  };
+
+  if (titre) {
+    const t = titre.toUpperCase();
+    const w = polices.g.widthOfTextAtSize(t, 13);
+    const boite = Math.max(w + 40, 240);
+    page.drawRectangle({ x: (A4[0] - boite) / 2, y: y - 22, width: boite, height: 26, borderColor: noir, borderWidth: 0.8 });
+    page.drawText(t, { x: (A4[0] - w) / 2, y: y - 14, size: 13, font: polices.g, color: noir });
+    y -= 40;
+  }
+  if (sousTitre) {
+    for (const l of couper(sousTitre, polices.i, largeur)) {
+      const w = polices.i.widthOfTextAtSize(l, 10.5);
+      page.drawText(l, { x: (A4[0] - w) / 2, y, size: 10.5, font: polices.i, color: noir });
+      y -= 14;
+    }
+    y -= 10;
+  }
+
+  type Mot = { texte: string; m: (typeof blocs)[number]["morceaux"][number]; tab?: boolean; espace: boolean };
+  for (const b of blocs) {
+    if (b.sautPage) nouvellePage();
+    y -= tw(b.avant);
+    if (b.separateur) {
+      if (y < BAS + 30) nouvellePage();
+      page.drawLine({ start: { x: A4[0] / 2 - 80, y }, end: { x: A4[0] / 2 + 80, y }, thickness: 0.7, color: rgb(0.18, 0.33, 0.59) });
+      y -= 18;
+    }
+    // Mots stylés
+    const mots: Mot[] = [];
+    for (const m of b.morceaux) {
+      const parts = m.texte.split(/(\t| +)/);
+      for (const part of parts) {
+        if (!part) continue;
+        if (part === "\t") mots.push({ texte: "", m, tab: true, espace: false });
+        else if (/^ +$/.test(part)) {
+          if (mots.length) mots[mots.length - 1].espace = true;
+        } else mots.push({ texte: part, m, espace: false });
+      }
+    }
+    const gauche = MG + tw(b.retrait);
+    const premiere = gauche - tw(b.suspendu);
+    // Découpage en lignes
+    const lignes: { mots: Mot[]; x0: number }[] = [];
+    let courante: Mot[] = [];
+    let x0 = premiere;
+    let x = x0;
+    for (const mot of mots) {
+      if (mot.tab) {
+        courante.push(mot);
+        x = Math.max(x + 4, gauche);
+        continue;
+      }
+      const f = police(mot.m);
+      const w = f.widthOfTextAtSize(mot.texte, T);
+      if (x + w > MG + largeur && courante.length) {
+        lignes.push({ mots: courante, x0 });
+        courante = [];
+        x0 = gauche;
+        x = x0;
+      }
+      courante.push(mot);
+      x += w + (mot.espace ? f.widthOfTextAtSize(" ", T) : 0);
+    }
+    if (courante.length) lignes.push({ mots: courante, x0 });
+    // Dessin
+    lignes.forEach((ligne, n) => {
+      if (y < BAS) nouvellePage();
+      const derniere = n === lignes.length - 1;
+      const visibles = ligne.mots;
+      const mesure = (mm: Mot) => (mm.tab ? 0 : police(mm.m).widthOfTextAtSize(mm.texte, T));
+      const espaceN = polices.n.widthOfTextAtSize(" ", T) + 0.8;
+      let utile = 0;
+      let trous = 0;
+      let apresTab = false;
+      visibles.forEach((mm, k) => {
+        utile += mesure(mm);
+        if (mm.tab) apresTab = true;
+        if (k < visibles.length - 1 && mm.espace) {
+          utile += espaceN;
+          trous++;
+        }
+      });
+      const fin = MG + largeur;
+      let cx = ligne.x0;
+      if (b.align === "droite") cx = fin - utile;
+      else if (b.align === "centre") cx = gauche + (fin - gauche - utile) / 2;
+      const extra = b.align === "justifie" && !derniere && trous > 0 && !apresTab ? (fin - ligne.x0 - utile) / trous : 0;
+      visibles.forEach((mm, k) => {
+        if (mm.tab) {
+          cx = Math.max(cx + 4, gauche);
+          return;
+        }
+        const f = police(mm.m);
+        const w = f.widthOfTextAtSize(mm.texte, T);
+        const sp = k < visibles.length - 1 && mm.espace ? espaceN + extra : 0;
+        if (mm.m.surligne) page.drawRectangle({ x: cx - 1, y: y - 3, width: w + 2, height: T + 2, color: rgb(1, 0.93, 0.2) });
+        page.drawText(mm.texte, { x: cx, y, size: T, font: f, color: noir });
+        if (mm.m.souligne) {
+          const suite = sp && visibles[k + 1]?.m.souligne ? sp : 0;
+          page.drawLine({ start: { x: cx, y: y - 1.6 }, end: { x: cx + w + suite, y: y - 1.6 }, thickness: 0.6, color: noir });
+        }
+        cx += w + sp;
+      });
+      y -= H;
+    });
+    y -= tw(b.apres);
+  }
+
+  const pages = doc.getPages();
+  pages.forEach((pg, n) => {
+    const t = String(n + 1);
+    pg.drawText(t, { x: A4[0] / 2 - polices.n.widthOfTextAtSize(t, 10) / 2, y: 34, size: 10, font: polices.n, color: noir });
+  });
+  return doc.save();
+}

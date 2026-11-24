@@ -10,7 +10,7 @@ import { empreinteTexte, journaliser } from "@/lib/journal";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import { valeur } from "../connexions";
 import type { Dossier } from "../dossiers";
-import { texteVersPdf } from "../pdf";
+import { actePdf, texteVersPdf } from "../pdf";
 import { lire, type FichierStocke } from "../stockage";
 import { messageErreur, tracer } from "./commun";
 import { graph, graphConfigure } from "./graph";
@@ -93,7 +93,7 @@ async function elementsAClasser(d: Base, dos: Dossier): Promise<Element[]> {
   for (const { acte, att } of atts) {
     if (att.version !== acte.version || att.empreinte !== empreinteTexte(acte.contenu)) continue;
     const libelle = LIBELLES_MODELE[acte.type as CodeModele] ?? acte.type;
-    liste.push({ cle: `acte:${acte.id}:v${acte.version}`, nom: `Actes/${nomPropre(libelle)} v${acte.version} (attesté).pdf`, produire: () => texteVersPdf(acte.contenu, libelle) });
+    liste.push({ cle: `acte:${acte.id}:v${acte.version}`, nom: `Actes/${nomPropre(libelle)} v${acte.version} (attesté).pdf`, produire: () => actePdf(acte.contenu, libelle) });
   }
   for (const c of await d.select().from(conventions).where(eq(conventions.dossierId, dos.id)))
     liste.push({

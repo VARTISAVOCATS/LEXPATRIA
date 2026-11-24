@@ -10,7 +10,7 @@ import { clients, dossiers, pieces } from "@/db/schema";
 import { journaliser } from "@/lib/journal";
 import { JURIDICTIONNELS, LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import type { Dossier } from "../dossiers";
-import { assembler, texteVersPdf } from "../pdf";
+import { actePdf, assembler, texteVersPdf } from "../pdf";
 import { attestationValide, dernierActe } from "../poste";
 import { envoyer } from "../notifications";
 import type { Membre } from "../session";
@@ -32,7 +32,7 @@ export async function paquetTelerecours(d: Base, dos: Dossier): Promise<{ ok: tr
   if (!(await attestationValide(d, acte))) return { ok: false, erreur: "Aucun dépôt sans attestation de l'avocat sur la dernière version de l'acte." };
   const zip = new JSZip();
   const libelle = LIBELLES_MODELE[acte.type as CodeModele] ?? acte.type;
-  zip.file(`Requete - ${dos.reference}.pdf`, await texteVersPdf(acte.contenu, libelle));
+  zip.file(`Requete - ${dos.reference}.pdf`, await actePdf(acte.contenu, libelle));
   const lesPieces = (await d.select().from(pieces).where(and(eq(pieces.dossierId, dos.id), eq(pieces.manquante, false)))).sort(
     (a, b) => (a.numero ?? 999) - (b.numero ?? 999) || a.creeLe.getTime() - b.creeLe.getTime(),
   );

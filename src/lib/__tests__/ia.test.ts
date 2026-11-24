@@ -44,3 +44,22 @@ describe("pièces médicales", () => {
     expect(estPieceMedicale({ type: "DECISION", libelle: "La décision contestée (toutes les pages)" })).toBe(false);
   });
 });
+
+describe("mise en forme des actes", () => {
+  it("reconnaît la présentation du cabinet et produit Word et PDF", async () => {
+    const { mettreEnForme } = await import("@/lib/miseEnForme");
+    const { acteVersDocx } = await import("@/lib/serveur/docx-acte");
+    const { actePdf } = await import("@/lib/serveur/pdf");
+    const texte = "À : Monsieur le Président du tribunal administratif de Melun.\n\nREQUÊTE EN ANNULATION\n(article R. 421-1 du code de justice administrative)\n\nPOUR : Monsieur Karim EXEMPLE, né le XXX.\n\nCONTRE : La décision du 30/04/2026.\n\nPièce n° 1 : Décision attaquée\n\nÀ l'honneur de vous exposer\n\nI. RAPPEL DES FAITS\n\nTexte « cité ».\n\nPAR CES MOTIFS\n\n— Annuler la décision ;\n\nFait à Paris, le XXX\n\nMaître Rafik Rabia\n\nBORDEREAU DES PIÈCES\nPièce n° 1 : Décision attaquée";
+    const f = mettreEnForme(texte);
+    expect(f.titre).toBe("REQUÊTE EN ANNULATION");
+    expect(f.sousTitre).toBe("article R. 421-1 du code de justice administrative");
+    expect(f.blocs.find((b) => b.morceaux[0].texte === "Pièce n° 1 : Décision attaquée")?.align).toBe("droite");
+    expect(f.blocs.find((b) => b.morceaux.some((m) => m.texte === "Maître Rafik Rabia"))?.align).toBe("droite");
+    expect(f.blocs.find((b) => b.morceaux.some((m) => m.texte === "« cité »"))?.morceaux.find((m) => m.texte === "« cité »")?.italique).toBe(true);
+    expect((await acteVersDocx(texte)).subarray(0, 2).toString()).toBe("PK");
+    expect(Buffer.from(await actePdf(texte)).subarray(0, 4).toString()).toBe("%PDF");
+    // Un courrier n'a ni titre encadré ni intitulés centrés.
+    expect(mettreEnForme("MINISTÈRE DE L'INTÉRIEUR\nObjet : recours").titre).toBeNull();
+  });
+});
