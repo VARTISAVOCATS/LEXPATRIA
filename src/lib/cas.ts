@@ -34,6 +34,7 @@ export const MODELES_CAS = [
   "RAPO_NATURALISATION",
   "MISE_EN_DEMEURE",
   "AVIS_ECRIT",
+  "REQUETE_APPEL",
 ] as const satisfies readonly CodeModele[];
 
 const texte = (max: number) => z.string().trim().max(max);
@@ -104,8 +105,8 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "La personne indique avoir reçu une OQTF sans préciser son fondement (refus ou retrait de titre, séjour irrégulier, rejet de l'asile) ni sa situation. Cas à retenir tant que la décision n'a pas été lue ; la lecture de la décision permet ensuite de préciser le cas.",
-    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
-    delai: "Un mois à compter de la notification, hors mesure restrictive de liberté ; sept jours avec assignation à résidence ; 48 heures en rétention (hors dépôt en ligne).",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision ; en cas d'assignation à résidence ou de rétention, tribunal du lieu d'assignation ou de rétention.",
+    delai: "Un mois à compter de la notification (article L. 911-1 du CESEDA) ; sept jours en cas d'assignation à résidence ou de détention (article L. 921-1) ; 48 heures en rétention (article L. 921-2).",
     refere: null,
     demarche: true,
     demanderUrgence: true,
@@ -113,7 +114,8 @@ export const CAS_DEFAUT: Cas[] = [
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, IDENTITE, "Justificatifs de présence, de vie familiale et d'emploi"],
-    vigilance: ["Identifier le fondement de l'OQTF (L. 611-1 du CESEDA) et les décisions qui l'accompagnent à la lecture de l'arrêté."],
+    vigilance: [
+      "Assignation à résidence, détention ou rétention notifiée pendant le délai d'un mois : un nouveau délai de sept jours (48 heures en rétention) court à compter de sa notification, devant le tribunal du lieu d'assignation ou de rétention (article R. 921-1 du CESEDA).","Identifier le fondement de l'OQTF (L. 611-1 du CESEDA) et les décisions qui l'accompagnent à la lecture de l'arrêté."],
     actif: true,
   },
   {
@@ -126,7 +128,7 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "Arrêté préfectoral qui refuse la délivrance ou le renouvellement d'un titre de séjour (ou d'un certificat de résidence algérien) ET fait obligation de quitter le territoire (article L. 611-1, 3° du CESEDA). Souvent avec délai de départ volontaire de trente jours, fixation du pays de renvoi, parfois interdiction de retour. Récit type : « la préfecture a refusé mon titre et m'a donné une OQTF », « refus de séjour avec OQTF ».",
-    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision ; en cas d'assignation à résidence ou de rétention, tribunal du lieu d'assignation ou de rétention.",
     delai: "Un mois à compter de la notification, hors mesure restrictive de liberté (procédure ordinaire, jugement en formation collégiale) ; sept jours si une assignation à résidence est notifiée avec l'OQTF.",
     refere: null,
     demarche: true,
@@ -136,6 +138,7 @@ export const CAS_DEFAUT: Cas[] = [
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Titre de séjour ou récépissé antérieur", IDENTITE, "Justificatifs de présence, de vie familiale et d'emploi"],
     vigilance: [
+      "Assignation à résidence, détention ou rétention notifiée pendant le délai d'un mois : un nouveau délai de sept jours (48 heures en rétention) court à compter de sa notification, devant le tribunal du lieu d'assignation ou de rétention (article R. 921-1 du CESEDA).",
       "Contester dans une même requête le refus de séjour, l'OQTF, le délai de départ volontaire, le pays de renvoi et l'interdiction de retour.",
       "Vérifier la date d'édiction (régime issu de la loi du 26 janvier 2024 pour les décisions édictées depuis le 15 juillet 2024).",
       "Ressortissant algérien : moyens fondés sur l'accord franco-algérien du 27 décembre 1968, et non sur le CESEDA.",
@@ -152,7 +155,7 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "Arrêté qui RETIRE un titre de séjour en cours de validité (ou un récépissé) et prononce une OQTF (L. 611-1, 5°). Motifs fréquents : fraude, rupture de la vie commune, menace pour l'ordre public, perte d'emploi. Récit : « on m'a retiré ma carte », « la préfecture m'a enlevé mon titre et donné une OQTF ».",
-    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision ; en cas d'assignation à résidence ou de rétention, tribunal du lieu d'assignation ou de rétention.",
     delai: "Un mois à compter de la notification, hors mesure restrictive de liberté ; sept jours avec assignation à résidence.",
     refere: null,
     demarche: true,
@@ -162,6 +165,7 @@ export const CAS_DEFAUT: Cas[] = [
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Titre de séjour retiré (copie)", IDENTITE, "Courrier de la procédure contradictoire préalable, s'il existe"],
     vigilance: [
+      "Assignation à résidence, détention ou rétention notifiée pendant le délai d'un mois : un nouveau délai de sept jours (48 heures en rétention) court à compter de sa notification, devant le tribunal du lieu d'assignation ou de rétention (article R. 921-1 du CESEDA).",
       "Vérifier le respect de la procédure contradictoire préalable au retrait.",
       "Retrait pour ordre public : vérifier la saisine de la commission du titre de séjour lorsqu'elle est requise.",
     ],
@@ -177,7 +181,7 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "OQTF prise sans refus de titre préalable, sur le fondement d'une entrée irrégulière, d'un maintien après expiration du visa ou du titre (L. 611-1, 1° ou 2°), souvent à la suite d'une interpellation ou d'un contrôle d'identité. Parfois sans délai de départ volontaire, avec interdiction de retour. Récit : « contrôlé par la police », « arrêté dans la rue », « je n'ai pas de papiers et j'ai reçu une OQTF ».",
-    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision ; en cas d'assignation à résidence ou de rétention, tribunal du lieu d'assignation ou de rétention.",
     delai: "Un mois à compter de la notification, que le délai de départ volontaire soit accordé ou refusé ; sept jours avec assignation à résidence ; 48 heures en rétention (hors dépôt en ligne).",
     refere: null,
     demarche: true,
@@ -187,6 +191,7 @@ export const CAS_DEFAUT: Cas[] = [
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, IDENTITE, "Procès-verbal d'audition s'il a été remis", "Justificatifs de présence, de vie familiale et d'emploi"],
     vigilance: [
+      "Assignation à résidence, détention ou rétention notifiée pendant le délai d'un mois : un nouveau délai de sept jours (48 heures en rétention) court à compter de sa notification, devant le tribunal du lieu d'assignation ou de rétention (article R. 921-1 du CESEDA).",
       "Demander si une assignation à résidence ou un placement en rétention a suivi : le délai devient de sept jours ou de 48 heures.",
       "Contester le refus de délai de départ volontaire et l'interdiction de retour.",
     ],
@@ -202,7 +207,7 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "OQTF prise après le rejet définitif de la demande d'asile par l'OFPRA ou la CNDA (L. 611-1, 4°). Récit : « ma demande d'asile a été rejetée », « la CNDA a rejeté mon recours et j'ai reçu une OQTF », « débouté de l'asile ».",
-    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision ; en cas d'assignation à résidence ou de rétention, tribunal du lieu d'assignation ou de rétention.",
     delai: "Un mois à compter de la notification (article L. 911-1 du CESEDA, régime en vigueur depuis le 15 juillet 2024) ; sept jours en cas d'assignation à résidence ou de détention et 48 heures en rétention (articles L. 921-1 et L. 921-2).",
     refere: null,
     demarche: true,
@@ -212,6 +217,7 @@ export const CAS_DEFAUT: Cas[] = [
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Décision de l'OFPRA et, le cas échéant, de la CNDA", IDENTITE],
     vigilance: [
+      "Assignation à résidence, détention ou rétention notifiée pendant le délai d'un mois : un nouveau délai de sept jours (48 heures en rétention) court à compter de sa notification, devant le tribunal du lieu d'assignation ou de rétention (article R. 921-1 du CESEDA).",
       "La contestation de l'OQTF ne rouvre pas la demande d'asile : elle porte sur l'éloignement, la vie privée et familiale et le pays de renvoi.",
       "Examiner les risques en cas de retour au regard de l'article 3 de la CEDH pour la décision fixant le pays de renvoi.",
     ],
@@ -234,9 +240,9 @@ export const CAS_DEFAUT: Cas[] = [
     demanderUrgence: true,
     implicite: false,
     complements: [],
-    modele: "REQUETE_SOMMAIRE",
+    modele: "REQUETE_OQTF",
     pieces: [DECISION, "Arrêté d'assignation à résidence", NOTIF, IDENTITE],
-    vigilance: ["Contester aussi l'arrêté d'assignation à résidence.", "Délai très court : requête sommaire puis mémoire complémentaire."],
+    vigilance: ["Contester aussi l'arrêté d'assignation à résidence.", "Requête complète dans les sept jours, dirigée aussi contre l'assignation : le juge statue sous quinze jours. Délai franc ; demander la communication du dossier.", "Si l'assignation a été notifiée après l'OQTF, le délai de sept jours court à compter de la notification de l'assignation (article R. 921-1 du CESEDA)."],
     actif: true,
   },
   {
@@ -249,8 +255,8 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "OQTF visant un ressortissant de l'Union européenne, de l'EEE ou de la Suisse, ou un membre de sa famille (articles L. 251-1 et suivants du CESEDA) : absence de ressources suffisantes, abus de droit, menace pour l'ordre public. Récit : « je suis roumain / italien / espagnol », « mon conjoint est européen ».",
-    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision.",
-    delai: "Un mois à compter de la notification hors mesure restrictive de liberté.",
+    juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture auteur de la décision ; en cas d'assignation à résidence ou de rétention, tribunal du lieu d'assignation ou de rétention.",
+    delai: "Un mois à compter de la notification (article L. 911-1 du CESEDA) ; sept jours en cas d'assignation à résidence ou de détention (article L. 921-1) ; 48 heures en rétention (article L. 921-2).",
     refere: null,
     demarche: true,
     demanderUrgence: true,
@@ -258,7 +264,8 @@ export const CAS_DEFAUT: Cas[] = [
     complements: [],
     modele: "REQUETE_OQTF",
     pieces: [DECISION, NOTIF, "Carte d'identité ou passeport européen", "Justificatifs de ressources, d'emploi et de durée de séjour"],
-    vigilance: ["Droit au séjour issu de la directive 2004/38/CE : vérifier le droit au séjour permanent après cinq ans."],
+    vigilance: [
+      "Assignation à résidence, détention ou rétention notifiée pendant le délai d'un mois : un nouveau délai de sept jours (48 heures en rétention) court à compter de sa notification, devant le tribunal du lieu d'assignation ou de rétention (article R. 921-1 du CESEDA).","Droit au séjour issu de la directive 2004/38/CE : vérifier le droit au séjour permanent après cinq ans."],
     actif: true,
   },
 
@@ -282,7 +289,7 @@ export const CAS_DEFAUT: Cas[] = [
     complements: [],
     modele: "REQUETE_REFUS_TITRE",
     pieces: [DECISION, NOTIF, IDENTITE, "Récépissé de la demande ou attestation de dépôt ANEF", "Pièces jointes à la demande"],
-    vigilance: ["Vérifier qu'aucune OQTF n'a été notifiée séparément.", "Un recours gracieux est possible mais ne dispense pas de respecter le délai contentieux."],
+    vigilance: ["Vérifier qu'aucune OQTF n'a été notifiée séparément.", "Un recours gracieux formé dans les deux mois proroge le délai contentieux contre un refus de titre ; il ne proroge jamais le délai contre une OQTF."],
     actif: true,
   },
   {
@@ -504,7 +511,7 @@ export const CAS_DEFAUT: Cas[] = [
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Attestation d'inscription ou de préinscription", "Justificatifs de ressources", "Diplômes et relevés de notes", IDENTITE],
-    vigilance: ["Rentrée universitaire : la commission statue en deux mois ; envisager un référé-suspension après son rejet implicite."],
+    vigilance: ["Rentrée universitaire : la commission statue en deux mois ; un référé-suspension n'est possible qu'après sa décision, explicite ou implicite, jamais pendant le recours préalable."],
     actif: true,
   },
   {
@@ -525,7 +532,7 @@ export const CAS_DEFAUT: Cas[] = [
     complements: [],
     modele: "RAPO_VISA",
     pieces: [DECISION, "Autorisation de travail ou contrat", "Justificatifs de ressources", IDENTITE],
-    vigilance: [],
+    vigilance: ["Identifier le motif du refus (risque de détournement de l'objet du visa, ressources, pièces de l'employeur ou de l'organisme d'accueil).", "Rejet implicite de la commission à deux mois, puis recours devant le tribunal administratif de Nantes dans les deux mois ; référé-suspension possible contre la décision de la commission."],
     actif: true,
   },
 
@@ -634,7 +641,7 @@ export const CAS_DEFAUT: Cas[] = [
     signes:
       "Demande de titre (première demande, renouvellement, changement de statut) déposée en préfecture ou sur l'ANEF sans décision depuis plus de quatre mois. Récit : « j'ai déposé mon dossier il y a six mois et pas de réponse », « l'ANEF est en cours d'instruction depuis des mois ».",
     juridiction: "Tribunal administratif dans le ressort duquel siège la préfecture saisie.",
-    delai: "Refus implicite né quatre mois après le dépôt ; recours dans les deux mois suivants, sauf si l'accusé de réception ne mentionne pas les voies et délais de recours.",
+    delai: "Refus implicite né quatre mois après le dépôt (article R. 432-2 du CESEDA), quatre-vingt-dix ou soixante jours pour certains titres ; recours dans les deux mois suivants si l'accusé de réception mentionne les voies et délais, à défaut dans un délai raisonnable d'un an.",
     refere: null,
     demarche: true,
     demanderUrgence: true,
@@ -643,6 +650,7 @@ export const CAS_DEFAUT: Cas[] = [
     modele: "REQUETE_REFUS_TITRE",
     pieces: ["Attestation de dépôt ou accusé de réception de la demande", "Récépissés successifs", "Échanges avec la préfecture", IDENTITE],
     vigilance: [
+      "Vérifier le titre demandé : pour certains titres le refus implicite naît à quatre-vingt-dix ou soixante jours, et la date limite calculée sur quatre mois serait trop tardive. La délivrance d'un récépissé n'empêche pas la naissance du refus (CE, avis, 6 mai 2025, n° 499904).",
       "Demander la communication des motifs dans le délai de recours (article L. 232-4 du code des relations entre le public et l'administration).",
       "Si le récépissé a expiré et que l'emploi est menacé, envisager aussi un référé.",
     ],
@@ -699,7 +707,7 @@ export const CAS_DEFAUT: Cas[] = [
     pieces: ["Récépissé ou attestation expiré", "Preuve du dépôt de la demande", "Attestation de l'employeur, courrier de la CAF ou de France Travail, le cas échéant", IDENTITE],
     vigilance: [
       "Urgence à établir concrètement : suspension du contrat de travail, interruption des droits sociaux, inscription compromise.",
-      "Une demande déposée depuis plus de quatre mois a fait naître un refus implicite : envisager aussi le recours contre ce refus.",
+      "Une demande déposée depuis plus de quatre mois a fait naître un refus implicite : le référé mesures utiles risque de faire obstacle à cette décision ; basculer vers la requête contre le refus implicite avec référé-suspension.",
     ],
     actif: true,
   },
@@ -736,7 +744,7 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "Demande de naturalisation par décret déposée (sur l'ANEF ou en préfecture) sans évolution : statut « dossier envoyé » ou « en attente » sans passage « en instruction », aucun récépissé de complétude, aucune convocation à l'entretien d'assimilation, ou aucune décision depuis de longs mois. Récit : « j'ai déposé ma naturalisation il y a un an et le dossier n'est toujours pas en instruction », « pas de convocation », « pas de nouvelles de ma demande de nationalité ». Aucune décision défavorable n'a été reçue.",
-    juridiction: "Préfecture ou plateforme d'accès à la nationalité compétente ; juge des référés du tribunal administratif dans son ressort.",
+    juridiction: "Juge des référés du tribunal administratif dans le ressort de la préfecture ou de la plateforme d'accès à la nationalité saisie.",
     delai:
       "Aucun délai ne court : tant que le dossier reste au statut « dossier envoyé », aucun récépissé de complétude n'a été délivré et le délai de réponse de dix-huit mois (douze mois après dix ans de résidence, article 21-25-1 du code civil) n'a pas commencé ; aucune décision implicite de rejet ne peut naître.",
     refere: "MESURES_UTILES",
@@ -816,7 +824,7 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes:
       "La personne, titulaire d'un droit au séjour en France, est bloquée à l'étranger : titre perdu, volé ou expiré pendant le séjour à l'étranger, consulat qui refuse ou tarde à délivrer le visa de retour, embarquement refusé. Récit : « j'ai perdu ma carte au pays et le consulat refuse le visa de retour », « ma famille et mon travail sont en France ».",
-    juridiction: "Tribunal administratif de Nantes s'agissant d'un refus de visa ; à vérifier selon l'autorité en cause.",
+    juridiction: "Juge des référés du tribunal administratif de Nantes pour un refus ou une carence consulaire en matière de visa ; tribunal administratif du siège de la préfecture si le blocage tient à la préfecture (duplicata, titre non remis).",
     delai: "Pas de délai propre au référé ; un refus explicite de visa ouvre aussi le recours préalable obligatoire de trente jours.",
     refere: "LIBERTE",
     demarche: false,
@@ -865,15 +873,16 @@ export const CAS_DEFAUT: Cas[] = [
     naturalisationIssue: null,
     signes: "Le tribunal administratif a rejeté la requête. Récit : « le tribunal a rejeté mon recours », « jugement négatif », « je veux faire appel ».",
     juridiction: "Cour administrative d'appel compétente.",
-    delai: "Un mois pour un jugement en matière d'OQTF, deux mois dans les autres cas, à compter de la notification du jugement ; pas d'appel contre un jugement sur un transfert Dublin.",
+    delai: "Un mois à compter de la notification pour un jugement rendu en matière d'OQTF ou d'assignation, deux mois dans les autres cas ; transfert Dublin : pas d'appel, pourvoi en cassation seulement ; ordonnance de référé-liberté : appel devant le Conseil d'État dans les quinze jours.",
     refere: null,
     demarche: true,
     demanderUrgence: true,
     implicite: false,
     complements: [],
-    modele: "MEMOIRE_COMPLEMENTAIRE",
+    modele: "REQUETE_APPEL",
     pieces: ["Jugement et courrier de notification", "Requête et mémoires de première instance", DECISION],
-    vigilance: ["Le forfait d'appel diffère de la reprise de procédure : à confirmer avec le client à la prise en charge."],
+    vigilance: [
+      "L'appel ne suspend pas l'exécution de l'OQTF : envisager une demande de sursis à exécution si l'éloignement est imminent.","Le forfait d'appel diffère de la reprise de procédure : à confirmer avec le client à la prise en charge."],
     actif: true,
   },
 ];
