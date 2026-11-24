@@ -122,7 +122,7 @@ export function apresPaiement(urgence: boolean): string[] {
   return [
     `Un avocat du cabinet prend votre dossier en charge sous ${urgence ? "10" : "48"} heures ouvrées.`,
     "Vous transmettez vos documents depuis votre espace, en les photographiant avec votre téléphone.",
-    "Votre recours est déposé avant la date limite, et vous suivez chaque étape depuis votre espace.",
+    "Votre avocat dépose le recours dans le délai et vous suivez chaque étape depuis votre espace.",
   ];
 }
 
