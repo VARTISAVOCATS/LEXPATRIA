@@ -154,3 +154,14 @@ describe("référentiel des cas", () => {
     }
   });
 });
+
+describe("fiches préparées mais inactives", () => {
+  it("rétention, détention et Dublin existent, sont valides et restent inactives", () => {
+    expect(schemaReferentiel.safeParse(CAS_DEFAUT).success).toBe(true);
+    for (const code of ["OQTF_RETENTION", "OQTF_DETENTION", "TRANSFERT_DUBLIN"]) {
+      const c = CAS_DEFAUT.find((x) => x.code === code);
+      expect(c?.actif).toBe(false);
+      expect(controlerTexte([c!.libelle, c!.delai, ...c!.vigilance].join(" ")).length).toBe(0);
+    }
+  });
+});
