@@ -294,22 +294,7 @@ export async function attestationPdf(a: {
   y -= 18;
   centre(compatible("Prise en charge et dépôt du recours"), y, it, 11.5, gris);
 
-  // Références du recours : deux lignes en petites capitales espacées, entre deux filets fins (sans encadré).
-  const dateDepot = a.depot?.date
-    ? new Date(`${a.depot.date}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).replace(/^1 /, "1er ")
-    : null;
-  const ligne1 = [`Dossier ${a.reference}`, dateDepot ? `Recours déposé le ${dateDepot}` : null].filter(Boolean).join("   ·   ");
-  const ligne2 = [a.depot?.juridiction ?? null, a.depot?.numero ? `Requête n° ${a.depot.numero}` : null].filter(Boolean).join("   ·   ");
-  y -= 30;
-  const filet = (yy: number) => page.drawLine({ start: { x: L / 2 - 150, y: yy }, end: { x: L / 2 + 150, y: yy }, thickness: 0.35, color: bleu });
-  filet(y + 14);
-  centre(compatible(ligne1.toUpperCase()), y, n, 8.5, bleu, 1.1);
-  if (ligne2) {
-    y -= 15;
-    centre(compatible(ligne2.toUpperCase()), y, n, 8.5, bleu, 1.1);
-  }
-  filet(y - 9);
-  y -= 46;
+  y -= 48;
 
   // Corps : paragraphes justifiés ; « Fait à » et signature à droite
   const T = 12;
