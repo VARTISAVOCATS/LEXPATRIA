@@ -18,6 +18,8 @@ export interface DossierTache {
   piecesAVerifier: number;
   piecesManquantes: number;
   messagesNonLus: number;
+  /** Recours déposé, attestation du client pas encore signée. */
+  attestationASigner?: boolean;
 }
 
 export interface Tache {
@@ -74,6 +76,7 @@ export function calculerTaches(
       else if (!x.avis && x.statut === "PRIS_EN_CHARGE") ajouter(x, "Rédiger le recours", x.dateLimite, "travail");
       else if (!x.avis && x.statut === "EN_REDACTION") ajouter(x, "Finaliser et attester l'acte", x.dateLimite, "travail");
       else if (!x.avis && x.statut === "ACTE_ATTESTE" && !x.transmis) ajouter(x, "Transmettre au secrétariat pour le dépôt", x.dateLimite, "travail");
+      if (x.attestationASigner) ajouter(x, "Signer l'attestation du client", null, "travail", "URGENT");
       if (x.piecesAVerifier > 0) ajouter(x, `Vérifier ${x.piecesAVerifier > 1 ? `${x.piecesAVerifier} pièces reçues` : "une pièce reçue"}`, null, "pieces", "SEMAINE");
     } else if (x.statut === "ACTE_ATTESTE" && x.transmis) {
       ajouter(x, "Déposer le recours", x.dateLimite, "travail", "URGENT");

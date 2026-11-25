@@ -1104,5 +1104,8 @@
   "Accord de l'État requis, s'il a été communiqué": "The requested State's agreement, if it was provided",
   "Attestation de demande d'asile": "Asylum application certificate",
   "Fiche pénale ou date de libération prévisible": "Prison record or expected release date",
-  "La décision de placement en rétention": "The detention order"
+  "La décision de placement en rétention": "The detention order",
+  "Votre attestation sera disponible ici dès le dépôt de votre recours.": "Your certificate will be available here as soon as your appeal is filed.",
+  "Votre attestation, signée le {date}": "Your certificate, signed on {date}",
+  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "As soon as your appeal is filed, a certificate to show if you are stopped for a check will be available in your personal space."
 }

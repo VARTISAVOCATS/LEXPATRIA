@@ -41,6 +41,7 @@ export interface ProprietesPoste {
   peutAttester: boolean;
   transmisLe: string | null;
   priseEnCharge: { le: string } | null;
+  recoursDepose: boolean;
   dateLimiteVerifiee: boolean;
   avisTransmisLe: string | null;
   pieces: PieceApercu[];
@@ -376,8 +377,12 @@ export default function PosteTravail(p: ProprietesPoste) {
               </>
             ) : (
               <>
-                <p className="note">Une fois signée, elle est remise au client dans son espace.</p>
-                <button className="btn sm" disabled={!p.peutAttester || !!envoi} onClick={() => agir("priseEnCharge")}>
+                <p className="note">
+                  {p.recoursDepose
+                    ? "Elle mentionne la date de dépôt du recours et, s'il est connu, son numéro. Une fois signée, elle est remise au client dans son espace."
+                    : "Elle est délivrée après le dépôt du recours, dont elle mentionne la date."}
+                </p>
+                <button className="btn sm" disabled={!p.peutAttester || !p.recoursDepose || !!envoi} onClick={() => agir("priseEnCharge")}>
                   Signer l&apos;attestation
                 </button>
               </>

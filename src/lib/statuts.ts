@@ -59,7 +59,7 @@ export function libelleClient(s: Statut, procedure: string, avisPrealable = fals
     case "PAYE":
       return "Dossier reçu";
     case "PRIS_EN_CHARGE":
-      return g === "CONTENTIEUX" ? "Dossier pris en charge · attestation disponible" : g === "CONSULTATION" ? "Rendez-vous fixé" : "Dossier pris en charge";
+      return g === "CONSULTATION" ? "Rendez-vous fixé" : "Dossier pris en charge";
     case "DEPOSE":
       return g === "CONTENTIEUX" ? "Recours déposé au tribunal" : g === "MISE_EN_DEMEURE" ? "Mise en demeure envoyée" : "Recours envoyé";
     case "ENREGISTRE":

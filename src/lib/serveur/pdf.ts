@@ -1,7 +1,7 @@
 // Production de PDF (sans dépendance native) : actes et avis pour l'envoi recommandé, le dépôt Télérecours
 // et le classement SharePoint ; assemblage des fichiers d'une pièce (PDF et images) en un seul PDF.
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont } from "pdf-lib";
 
 const A4: [number, number] = [595.28, 841.89];
 const MARGE = 64;
@@ -226,64 +226,113 @@ export async function actePdf(texte: string, titreDocument = "Acte"): Promise<Ui
   return doc.save();
 }
 
-/** Attestation de prise en charge : une page A4 à présenter en cas de contrôle (papier ou écran du téléphone). */
-export async function attestationPdf(a: { texte: string; le: Date; reference: string; empreinte: string }): Promise<Uint8Array> {
+/** Attestation remise au client après le dépôt du recours : une page A4 en filigrane, à présenter en cas de contrôle. */
+export async function attestationPdf(a: {
+  texte: string;
+  le: Date;
+  reference: string;
+  empreinte: string;
+  depot?: { date: string | null; juridiction: string | null; numero: string | null } | null;
+}): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
-  doc.setTitle(`Attestation de prise en charge - ${a.reference}`);
+  doc.setTitle(`Attestation - ${a.reference}`);
   doc.setProducer("LEXPATRIA Avocats");
   const n = await doc.embedFont(StandardFonts.TimesRoman);
   const g = await doc.embedFont(StandardFonts.TimesRomanBold);
   const it = await doc.embedFont(StandardFonts.TimesRomanItalic);
   const page = doc.addPage(A4);
   const [L, H] = A4;
-  const MG = 70.85;
+  const MG = 72;
   const encre = rgb(0.08, 0.1, 0.16);
-  const gris = rgb(0.35, 0.37, 0.42);
-  const bleu = rgb(0.06, 0.12, 0.25);
-  const centre = (t: string, y: number, f: PDFFont, s: number, c = encre) => page.drawText(t, { x: L / 2 - f.widthOfTextAtSize(t, s) / 2, y, size: s, font: f, color: c });
+  const gris = rgb(0.38, 0.4, 0.46);
+  const bleu = rgb(0.07, 0.13, 0.27);
+  const rouge = rgb(0.75, 0.16, 0.14);
+  const centre = (t: string, y: number, f: PDFFont, s: number, c = encre, espace = 0) => {
+    const l = f.widthOfTextAtSize(t, s) + espace * (t.length - 1);
+    if (!espace) return page.drawText(t, { x: L / 2 - l / 2, y, size: s, font: f, color: c });
+    let x = L / 2 - l / 2;
+    for (const ch of t) {
+      page.drawText(ch, { x, y, size: s, font: f, color: c });
+      x += f.widthOfTextAtSize(ch, s) + espace;
+    }
+  };
 
-  // En-tête du cabinet
-  let y = H - 72;
-  centre("LEXPATRIA", y, g, 20, bleu);
-  y -= 16;
-  centre("A V O C A T S", y, n, 10, bleu);
-  y -= 16;
-  centre(compatible("SELARL VARTIS Avocats · Avocats au barreau de Paris"), y, n, 9.5, gris);
+  // Filigrane : trame diagonale de micro-texte, puis le nom du cabinet en grand, en travers de la page.
+  const trame = compatible(`LEXPATRIA AVOCATS · ${a.reference} · `).repeat(14);
+  for (let k = -12; k < 26; k++)
+    page.drawText(trame, { x: -260, y: k * 34, size: 6.5, font: n, color: bleu, opacity: 0.045, rotate: degrees(35) });
+  const fil = "LEXPATRIA";
+  const tf = 88;
+  const lf = g.widthOfTextAtSize(fil, tf);
+  const ang = (35 * Math.PI) / 180;
+  // Centre du mot placé au centre de la page (rotation autour de l'origine du texte).
+  const cx = (lf / 2) * Math.cos(ang) - 0.35 * tf * Math.sin(ang);
+  const cy = (lf / 2) * Math.sin(ang) + 0.35 * tf * Math.cos(ang);
+  page.drawText(fil, { x: L / 2 - cx, y: H / 2 - 30 - cy, size: tf, font: g, color: bleu, opacity: 0.06, rotate: degrees(35) });
+
+  // Double filet d'encadrement
+  page.drawRectangle({ x: 26, y: 26, width: L - 52, height: H - 52, borderColor: bleu, borderWidth: 1.2 });
+  page.drawRectangle({ x: 31, y: 31, width: L - 62, height: H - 62, borderColor: bleu, borderWidth: 0.4 });
+
+  // En-tête : logotype (LEXPATRIA, filet et losange rouge, AVOCATS), puis la société
+  let y = H - 88;
+  centre("LEXPATRIA", y, g, 24, bleu, 2.2);
   y -= 12;
-  centre("222 boulevard Saint-Germain, 75007 Paris", y, n, 9.5, gris);
-  y -= 14;
-  page.drawLine({ start: { x: MG, y }, end: { x: L - MG, y }, thickness: 0.6, color: bleu });
+  page.drawLine({ start: { x: L / 2 - 70, y }, end: { x: L / 2 - 6, y }, thickness: 0.7, color: bleu });
+  page.drawLine({ start: { x: L / 2 + 6, y }, end: { x: L / 2 + 70, y }, thickness: 0.7, color: bleu });
+  page.drawRectangle({ x: L / 2, y: y - 3.2, width: 4.5, height: 4.5, color: rouge, rotate: degrees(45) });
+  y -= 15;
+  centre("AVOCATS", y, n, 10, bleu, 3.2);
+  y -= 20;
+  centre(compatible("SELARL VARTIS Avocats · Avocats au barreau de Paris"), y, it, 10, gris);
+  y -= 13;
+  centre("222 boulevard Saint-Germain, 75007 Paris", y, it, 10, gris);
 
-  // Titre encadré
-  y -= 58;
-  const titre = "ATTESTATION DE PRISE EN CHARGE";
-  const lt = g.widthOfTextAtSize(titre, 14);
-  page.drawRectangle({ x: L / 2 - lt / 2 - 18, y: y - 9, width: lt + 36, height: 30, borderColor: encre, borderWidth: 0.8 });
-  centre(titre, y, g, 14);
+  // Titre
+  y -= 52;
+  centre("ATTESTATION", y, g, 20, bleu, 4);
+  y -= 18;
+  centre(compatible("Prise en charge et dépôt du recours"), y, it, 11.5, gris);
 
-  // Corps : paragraphes justifiés, puis « Fait à » et signature alignés à droite
-  y -= 60;
+  // Récapitulatif encadré (lecture rapide en cas de contrôle)
+  const lignesRecap: [string, string][] = [["Dossier", a.reference]];
+  if (a.depot?.date) lignesRecap.push(["Recours déposé le", new Date(`${a.depot.date}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).replace(/^1 /, "1er ")]);
+  if (a.depot?.juridiction) lignesRecap.push(["Juridiction", a.depot.juridiction.charAt(0).toUpperCase() + a.depot.juridiction.slice(1)]);
+  if (a.depot?.numero) lignesRecap.push(["Requête n°", a.depot.numero]);
+  y -= 26;
+  const hRecap = lignesRecap.length * 17 + 14;
+  page.drawRectangle({ x: MG + 40, y: y - hRecap + 10, width: L - 2 * MG - 80, height: hRecap, color: rgb(0.94, 0.95, 0.98), borderColor: bleu, borderWidth: 0.5, opacity: 0.92 });
+  page.drawRectangle({ x: MG + 40, y: y - hRecap + 10, width: 3, height: hRecap, color: rouge });
+  let yr = y - 6;
+  for (const [k, v] of lignesRecap) {
+    page.drawText(compatible(k), { x: MG + 58, y: yr, size: 10.5, font: it, color: gris });
+    page.drawText(compatible(v), { x: MG + 175, y: yr, size: 10.5, font: g, color: encre });
+    yr -= 17;
+  }
+  y = y - hRecap - 22;
+
+  // Corps : paragraphes justifiés ; « Fait à » et signature à droite
   const T = 12;
-  const IL = 18;
+  const IL = 17.5;
   const largeur = L - 2 * MG;
   const paragraphes = compatible(a.texte.replace(/[   ]/g, " ")).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
   for (const p of paragraphes) {
-    const droite = /^(Fait à|Maître )/.test(p);
-    if (droite) {
-      y -= /^Fait à/.test(p) ? 10 : 0;
-      for (const l of p.split("\n")) {
-        const f = /^Maître/.test(l) ? g : n;
-        page.drawText(l, { x: L - MG - f.widthOfTextAtSize(l, T), y, size: T, font: f, color: encre });
-        y -= IL;
-      }
-      y -= 8;
+    if (/^(Fait à|Maître )/.test(p)) {
+      const signature = /^Maître /.test(p);
+      if (!signature) y -= 6;
+      const lignes = signature ? [p, "Avocat au barreau de Paris"] : [p];
+      lignes.forEach((l, k) => {
+        const f = signature ? (k === 0 ? g : it) : n;
+        const s = signature && k > 0 ? 10.5 : T;
+        page.drawText(l, { x: L - MG - f.widthOfTextAtSize(l, s), y, size: s, font: f, color: encre });
+        y -= signature && k === 0 ? 14 : IL;
+      });
+      y -= 6;
       continue;
     }
-    const mots = p.split(/\s+/);
     let ligne: string[] = [];
     const tracer = (mots: string[], justifier: boolean) => {
-      const brut = mots.join(" ");
-      if (!justifier || mots.length < 2) page.drawText(brut, { x: MG, y, size: T, font: n, color: encre });
+      if (!justifier || mots.length < 2) page.drawText(mots.join(" "), { x: MG, y, size: T, font: n, color: encre });
       else {
         const espace = (largeur - mots.reduce((s, m) => s + n.widthOfTextAtSize(m, T), 0)) / (mots.length - 1);
         let x = MG;
@@ -294,7 +343,7 @@ export async function attestationPdf(a: { texte: string; le: Date; reference: st
       }
       y -= IL;
     };
-    for (const m of mots) {
+    for (const m of p.split(/\s+/)) {
       if (n.widthOfTextAtSize([...ligne, m].join(" "), T) > largeur && ligne.length) {
         tracer(ligne, true);
         ligne = [];
@@ -302,15 +351,13 @@ export async function attestationPdf(a: { texte: string; le: Date; reference: st
       ligne.push(m);
     }
     if (ligne.length) tracer(ligne, false);
-    y -= 10;
+    y -= 9;
   }
 
-  // Pied : traçabilité de l'attestation
+  // Pied : traçabilité
   const le = a.le.toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "short", timeStyle: "short" });
-  const pied1 = compatible(`Dossier ${a.reference} · attestation établie par l'avocat depuis l'espace cabinet le ${le}`);
-  const pied2 = compatible(`Empreinte du texte : ${a.empreinte.slice(0, 16)} · lexpatria.fr`);
-  page.drawLine({ start: { x: MG, y: 78 }, end: { x: L - MG, y: 78 }, thickness: 0.4, color: gris });
-  centre(pied1, 62, it, 8.5, gris);
-  centre(pied2, 50, it, 8.5, gris);
+  page.drawLine({ start: { x: MG, y: 74 }, end: { x: L - MG, y: 74 }, thickness: 0.4, color: gris });
+  centre(compatible(`Attestation établie par l'avocat depuis l'espace sécurisé du cabinet le ${le} · dossier ${a.reference}`), 60, it, 8, gris);
+  centre(compatible(`Empreinte du texte : ${a.empreinte.slice(0, 16)} · lexpatria.fr`), 49, it, 8, gris);
   return doc.save();
 }

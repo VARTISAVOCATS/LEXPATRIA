@@ -6,7 +6,7 @@ import { clients, dossiers, echeances, indisponibilites, journal, messages, piec
 import { journaliser } from "@/lib/journal";
 import { casDuTriage, trouverCas } from "@/lib/cas";
 import { lireParametre } from "./parametres";
-import { libelleClient, STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
+import { libelleClient, rang as rangStatut, STATUTS_AVOCAT, type Statut } from "@/lib/statuts";
 import { ajouterMessage, voitTout, type Dossier } from "./dossiers";
 import { envoyer } from "./notifications";
 import { attestationValide, dernierActe } from "./poste";
@@ -248,6 +248,7 @@ export async function tachesDuJour(d: Base, m: Membre, tout: boolean) {
     piecesAVerifier: Number(l.aVerifier),
     piecesManquantes: Number(l.manquantes),
     messagesNonLus: Number(l.nonLus),
+    attestationASigner: !l.dos.priseEnCharge && !(l.dos.avisPrealable || l.dos.procedure === "DIAGNOSTIC" || l.dos.procedure === "CONSULTATION") && rangStatut(l.dos.statut) >= rangStatut("DEPOSE"),
   }));
   const ids = lignes.map((l) => l.dos.id);
   const dans30 = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);

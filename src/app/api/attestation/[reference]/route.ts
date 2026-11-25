@@ -21,9 +21,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ referen
     }
   }
   if (!dos) return new Response("Dossier introuvable", { status: 404 });
-  const pc = dos.priseEnCharge as { texte: string; le: string; empreinte?: string } | null;
+  const pc = dos.priseEnCharge as { texte: string; le: string; empreinte?: string; depot?: { date: string | null; juridiction: string | null; numero: string | null } } | null;
   if (!pc) return new Response("Attestation pas encore signée", { status: 404 });
-  const pdf = await attestationPdf({ texte: pc.texte, le: new Date(pc.le), reference: dos.reference, empreinte: pc.empreinte ?? "" });
+  const pdf = await attestationPdf({ texte: pc.texte, le: new Date(pc.le), reference: dos.reference, empreinte: pc.empreinte ?? "", depot: pc.depot ?? null });
   return new Response(new Uint8Array(pdf), {
     headers: {
       "content-type": "application/pdf",

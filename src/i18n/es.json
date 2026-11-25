@@ -1104,5 +1104,8 @@
   "Accord de l'État requis, s'il a été communiqué": "Acuerdo del Estado requerido, si se ha comunicado",
   "Attestation de demande d'asile": "Certificado de solicitud de asilo",
   "Fiche pénale ou date de libération prévisible": "Ficha penitenciaria o fecha prevista de excarcelación",
-  "La décision de placement en rétention": "La decisión de internamiento en un centro de retención"
+  "La décision de placement en rétention": "La decisión de internamiento en un centro de retención",
+  "Votre attestation sera disponible ici dès le dépôt de votre recours.": "Su certificado estará disponible aquí en cuanto se presente su recurso.",
+  "Votre attestation, signée le {date}": "Su certificado, firmado el {date}",
+  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "En cuanto se presente su recurso, tendrá en su espacio un certificado para presentar en caso de control."
 }

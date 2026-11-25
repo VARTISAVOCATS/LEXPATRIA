@@ -7,7 +7,7 @@ import type { Dossier } from "@/lib/serveur/dossiers";
 import { attestationValide, controleCroise, modelesDuDossier, texteAttestation, type Analyse } from "@/lib/serveur/poste";
 import type { Membre } from "@/lib/serveur/session";
 import type { FichierStocke } from "@/lib/serveur/stockage";
-import { frDateHeure } from "@/lib/statuts";
+import { frDateHeure, rang } from "@/lib/statuts";
 import type { ProprietesPoste } from "./PosteTravail";
 
 export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<ProprietesPoste> {
@@ -30,6 +30,7 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
     peutAttester: m.role === "ASSOCIE" || (m.role === "AVOCAT" && dos.avocatId === m.id),
     transmisLe: dos.transmisSecretariatLe ? frDateHeure(dos.transmisSecretariatLe) : null,
     priseEnCharge: pc ? { le: frDateHeure(new Date(pc.le)) } : null,
+    recoursDepose: rang(dos.statut) >= rang("DEPOSE"),
     dateLimiteVerifiee: dos.dateLimiteVerifiee,
     avisTransmisLe: dos.avisTransmisLe ? frDateHeure(dos.avisTransmisLe) : null,
     pieces: lesPieces

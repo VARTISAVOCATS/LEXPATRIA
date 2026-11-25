@@ -79,7 +79,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
             )}
             {!frais.avisPrealable && frais.procedure !== "DIAGNOSTIC" && (
             <p className="petite">
-              {t("Dès la prise en charge, une attestation à présenter en cas de contrôle sera disponible dans votre espace.")}
+              {t("Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.")}
             </p>
             )}
           </>

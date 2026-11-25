@@ -92,13 +92,16 @@ describe("parcours du poste de travail jusqu'au dépôt", () => {
     expect(await attestationValide(d, await dernierActe(d, dos.id))).toBeNull();
     expect((await changerStatut(d, kachi, dos, "DEPOSE")).ok).toBe(false);
 
-    // Nouvelle attestation, dépôt accepté
+    // Nouvelle attestation, dépôt accepté ; l'attestation du client n'est délivrée qu'après le dépôt
     expect((await attester(d, kachi, dos)).ok).toBe(true);
+    expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
     expect((await changerStatut(d, kachi, await relire(dos.id), "DEPOSE")).ok).toBe(true);
 
     // Attestation de prise en charge pour le client
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(true);
-    expect(((await relire(dos.id)).priseEnCharge as { texte: string }).texte).toContain("Maître Boualem Kachi");
+    const texte = ((await relire(dos.id)).priseEnCharge as { texte: string }).texte;
+    expect(texte).toContain("Maître Boualem Kachi");
+    expect(texte).toMatch(/j'ai déposé le \d{1,2}(er)? \S+ \d{4}/);
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
   });
 });

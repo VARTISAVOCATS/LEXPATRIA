@@ -8,7 +8,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import type { Base } from "@/db";
-import { actes, attestations, clients, dossiers, pieces, utilisateurs } from "@/db/schema";
+import { actes, attestations, clients, dossiers, journal, pieces, utilisateurs } from "@/db/schema";
 import { empreinteTexte, journaliser } from "@/lib/journal";
 import {
   compterManquants,
@@ -521,20 +521,69 @@ export async function transmettre(d: Base, m: Membre, dos: Dossier): Promise<Res
 }
 
 /** Attestation de prise en charge remise au client, après vérification des dates. */
+/** Ce que l'acte déposé représente pour le client, dans l'attestation. */
+const OBJET_DEPOT: Partial<Record<CodeModele, string>> = {
+  REQUETE_OQTF: "une requête en annulation dirigée contre l'obligation de quitter le territoire français prise à son encontre",
+  REQUETE_REFUS_TITRE: "une requête en annulation dirigée contre le refus de titre de séjour qui lui a été opposé",
+  REQUETE_SOMMAIRE: "une requête en annulation",
+  MEMOIRE_COMPLEMENTAIRE: "un mémoire complémentaire",
+  REFERE_SUSPENSION: "une requête en référé-suspension (article L. 521-1 du code de justice administrative)",
+  REFERE_LIBERTE: "une requête en référé-liberté (article L. 521-2 du code de justice administrative)",
+  REFERE_MESURES_UTILES: "une requête en référé mesures utiles (article L. 521-3 du code de justice administrative)",
+  RECOURS_GRACIEUX: "un recours gracieux auprès du préfet",
+  RAPO_VISA: "un recours administratif préalable contre le refus de visa qui lui a été opposé",
+  RAPO_NATURALISATION: "un recours administratif préalable auprès du ministre chargé des naturalisations",
+  MISE_EN_DEMEURE: "une mise en demeure adressée à la préfecture",
+  REQUETE_APPEL: "une requête d'appel",
+};
+
+const dateLongue = (iso: string) =>
+  new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).replace(/^1 /, "1er ");
+const jourParis = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
+
+/** Dépôt du recours : date (passage à « déposé », ou date d'enregistrement saisie), juridiction lue dans l'acte, numéro attribué. */
+export async function infosDepot(d: Base, dos: Dossier) {
+  const lignes = await d.select().from(journal).where(eq(journal.dossierId, dos.id)).orderBy(journal.le);
+  const depose = lignes.find((l) => (l.action === "STATUT_MODIFIE" || l.action === "ENVOI_RECOMMANDE") && (l.details as { vers?: string } | null)?.vers === "DEPOSE");
+  const enregistre = lignes.find((l) => l.action === "REQUETE_ENREGISTREE");
+  const date = depose ? jourParis(depose.le) : ((enregistre?.details as { date?: string } | null)?.date ?? (enregistre ? jourParis(enregistre.le) : null));
+  const acte = await dernierActe(d, dos.id);
+  const premiere = acte?.contenu.split("\n").find((l) => l.trim()) ?? "";
+  const juridiction = premiere.match(/(tribunal administratif de [^.,;\n]+|cour administrative d'appel de [^.,;\n]+)/i)?.[1]?.trim() ?? null;
+  return { date, juridiction: juridiction && !juridiction.includes("XXX") ? juridiction : null, numero: dos.numeroRequete ?? null, acte };
+}
+
+/** L'attestation est délivrée après le dépôt du recours : elle en mentionne la date, la juridiction et, s'il est connu, le numéro. */
 export async function signerPriseEnCharge(d: Base, m: Membre, dos: Dossier): Promise<Resultat> {
   if (!estAvocat(m) || !peutTravailler(m, dos)) return refus("Seul l'avocat en charge du dossier signe l'attestation.");
   if (dos.priseEnCharge) return refus("L'attestation est déjà signée.");
+  if (rang(dos.statut) < rang("DEPOSE")) return refus("L'attestation est délivrée après le dépôt du recours.");
+  const depot = await infosDepot(d, dos);
+  if (!depot.date) return refus("Date de dépôt introuvable : indiquez d'abord le dépôt du recours.");
   const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
   const le = new Date();
-  const texte = `Je soussigné(e), Maître ${m.prenom} ${m.nom}, avocat au barreau de Paris, SELARL VARTIS Avocats (Lexpatria Avocats), 222 boulevard Saint-Germain, 75007 Paris, atteste être chargé(e) de la défense des intérêts de ${cli?.civilite === "MADAME" ? "Madame" : "Monsieur"} ${cli?.prenom ?? ""} ${(cli?.nom ?? "").toUpperCase()} dans le dossier ${dos.reference} (${procedureLibelle(dos.procedure)}).\n\nFait à Paris, le ${le.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}.\n\nMaître ${m.prenom} ${m.nom}`;
-  await d.update(dossiers).set({ priseEnCharge: { texte, le: le.toISOString(), avocatId: m.id, empreinte: empreinteTexte(texte) } }).where(eq(dossiers.id, dos.id));
+  const client = `${cli?.civilite === "MADAME" ? "Madame" : "Monsieur"} ${cli?.prenom ?? ""} ${(cli?.nom ?? "").toUpperCase()}`.replace(/\s+/g, " ").trim();
+  const naissance = cli?.dateNaissance ? `, ${cli.civilite === "MADAME" ? "née" : "né"} le ${dateLongue(cli.dateNaissance)}` : "";
+  const juridictionnel = depot.acte ? JURIDICTIONNELS.includes(depot.acte.type as CodeModele) : true;
+  const objet = (depot.acte && OBJET_DEPOT[depot.acte.type as CodeModele]) ?? `un recours (${procedureLibelle(dos.procedure).toLowerCase()})`;
+  const ou = juridictionnel && depot.juridiction ? ` devant le ${depot.juridiction}` : "";
+  const numero = depot.numero ? `, enregistré${/^(une|la) /.test(objet) ? "e" : ""} sous le n° ${depot.numero}` : "";
+  const texte =
+    `Je soussigné(e), Maître ${m.prenom} ${m.nom}, avocat au barreau de Paris, exerçant au sein de la SELARL VARTIS Avocats (LEXPATRIA Avocats), 222 boulevard Saint-Germain, 75007 Paris, atteste être chargé(e) de la défense des intérêts de ${client}${naissance}.\n\n` +
+    `À ce titre, j'ai ${juridictionnel ? "déposé" : "adressé"} le ${dateLongue(depot.date)}${ou} ${objet}${numero}.\n\n` +
+    `La présente attestation est délivrée à l'intéressé${cli?.civilite === "MADAME" ? "e" : ""} pour servir et valoir ce que de droit.\n\n` +
+    `Fait à Paris, le ${dateLongue(jourParis(le))}.\n\nMaître ${m.prenom} ${m.nom}`;
+  await d
+    .update(dossiers)
+    .set({ priseEnCharge: { texte, le: le.toISOString(), avocatId: m.id, empreinte: empreinteTexte(texte), depot: { date: depot.date, juridiction: depot.juridiction, numero: depot.numero } } })
+    .where(eq(dossiers.id, dos.id));
   await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PRISE_EN_CHARGE_ATTESTEE" });
   if (cli?.email)
     await envoyer({
       canal: "EMAIL",
       destinataire: cli.email,
-      sujet: "Votre attestation de prise en charge — LEXPATRIA",
-      texte: `Bonjour,\n\nVotre avocat a signé votre attestation de prise en charge. Elle est disponible dans votre espace, rubrique « Documents » : ${process.env.URL_PUBLIQUE ?? "https://lexpatria.fr"}/espace\n\nLEXPATRIA Avocats`,
+      sujet: "Votre attestation — LEXPATRIA",
+      texte: `Bonjour,\n\nVotre recours a été déposé et votre avocat a signé votre attestation. Elle est disponible dans votre espace, rubrique « Documents », à télécharger en PDF : ${process.env.URL_PUBLIQUE ?? "https://lexpatria.fr"}/espace\n\nLEXPATRIA Avocats`,
     });
   return { ok: true };
 }

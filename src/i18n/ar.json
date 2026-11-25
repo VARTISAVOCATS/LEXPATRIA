@@ -1104,5 +1104,8 @@
   "Accord de l'État requis, s'il a été communiqué": "موافقة الدولة المطلوب منها، إن تم إبلاغها",
   "Attestation de demande d'asile": "شهادة طلب اللجوء",
   "Fiche pénale ou date de libération prévisible": "البطاقة الجزائية أو تاريخ الإفراج المتوقع",
-  "La décision de placement en rétention": "قرار الوضع في مركز الاحتجاز"
+  "La décision de placement en rétention": "قرار الوضع في مركز الاحتجاز",
+  "Votre attestation sera disponible ici dès le dépôt de votre recours.": "ستكون شهادتك متاحة هنا فور إيداع طعنك.",
+  "Votre attestation, signée le {date}": "شهادتك، الموقعة بتاريخ {date}",
+  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "فور إيداع طعنك، ستتوفر في فضائك شهادة لتقديمها عند أي تفتيش."
 }
