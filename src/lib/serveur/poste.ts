@@ -566,13 +566,20 @@ export async function signerPriseEnCharge(d: Base, m: Membre, dos: Dossier): Pro
   const naissance = cli?.dateNaissance ? `, ${cli.civilite === "MADAME" ? "née" : "né"} le ${dateLongue(cli.dateNaissance)}` : "";
   const juridictionnel = depot.acte ? JURIDICTIONNELS.includes(depot.acte.type as CodeModele) : true;
   const objet = (depot.acte && OBJET_DEPOT[depot.acte.type as CodeModele]) ?? `un recours (${procedureLibelle(dos.procedure).toLowerCase()})`;
-  const ou = juridictionnel && depot.juridiction ? ` au ${depot.juridiction}` : "";
-  const numero = depot.numero ? ` Ce dossier est enregistré sous le numéro ${depot.numero}.` : "";
+  // « de » + article : « d'une requête », « d'un recours ».
+  const deObjet = objet.replace(/^une /, "d'une ").replace(/^un /, "d'un ");
+  const avocat = `Maître ${m.prenom} ${m.nom.toUpperCase()}`;
+  const depotPhrase =
+    juridictionnel && depot.juridiction
+      ? `En date du ${dateLongue(depot.date)} nous avons saisi le ${depot.juridiction} ${deObjet}.`
+      : `En date du ${dateLongue(depot.date)} nous avons ${juridictionnel ? "déposé" : "adressé"} ${objet}.`;
+  const numero = depot.numero ? ` ${juridictionnel ? "Cette requête" : "Ce recours"} est enregistré${juridictionnel ? "e" : ""} sous le numéro ${depot.numero}.` : "";
   const texte =
-    `Je soussigné(e), Maître ${m.prenom} ${m.nom}, avocat au barreau de Paris, exerçant au sein de la SELARL VARTIS Avocats (LEXPATRIA Avocats), 222 boulevard Saint-Germain, 75007 Paris, atteste être chargé(e) de la défense des intérêts de ${client}${naissance}.\n\n` +
-    `À ce titre j'ai ${juridictionnel ? "déposé" : "adressé"} en date du ${dateLongue(depot.date)}${ou} ${objet}.${numero}\n\n` +
+    `Je soussigné(e), ${avocat}, avocat au barreau de Paris, exerçant au sein de la SELARL VARTIS Avocats (LEXPATRIA Avocats) dont le siège est situé 222 boulevard Saint-Germain à Paris (75007),\n\n` +
+    `certifie que notre cabinet assure la défense des intérêts de ${client}${naissance}.\n\n` +
+    `${depotPhrase}${numero}\n\n` +
     `La présente attestation est délivrée à l'intéressé${cli?.civilite === "MADAME" ? "e" : ""} pour servir et valoir ce que de droit.\n\n` +
-    `Fait à Paris, le ${dateLongue(jourParis(le))}.\n\nMaître ${m.prenom} ${m.nom}`;
+    `Fait à Paris, le ${dateLongue(jourParis(le))}.\n\n${avocat}`;
   await d
     .update(dossiers)
     .set({ priseEnCharge: { texte, le: le.toISOString(), avocatId: m.id, empreinte: empreinteTexte(texte), depot: { date: depot.date, juridiction: depot.juridiction, numero: depot.numero } } })

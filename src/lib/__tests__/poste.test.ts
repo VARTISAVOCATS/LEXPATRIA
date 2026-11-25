@@ -100,8 +100,8 @@ describe("parcours du poste de travail jusqu'au dépôt", () => {
     // Attestation de prise en charge pour le client
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(true);
     const texte = ((await relire(dos.id)).priseEnCharge as { texte: string }).texte;
-    expect(texte).toContain("Maître Boualem Kachi");
-    expect(texte).toMatch(/j'ai déposé en date du \d{1,2}(er)? \S+ \d{4}/);
+    expect(texte).toContain("Maître Boualem KACHI");
+    expect(texte).toMatch(/En date du \d{1,2}(er)? \S+ \d{4} nous avons (saisi|déposé)/);
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
   });
 });
