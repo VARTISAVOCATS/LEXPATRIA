@@ -99,7 +99,10 @@ describe("parcours du poste de travail jusqu'au dépôt", () => {
 
     // Attestation de prise en charge pour le client
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(true);
-    const texte = ((await relire(dos.id)).priseEnCharge as { texte: string }).texte;
+    const { attestationsClient } = await import("@/lib/attestations");
+    const [att] = attestationsClient((await relire(dos.id)).priseEnCharge);
+    expect(att.type).toBe("DEPOT");
+    const texte = att.texte;
     expect(texte).toContain("Maître Boualem KACHI");
     expect(texte).toMatch(/En date du \d{1,2}(er)? \S+ \d{4} nous avons (saisi|déposé)/);
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
@@ -151,5 +154,26 @@ describe("analyse de secours", () => {
       delete process.env.ANTHROPIC_API_KEY;
       viderCacheConnexions();
     }
+  });
+});
+
+describe("attestation de prise en charge (recours non juridictionnel)", () => {
+  it("se signe dès la prise en charge, une seule fois, sans mention de dépôt", async () => {
+    const d = await db();
+    const [kachi] = await d.select().from(schema.utilisateurs).where(eq(schema.utilisateurs.email, "boualem.kachi@exemple.invalid"));
+    const [c] = await d.insert(schema.clients).values({ code: await prochainCodeClient(d), email: "visa-pec@exemple.invalid", prenom: "Lina", nom: "Test", civilite: "MADAME" }).returning();
+    const [dos] = await d
+      .insert(schema.dossiers)
+      .values({ reference: await prochaineReference(d), clientId: c.id, procedure: "REFUS_VISA", statut: "PAYE", avocatId: kachi.id, dateLimite: "2099-01-01" })
+      .returning();
+    expect((await signerPriseEnCharge(d, kachi, dos)).ok).toBe(false);
+    await accepter(d, kachi, dos);
+    expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(true);
+    const { attestationsClient } = await import("@/lib/attestations");
+    const [att] = attestationsClient((await relire(dos.id)).priseEnCharge);
+    expect(att.type).toBe("PRISE_EN_CHARGE");
+    expect(att.texte).toContain("notre cabinet a été chargé de");
+    expect(att.texte).not.toContain("saisi le tribunal");
+    expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
   });
 });

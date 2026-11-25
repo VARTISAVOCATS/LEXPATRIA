@@ -15,6 +15,7 @@ import { accesClient, detailDossier, marquerLus } from "@/lib/serveur/dossiers";
 import { clientConnecte } from "@/lib/serveur/session";
 import type { FichierStocke } from "@/lib/serveur/stockage";
 import { etapesClient, frDate, frDateHeure, libelleClient, rang, statutClient, type Statut } from "@/lib/statuts";
+import { attestationsClient, TITRE_ATTESTATION } from "@/lib/attestations";
 import { EnteteEspace } from "../../composants/Entete";
 import { AppelPropose } from "./AppelPropose";
 import { FormMessage, FormPiece } from "./Formulaires";
@@ -247,19 +248,22 @@ export default async function DossierClient({ params, searchParams }: { params: 
               {consultation && !avis && rang(statut) < rang("CLOS") && (
                 <p className="note">{t("L'avis écrit de votre avocat sera disponible ici sous 48 heures ouvrées après votre paiement.")}</p>
               )}
-              {consultation ? null : dos.priseEnCharge ? (
-                <details className="esp-conv" open>
-                  <summary>{t("Votre attestation, signée le {date}", { date: frDateHeure(new Date((dos.priseEnCharge as { le: string }).le)) })}</summary>
-                  <pre>{(dos.priseEnCharge as { texte: string }).texte}</pre>
-                  <p>
-                    <a className="btn" href={`/api/attestation/${dos.reference}`} target="_blank" rel="noreferrer">
-                      {t("Télécharger l'attestation (PDF)")}
-                    </a>
-                  </p>
-                  <p className="note">{t("À conserver sur votre téléphone ou imprimée, pour la présenter en cas de contrôle.")}</p>
-                </details>
-              ) : (
-                <p className="note">{t("Votre attestation sera disponible ici dès le dépôt de votre recours.")}</p>
+              {consultation
+                ? null
+                : attestationsClient(dos.priseEnCharge).map((a, i) => (
+                    <details key={i} className="esp-conv" open>
+                      <summary>{t("{titre}, signée le {date}", { titre: t(TITRE_ATTESTATION[a.type]), date: frDateHeure(new Date(a.le)) })}</summary>
+                      <pre>{a.texte}</pre>
+                      <p>
+                        <a className="btn" href={`/api/attestation/${dos.reference}?n=${i}`} target="_blank" rel="noreferrer">
+                          {t("Télécharger l'attestation (PDF)")}
+                        </a>
+                      </p>
+                      <p className="note">{t("À conserver sur votre téléphone ou imprimée, pour la présenter en cas de contrôle.")}</p>
+                    </details>
+                  ))}
+              {!consultation && attestationsClient(dos.priseEnCharge).length === 0 && (
+                <p className="note">{t("Votre attestation sera disponible ici dès que votre avocat l'aura signée.")}</p>
               )}
               {x.conventions.map((c) => (
                 <details key={c.id} className="esp-conv">

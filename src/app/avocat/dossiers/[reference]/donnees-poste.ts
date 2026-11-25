@@ -4,10 +4,11 @@ import type { Base } from "@/db";
 import { actes, pieces } from "@/db/schema";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import type { Dossier } from "@/lib/serveur/dossiers";
-import { attestationValide, controleCroise, modelesDuDossier, texteAttestation, type Analyse } from "@/lib/serveur/poste";
+import { attestationPossible, attestationValide, controleCroise, modelesDuDossier, texteAttestation, type Analyse } from "@/lib/serveur/poste";
 import type { Membre } from "@/lib/serveur/session";
 import type { FichierStocke } from "@/lib/serveur/stockage";
-import { frDateHeure, rang } from "@/lib/statuts";
+import { frDateHeure } from "@/lib/statuts";
+import { attestationsClient, TITRE_ATTESTATION } from "@/lib/attestations";
 import type { ProprietesPoste } from "./PosteTravail";
 
 export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<ProprietesPoste> {
@@ -15,7 +16,7 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
   const acte = tous[0] ?? null;
   const memeType = acte ? tous.filter((a) => a.type === acte.type) : [];
   const att = await attestationValide(d, acte);
-  const pc = dos.priseEnCharge as { le: string } | null;
+  const possible = await attestationPossible(d, dos);
   const lesPieces = await d.select().from(pieces).where(eq(pieces.dossierId, dos.id)).orderBy(pieces.numero, pieces.creeLe);
   return {
     reference: dos.reference,
@@ -29,8 +30,9 @@ export async function donneesPoste(d: Base, dos: Dossier, m: Membre): Promise<Pr
     texteAttestation: texteAttestation(`Maître ${m.prenom} ${m.nom}`),
     peutAttester: m.role === "ASSOCIE" || (m.role === "AVOCAT" && dos.avocatId === m.id),
     transmisLe: dos.transmisSecretariatLe ? frDateHeure(dos.transmisSecretariatLe) : null,
-    priseEnCharge: pc ? { le: frDateHeure(new Date(pc.le)) } : null,
-    recoursDepose: rang(dos.statut) >= rang("DEPOSE"),
+    attestationsClient: attestationsClient(dos.priseEnCharge).map((a) => ({ titre: TITRE_ATTESTATION[a.type], le: frDateHeure(new Date(a.le)) })),
+    attestationASigner: possible.type,
+    attestationRaison: possible.type ? "" : possible.raison,
     dateLimiteVerifiee: dos.dateLimiteVerifiee,
     avisTransmisLe: dos.avisTransmisLe ? frDateHeure(dos.avisTransmisLe) : null,
     pieces: lesPieces

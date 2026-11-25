@@ -25,7 +25,8 @@ import {
   type DonneesActe,
 } from "@/lib/modeles";
 import { adresseEnLignes } from "@/lib/pays";
-import { rang } from "@/lib/statuts";
+import { genre, rang } from "@/lib/statuts";
+import { attestationsClient, TITRE_ATTESTATION, type AttestationClient, type TypeAttestation } from "@/lib/attestations";
 import { minimiser } from "@/lib/triage";
 import { referencesPour } from "./actes-reference";
 import { casDuTriage } from "@/lib/cas";
@@ -541,56 +542,93 @@ const dateLongue = (iso: string) =>
   new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).replace(/^1 /, "1er ");
 const jourParis = (d: Date) => d.toLocaleDateString("sv-SE", { timeZone: "Europe/Paris" });
 
-/** Dépôt du recours : date (passage à « déposé », ou date d'enregistrement saisie), juridiction lue dans l'acte, numéro attribué. */
+/** Dépôt du recours : date (passage à « déposé » ou date d'enregistrement saisie, postérieure à la rédaction de l'acte),
+ *  juridiction lue dans l'acte, numéro attribué. */
 export async function infosDepot(d: Base, dos: Dossier) {
-  const lignes = await d.select().from(journal).where(eq(journal.dossierId, dos.id)).orderBy(journal.le);
-  const depose = lignes.find((l) => (l.action === "STATUT_MODIFIE" || l.action === "ENVOI_RECOMMANDE") && (l.details as { vers?: string } | null)?.vers === "DEPOSE");
+  const acte = await dernierActe(d, dos.id);
+  const depuis = acte?.creeLe ?? new Date(0);
+  const lignes = (await d.select().from(journal).where(eq(journal.dossierId, dos.id)).orderBy(journal.le)).filter((l) => l.le >= depuis);
+  const depose = lignes.find((l) => l.action === "STATUT_MODIFIE" && (l.details as { vers?: string } | null)?.vers === "DEPOSE");
   const enregistre = lignes.find((l) => l.action === "REQUETE_ENREGISTREE");
   const date = depose ? jourParis(depose.le) : ((enregistre?.details as { date?: string } | null)?.date ?? (enregistre ? jourParis(enregistre.le) : null));
-  const acte = await dernierActe(d, dos.id);
   const premiere = acte?.contenu.split("\n").find((l) => l.trim()) ?? "";
   const juridiction = premiere.match(/(tribunal administratif de [^.,;\n]+|cour administrative d'appel de [^.,;\n]+)/i)?.[1]?.trim() ?? null;
   return { date, juridiction: juridiction && !juridiction.includes("XXX") ? juridiction : null, numero: dos.numeroRequete ?? null, acte };
 }
 
-/** L'attestation est délivrée après le dépôt du recours : elle en mentionne la date, la juridiction et, s'il est connu, le numéro. */
+/** Mission confiée pour un recours non juridictionnel (attestation de prise en charge). */
+const MISSION: Partial<Record<CodeModele, string>> = {
+  RECOURS_GRACIEUX: "former un recours gracieux auprès du préfet",
+  RAPO_VISA: "former un recours administratif préalable contre le refus de visa qui lui a été opposé",
+  RAPO_NATURALISATION: "former un recours administratif préalable auprès du ministre chargé des naturalisations",
+  MISE_EN_DEMEURE: "mettre en demeure la préfecture d'accomplir les démarches qui lui incombent",
+};
+
+/** Attestation que l'avocat peut signer à ce stade du dossier, ou null (avec la raison). */
+export async function attestationPossible(d: Base, dos: Dossier): Promise<{ type: TypeAttestation } | { type: null; raison: string }> {
+  if (dos.avisPrealable || ["DIAGNOSTIC", "CONSULTATION"].includes(dos.procedure)) return { type: null, raison: "Pas d'attestation pour un avis ou une consultation." };
+  const deja = attestationsClient(dos.priseEnCharge);
+  const acte = await dernierActe(d, dos.id);
+  const juridictionnel = !!acte && JURIDICTIONNELS.includes(acte.type as CodeModele);
+  if (juridictionnel) {
+    if (rang(dos.statut) < rang("DEPOSE")) return { type: null, raison: "L'attestation est délivrée après le dépôt de la requête, dont elle mentionne la date." };
+    if (deja.some((a) => a.type === "DEPOT" && a.acteId === acte!.id)) return { type: null, raison: "L'attestation de dépôt de cette requête est déjà signée." };
+    return { type: "DEPOT" };
+  }
+  // Recours non juridictionnel (gracieux, préalable, mise en demeure) : attestation de prise en charge seulement.
+  const prealable = genre(dos.procedure) !== "CONTENTIEUX" || (!!acte && acte.type !== "AVIS_ECRIT");
+  if (!prealable) return { type: null, raison: "L'attestation est délivrée après le dépôt de la requête, dont elle mentionne la date." };
+  if (rang(dos.statut) < rang("PRIS_EN_CHARGE")) return { type: null, raison: "Acceptez d'abord le dossier." };
+  if (deja.some((a) => a.type === "PRISE_EN_CHARGE")) return { type: null, raison: "L'attestation de prise en charge est déjà signée." };
+  return { type: "PRISE_EN_CHARGE" };
+}
+
+/** Signe l'attestation du stade atteint : prise en charge (recours non juridictionnel) ou dépôt de la requête. */
 export async function signerPriseEnCharge(d: Base, m: Membre, dos: Dossier): Promise<Resultat> {
   if (!estAvocat(m) || !peutTravailler(m, dos)) return refus("Seul l'avocat en charge du dossier signe l'attestation.");
-  if (dos.priseEnCharge) return refus("L'attestation est déjà signée.");
-  if (rang(dos.statut) < rang("DEPOSE")) return refus("L'attestation est délivrée après le dépôt du recours.");
-  const depot = await infosDepot(d, dos);
-  if (!depot.date) return refus("Date de dépôt introuvable : indiquez d'abord le dépôt du recours.");
+  const possible = await attestationPossible(d, dos);
+  if (!possible.type) return refus(possible.raison);
   const [cli] = await d.select().from(clients).where(eq(clients.id, dos.clientId));
   const le = new Date();
   const client = `${cli?.civilite === "MADAME" ? "Madame" : "Monsieur"} ${cli?.prenom ?? ""} ${(cli?.nom ?? "").toUpperCase()}`.replace(/\s+/g, " ").trim();
   const naissance = cli?.dateNaissance ? `, ${cli.civilite === "MADAME" ? "née" : "né"} le ${dateLongue(cli.dateNaissance)}` : "";
-  const juridictionnel = depot.acte ? JURIDICTIONNELS.includes(depot.acte.type as CodeModele) : true;
-  const objet = (depot.acte && OBJET_DEPOT[depot.acte.type as CodeModele]) ?? `un recours (${procedureLibelle(dos.procedure).toLowerCase()})`;
-  // « de » + article : « d'une requête », « d'un recours ».
-  const deObjet = objet.replace(/^une /, "d'une ").replace(/^un /, "d'un ");
   const avocat = `Maître ${m.prenom} ${m.nom.toUpperCase()}`;
-  const depotPhrase =
-    juridictionnel && depot.juridiction
-      ? `En date du ${dateLongue(depot.date)} nous avons saisi le ${depot.juridiction} ${deObjet}.`
-      : `En date du ${dateLongue(depot.date)} nous avons ${juridictionnel ? "déposé" : "adressé"} ${objet}.`;
-  const numero = depot.numero ? ` ${juridictionnel ? "Cette requête" : "Ce recours"} est enregistré${juridictionnel ? "e" : ""} sous le numéro ${depot.numero}.` : "";
+  let corps: string;
+  let depot: AttestationClient["depot"] = null;
+  let acteId: string | null = null;
+  if (possible.type === "DEPOT") {
+    const x = await infosDepot(d, dos);
+    if (!x.date) return refus("Date de dépôt introuvable : indiquez d'abord le dépôt de la requête.");
+    const objet = (x.acte && OBJET_DEPOT[x.acte.type as CodeModele]) ?? "une requête";
+    const deObjet = objet.replace(/^une /, "d'une ").replace(/^un /, "d'un ");
+    corps =
+      (x.juridiction ? `En date du ${dateLongue(x.date)} nous avons saisi le ${x.juridiction} ${deObjet}.` : `En date du ${dateLongue(x.date)} nous avons déposé ${objet}.`) +
+      (x.numero ? ` Cette requête est enregistrée sous le numéro ${x.numero}.` : "");
+    depot = { date: x.date, juridiction: x.juridiction, numero: x.numero };
+    acteId = x.acte?.id ?? null;
+  } else {
+    const acte = await dernierActe(d, dos.id);
+    const mission = (acte && MISSION[acte.type as CodeModele]) ?? `l'assister dans la procédure suivante : ${procedureLibelle(dos.procedure).replace(/^./, (c) => c.toLowerCase())}`;
+    corps = `En date du ${dateLongue(jourParis(dos.accepteLe ?? le))} notre cabinet a été chargé de ${mission}.`;
+  }
   const texte =
     `Je soussigné(e), ${avocat}, avocat au barreau de Paris, exerçant au sein de la SELARL VARTIS Avocats (LEXPATRIA Avocats) dont le siège est situé 222 boulevard Saint-Germain à Paris (75007),\n\n` +
     `certifie que notre cabinet assure la défense des intérêts de ${client}${naissance}.\n\n` +
-    `${depotPhrase}${numero}\n\n` +
+    `${corps}\n\n` +
     `La présente attestation est délivrée à l'intéressé${cli?.civilite === "MADAME" ? "e" : ""} pour servir et valoir ce que de droit.\n\n` +
     `Fait à Paris, le ${dateLongue(jourParis(le))}.\n\n${avocat}`;
+  const nouvelle: AttestationClient = { type: possible.type, texte, le: le.toISOString(), avocatId: m.id, empreinte: empreinteTexte(texte), acteId, depot };
   await d
     .update(dossiers)
-    .set({ priseEnCharge: { texte, le: le.toISOString(), avocatId: m.id, empreinte: empreinteTexte(texte), depot: { date: depot.date, juridiction: depot.juridiction, numero: depot.numero } } })
+    .set({ priseEnCharge: [...attestationsClient(dos.priseEnCharge), nouvelle] })
     .where(eq(dossiers.id, dos.id));
-  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PRISE_EN_CHARGE_ATTESTEE" });
+  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: "PRISE_EN_CHARGE_ATTESTEE", details: { type: possible.type } });
   if (cli?.email)
     await envoyer({
       canal: "EMAIL",
       destinataire: cli.email,
       sujet: "Votre attestation — LEXPATRIA",
-      texte: `Bonjour,\n\nVotre recours a été déposé et votre avocat a signé votre attestation. Elle est disponible dans votre espace, rubrique « Documents », à télécharger en PDF : ${process.env.URL_PUBLIQUE ?? "https://lexpatria.fr"}/espace\n\nLEXPATRIA Avocats`,
+      texte: `Bonjour,\n\nVotre avocat a signé votre ${TITRE_ATTESTATION[possible.type].toLowerCase()}. Elle est disponible dans votre espace, rubrique « Documents », à télécharger en PDF : ${process.env.URL_PUBLIQUE ?? "https://lexpatria.fr"}/espace\n\nLEXPATRIA Avocats`,
     });
   return { ok: true };
 }

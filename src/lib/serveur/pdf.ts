@@ -232,7 +232,7 @@ export async function attestationPdf(a: {
   le: Date;
   reference: string;
   empreinte: string;
-  depot?: { date: string | null; juridiction: string | null; numero: string | null } | null;
+  sousTitre?: string;
 }): Promise<Uint8Array> {
   const doc = await PDFDocument.create();
   doc.setTitle(`Attestation - ${a.reference}`);
@@ -292,7 +292,7 @@ export async function attestationPdf(a: {
   y -= 52;
   centre("ATTESTATION", y, g, 20, bleu, 4);
   y -= 18;
-  centre(compatible("Prise en charge et dépôt du recours"), y, it, 11.5, gris);
+  centre(compatible(a.sousTitre ?? "Prise en charge et dépôt du recours"), y, it, 11.5, gris);
 
   y -= 48;
 

@@ -40,8 +40,9 @@ export interface ProprietesPoste {
   texteAttestation: string;
   peutAttester: boolean;
   transmisLe: string | null;
-  priseEnCharge: { le: string } | null;
-  recoursDepose: boolean;
+  attestationsClient: { titre: string; le: string }[];
+  attestationASigner: "PRISE_EN_CHARGE" | "DEPOT" | null;
+  attestationRaison: string;
   dateLimiteVerifiee: boolean;
   avisTransmisLe: string | null;
   pieces: PieceApercu[];
@@ -365,27 +366,31 @@ export default function PosteTravail(p: ProprietesPoste) {
             )}
           </section>
 
-          {/* ----- Attestation de prise en charge ----- */}
+          {/* ----- Attestations remises au client ----- */}
           <section className="card">
-            <h2>Attestation de prise en charge</h2>
-            {p.priseEnCharge ? (
-              <>
-                <p className="note">Signée le {p.priseEnCharge.le} et mise à disposition du client dans son espace.</p>
-                <a className="btn sm" href={`/api/attestation/${p.reference}`} target="_blank" rel="noreferrer">
+            <h2>Attestations du client</h2>
+            {p.attestationsClient.map((a, i) => (
+              <p key={i} className="note">
+                {a.titre}, signée le {a.le}.{" "}
+                <a href={`/api/attestation/${p.reference}?n=${i}`} target="_blank" rel="noreferrer">
                   Voir le PDF
                 </a>
-              </>
-            ) : (
+              </p>
+            ))}
+            {p.attestationASigner ? (
               <>
                 <p className="note">
-                  {p.recoursDepose
-                    ? "Elle mentionne la date de dépôt du recours et, s'il est connu, son numéro. Une fois signée, elle est remise au client dans son espace."
-                    : "Elle est délivrée après le dépôt du recours, dont elle mentionne la date."}
+                  {p.attestationASigner === "DEPOT"
+                    ? "Attestation de dépôt : elle mentionne la date de dépôt, la juridiction et, s'il est connu, le numéro de la requête."
+                    : "Attestation de prise en charge : recours gracieux, recours préalable ou mise en demeure."}{" "}
+                  Une fois signée, elle est remise au client dans son espace.
                 </p>
-                <button className="btn sm" disabled={!p.peutAttester || !p.recoursDepose || !!envoi} onClick={() => agir("priseEnCharge")}>
+                <button className="btn sm" disabled={!p.peutAttester || !!envoi} onClick={() => agir("priseEnCharge")}>
                   Signer l&apos;attestation
                 </button>
               </>
+            ) : (
+              <p className="note">{p.attestationRaison}</p>
             )}
           </section>
 

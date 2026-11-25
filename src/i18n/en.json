@@ -1107,5 +1107,10 @@
   "La décision de placement en rétention": "The detention order",
   "Votre attestation sera disponible ici dès le dépôt de votre recours.": "Your certificate will be available here as soon as your appeal is filed.",
   "Votre attestation, signée le {date}": "Your certificate, signed on {date}",
-  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "As soon as your appeal is filed, a certificate to show if you are stopped for a check will be available in your personal space."
+  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "As soon as your appeal is filed, a certificate to show if you are stopped for a check will be available in your personal space.",
+  "{titre}, signée le {date}": "{titre}, signed on {date}",
+  "Attestation de prise en charge": "Certificate of representation",
+  "Attestation de dépôt du recours": "Certificate of filing of the appeal",
+  "Votre attestation sera disponible ici dès que votre avocat l'aura signée.": "Your certificate will be available here as soon as your lawyer has signed it.",
+  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "A certificate to show if you are stopped for a check will be available in your personal space as soon as your lawyer has signed it."
 }

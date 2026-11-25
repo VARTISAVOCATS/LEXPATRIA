@@ -1107,5 +1107,10 @@
   "La décision de placement en rétention": "La decisión de internamiento en un centro de retención",
   "Votre attestation sera disponible ici dès le dépôt de votre recours.": "Su certificado estará disponible aquí en cuanto se presente su recurso.",
   "Votre attestation, signée le {date}": "Su certificado, firmado el {date}",
-  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "En cuanto se presente su recurso, tendrá en su espacio un certificado para presentar en caso de control."
+  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "En cuanto se presente su recurso, tendrá en su espacio un certificado para presentar en caso de control.",
+  "{titre}, signée le {date}": "{titre}, firmado el {date}",
+  "Attestation de prise en charge": "Certificado de representación",
+  "Attestation de dépôt du recours": "Certificado de presentación del recurso",
+  "Votre attestation sera disponible ici dès que votre avocat l'aura signée.": "Su certificado estará disponible aquí en cuanto su abogado lo haya firmado.",
+  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "En cuanto su abogado lo firme, tendrá en su espacio un certificado para presentar en caso de control."
 }

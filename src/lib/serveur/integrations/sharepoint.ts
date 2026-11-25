@@ -10,7 +10,8 @@ import { empreinteTexte, journaliser } from "@/lib/journal";
 import { LIBELLES_MODELE, type CodeModele } from "@/lib/modeles";
 import { valeur } from "../connexions";
 import type { Dossier } from "../dossiers";
-import { actePdf, texteVersPdf } from "../pdf";
+import { actePdf, attestationPdf, texteVersPdf } from "../pdf";
+import { attestationsClient, TITRE_ATTESTATION } from "@/lib/attestations";
 import { lire, type FichierStocke } from "../stockage";
 import { messageErreur, tracer } from "./commun";
 import { graph, graphConfigure } from "./graph";
@@ -101,8 +102,13 @@ async function elementsAClasser(d: Base, dos: Dossier): Promise<Element[]> {
       nom: `${c.type === "AVENANT_APPEL" ? "Avenant d'appel" : "Convention d'honoraires"} (version ${c.version}, ${c.accepteeLe.toISOString().slice(0, 10)}).pdf`,
       produire: () => texteVersPdf(`${c.texte}\n\nAcceptée le ${c.accepteeLe.toISOString()} depuis l'adresse ${c.ip}.\nEmpreinte SHA-256 : ${c.empreinte}`, "Convention d'honoraires"),
     });
-  const pc = dos.priseEnCharge as { texte: string } | null;
-  if (pc) liste.push({ cle: "prise-en-charge", nom: "Attestation de prise en charge.pdf", produire: () => texteVersPdf(pc.texte, "Attestation de prise en charge") });
+  attestationsClient(dos.priseEnCharge).forEach((a, i) =>
+    liste.push({
+      cle: i === 0 ? "prise-en-charge" : `attestation-${i + 1}`,
+      nom: `${TITRE_ATTESTATION[a.type]}${i > 0 ? ` ${i + 1}` : ""}.pdf`,
+      produire: () => attestationPdf({ texte: a.texte, le: new Date(a.le), reference: dos.reference, empreinte: a.empreinte ?? "", sousTitre: a.type === "DEPOT" ? "Prise en charge et dépôt du recours" : "Prise en charge du dossier" }),
+    }),
+  );
   return liste.filter((e) => !deja.has(e.cle));
 }
 

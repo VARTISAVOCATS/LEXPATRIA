@@ -1107,5 +1107,10 @@
   "La décision de placement en rétention": "قرار الوضع في مركز الاحتجاز",
   "Votre attestation sera disponible ici dès le dépôt de votre recours.": "ستكون شهادتك متاحة هنا فور إيداع طعنك.",
   "Votre attestation, signée le {date}": "شهادتك، الموقعة بتاريخ {date}",
-  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "فور إيداع طعنك، ستتوفر في فضائك شهادة لتقديمها عند أي تفتيش."
+  "Dès le dépôt de votre recours, une attestation à présenter en cas de contrôle sera disponible dans votre espace.": "فور إيداع طعنك، ستتوفر في فضائك شهادة لتقديمها عند أي تفتيش.",
+  "{titre}, signée le {date}": "{titre}، الموقعة بتاريخ {date}",
+  "Attestation de prise en charge": "شهادة التكفل بالملف",
+  "Attestation de dépôt du recours": "شهادة إيداع الطعن",
+  "Votre attestation sera disponible ici dès que votre avocat l'aura signée.": "ستكون شهادتك متاحة هنا فور توقيعها من قبل محاميك.",
+  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "ستتوفر في فضائك شهادة لتقديمها عند أي تفتيش فور توقيعها من قبل محاميك."
 }

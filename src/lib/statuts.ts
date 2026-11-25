@@ -36,7 +36,7 @@ export const LIBELLES_STATUT: Record<Statut, string> = {
 
 /** Vue du client : les étapes qui le concernent, sans le détail du travail de l'avocat (rédaction, relecture). */
 type Genre = "CONTENTIEUX" | "PREALABLE" | "MISE_EN_DEMEURE" | "AVIS" | "CONSULTATION";
-function genre(procedure: string): Genre {
+export function genre(procedure: string): Genre {
   if (procedure === "CONSULTATION") return "CONSULTATION";
   if (procedure === "DIAGNOSTIC") return "AVIS";
   if (procedure === "BLOCAGE_SIMPLE") return "MISE_EN_DEMEURE";
