@@ -225,3 +225,92 @@ export async function actePdf(texte: string, titreDocument = "Acte"): Promise<Ui
   });
   return doc.save();
 }
+
+/** Attestation de prise en charge : une page A4 à présenter en cas de contrôle (papier ou écran du téléphone). */
+export async function attestationPdf(a: { texte: string; le: Date; reference: string; empreinte: string }): Promise<Uint8Array> {
+  const doc = await PDFDocument.create();
+  doc.setTitle(`Attestation de prise en charge - ${a.reference}`);
+  doc.setProducer("LEXPATRIA Avocats");
+  const n = await doc.embedFont(StandardFonts.TimesRoman);
+  const g = await doc.embedFont(StandardFonts.TimesRomanBold);
+  const it = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  const page = doc.addPage(A4);
+  const [L, H] = A4;
+  const MG = 70.85;
+  const encre = rgb(0.08, 0.1, 0.16);
+  const gris = rgb(0.35, 0.37, 0.42);
+  const bleu = rgb(0.06, 0.12, 0.25);
+  const centre = (t: string, y: number, f: PDFFont, s: number, c = encre) => page.drawText(t, { x: L / 2 - f.widthOfTextAtSize(t, s) / 2, y, size: s, font: f, color: c });
+
+  // En-tête du cabinet
+  let y = H - 72;
+  centre("LEXPATRIA", y, g, 20, bleu);
+  y -= 16;
+  centre("A V O C A T S", y, n, 10, bleu);
+  y -= 16;
+  centre(compatible("SELARL VARTIS Avocats · Avocats au barreau de Paris"), y, n, 9.5, gris);
+  y -= 12;
+  centre("222 boulevard Saint-Germain, 75007 Paris", y, n, 9.5, gris);
+  y -= 14;
+  page.drawLine({ start: { x: MG, y }, end: { x: L - MG, y }, thickness: 0.6, color: bleu });
+
+  // Titre encadré
+  y -= 58;
+  const titre = "ATTESTATION DE PRISE EN CHARGE";
+  const lt = g.widthOfTextAtSize(titre, 14);
+  page.drawRectangle({ x: L / 2 - lt / 2 - 18, y: y - 9, width: lt + 36, height: 30, borderColor: encre, borderWidth: 0.8 });
+  centre(titre, y, g, 14);
+
+  // Corps : paragraphes justifiés, puis « Fait à » et signature alignés à droite
+  y -= 60;
+  const T = 12;
+  const IL = 18;
+  const largeur = L - 2 * MG;
+  const paragraphes = compatible(a.texte.replace(/[   ]/g, " ")).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  for (const p of paragraphes) {
+    const droite = /^(Fait à|Maître )/.test(p);
+    if (droite) {
+      y -= /^Fait à/.test(p) ? 10 : 0;
+      for (const l of p.split("\n")) {
+        const f = /^Maître/.test(l) ? g : n;
+        page.drawText(l, { x: L - MG - f.widthOfTextAtSize(l, T), y, size: T, font: f, color: encre });
+        y -= IL;
+      }
+      y -= 8;
+      continue;
+    }
+    const mots = p.split(/\s+/);
+    let ligne: string[] = [];
+    const tracer = (mots: string[], justifier: boolean) => {
+      const brut = mots.join(" ");
+      if (!justifier || mots.length < 2) page.drawText(brut, { x: MG, y, size: T, font: n, color: encre });
+      else {
+        const espace = (largeur - mots.reduce((s, m) => s + n.widthOfTextAtSize(m, T), 0)) / (mots.length - 1);
+        let x = MG;
+        for (const m of mots) {
+          page.drawText(m, { x, y, size: T, font: n, color: encre });
+          x += n.widthOfTextAtSize(m, T) + espace;
+        }
+      }
+      y -= IL;
+    };
+    for (const m of mots) {
+      if (n.widthOfTextAtSize([...ligne, m].join(" "), T) > largeur && ligne.length) {
+        tracer(ligne, true);
+        ligne = [];
+      }
+      ligne.push(m);
+    }
+    if (ligne.length) tracer(ligne, false);
+    y -= 10;
+  }
+
+  // Pied : traçabilité de l'attestation
+  const le = a.le.toLocaleString("fr-FR", { timeZone: "Europe/Paris", dateStyle: "short", timeStyle: "short" });
+  const pied1 = compatible(`Dossier ${a.reference} · attestation établie par l'avocat depuis l'espace cabinet le ${le}`);
+  const pied2 = compatible(`Empreinte du texte : ${a.empreinte.slice(0, 16)} · lexpatria.fr`);
+  page.drawLine({ start: { x: MG, y: 78 }, end: { x: L - MG, y: 78 }, thickness: 0.4, color: gris });
+  centre(pied1, 62, it, 8.5, gris);
+  centre(pied2, 50, it, 8.5, gris);
+  return doc.save();
+}

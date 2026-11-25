@@ -251,6 +251,12 @@ export default async function DossierClient({ params, searchParams }: { params: 
                 <details className="esp-conv" open>
                   <summary>{t("Attestation de prise en charge, signée le {date}", { date: frDateHeure(new Date((dos.priseEnCharge as { le: string }).le)) })}</summary>
                   <pre>{(dos.priseEnCharge as { texte: string }).texte}</pre>
+                  <p>
+                    <a className="btn" href={`/api/attestation/${dos.reference}`} target="_blank" rel="noreferrer">
+                      {t("Télécharger l'attestation (PDF)")}
+                    </a>
+                  </p>
+                  <p className="note">{t("À conserver sur votre téléphone ou imprimée, pour la présenter en cas de contrôle.")}</p>
                 </details>
               ) : (
                 <p className="note">{t("Votre attestation de prise en charge sera disponible ici dès la prise en charge de votre dossier.")}</p>

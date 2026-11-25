@@ -368,7 +368,12 @@ export default function PosteTravail(p: ProprietesPoste) {
           <section className="card">
             <h2>Attestation de prise en charge</h2>
             {p.priseEnCharge ? (
-              <p className="note">Signée le {p.priseEnCharge.le} et mise à disposition du client dans son espace.</p>
+              <>
+                <p className="note">Signée le {p.priseEnCharge.le} et mise à disposition du client dans son espace.</p>
+                <a className="btn sm" href={`/api/attestation/${p.reference}`} target="_blank" rel="noreferrer">
+                  Voir le PDF
+                </a>
+              </>
             ) : (
               <>
                 <p className="note">Une fois signée, elle est remise au client dans son espace.</p>

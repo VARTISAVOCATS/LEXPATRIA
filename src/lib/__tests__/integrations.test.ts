@@ -13,7 +13,7 @@ import { adresseDepuisActe, envoyerRecommande } from "@/lib/serveur/integrations
 import { synchroniserAbsences } from "@/lib/serveur/integrations/outlook";
 import { facturer, prixHT } from "@/lib/serveur/integrations/pennylane";
 import { enregistrerNumero, paquetTelerecours } from "@/lib/serveur/integrations/telerecours";
-import { compatible, texteVersPdf } from "@/lib/serveur/pdf";
+import { attestationPdf, compatible, texteVersPdf } from "@/lib/serveur/pdf";
 import { adresseComplete, adresseEnLignes, tvaApplicable } from "@/lib/pays";
 import { texteConvention } from "@/lib/convention";
 
@@ -170,5 +170,13 @@ describe("Outlook", () => {
     evenements = [];
     await synchroniserAbsences(d, maintenant);
     expect(await d.select().from(schema.indisponibilites).where(eq(schema.indisponibilites.outlookId, "ev1"))).toEqual([]);
+  });
+});
+
+describe("attestation de prise en charge", () => {
+  it("produit une page PDF à présenter en cas de contrôle", async () => {
+    const pdf = await attestationPdf({ texte: "Je soussigné, Maître Boualem Kachi, atteste être chargé de la défense de Madame Amina TEST.\n\nFait à Paris, le 25/11/2026.\n\nMaître Boualem Kachi", le: new Date(), reference: "D1", empreinte: "abc" });
+    expect(Buffer.from(pdf.slice(0, 4)).toString()).toBe("%PDF");
+    expect((await PDFDocument.load(pdf)).getPageCount()).toBe(1);
   });
 });
