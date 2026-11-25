@@ -294,22 +294,22 @@ export async function attestationPdf(a: {
   y -= 18;
   centre(compatible("Prise en charge et dépôt du recours"), y, it, 11.5, gris);
 
-  // Récapitulatif encadré (lecture rapide en cas de contrôle)
-  const lignesRecap: [string, string][] = [["Dossier", a.reference]];
-  if (a.depot?.date) lignesRecap.push(["Recours déposé le", new Date(`${a.depot.date}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).replace(/^1 /, "1er ")]);
-  if (a.depot?.juridiction) lignesRecap.push(["Juridiction", a.depot.juridiction.charAt(0).toUpperCase() + a.depot.juridiction.slice(1)]);
-  if (a.depot?.numero) lignesRecap.push(["Requête n°", a.depot.numero]);
-  y -= 26;
-  const hRecap = lignesRecap.length * 17 + 14;
-  page.drawRectangle({ x: MG + 40, y: y - hRecap + 10, width: L - 2 * MG - 80, height: hRecap, color: rgb(0.94, 0.95, 0.98), borderColor: bleu, borderWidth: 0.5, opacity: 0.92 });
-  page.drawRectangle({ x: MG + 40, y: y - hRecap + 10, width: 3, height: hRecap, color: rouge });
-  let yr = y - 6;
-  for (const [k, v] of lignesRecap) {
-    page.drawText(compatible(k), { x: MG + 58, y: yr, size: 10.5, font: it, color: gris });
-    page.drawText(compatible(v), { x: MG + 175, y: yr, size: 10.5, font: g, color: encre });
-    yr -= 17;
+  // Références du recours : deux lignes en petites capitales espacées, entre deux filets fins (sans encadré).
+  const dateDepot = a.depot?.date
+    ? new Date(`${a.depot.date}T12:00:00Z`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).replace(/^1 /, "1er ")
+    : null;
+  const ligne1 = [`Dossier ${a.reference}`, dateDepot ? `Recours déposé le ${dateDepot}` : null].filter(Boolean).join("   ·   ");
+  const ligne2 = [a.depot?.juridiction ?? null, a.depot?.numero ? `Requête n° ${a.depot.numero}` : null].filter(Boolean).join("   ·   ");
+  y -= 30;
+  const filet = (yy: number) => page.drawLine({ start: { x: L / 2 - 150, y: yy }, end: { x: L / 2 + 150, y: yy }, thickness: 0.35, color: bleu });
+  filet(y + 14);
+  centre(compatible(ligne1.toUpperCase()), y, n, 8.5, bleu, 1.1);
+  if (ligne2) {
+    y -= 15;
+    centre(compatible(ligne2.toUpperCase()), y, n, 8.5, bleu, 1.1);
   }
-  y = y - hRecap - 22;
+  filet(y - 9);
+  y -= 46;
 
   // Corps : paragraphes justifiés ; « Fait à » et signature à droite
   const T = 12;
