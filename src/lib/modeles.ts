@@ -346,7 +346,7 @@ const EXTERNE_COMPETENCE = (d: DonneesActe) =>
   moyen(
     "a",
     "Sur l'incompétence de l'auteur de la décision",
-    "Les règles de compétence sont d'ordre public et le juge les examine au besoin d'office. L'administration doit justifier que le signataire de la décision bénéficiait d'une délégation de signature régulière, visant ce type de décision et publiée avant son édiction : une délégation n'est opposable qu'après sa publication au recueil des actes administratifs de la préfecture (CE, 28 février 1996, Préfet des Yvelines c/ Oluc, n° 150991).",
+    "Les règles de compétence sont d'ordre public et le juge les examine au besoin d'office. L'administration doit justifier que le signataire de la décision bénéficiait d'une délégation de signature régulière, visant ce type de décision et publiée avant son édiction : une délégation n'est opposable qu'après sa publication au recueil des actes administratifs de la préfecture.",
     `La décision attaquée n'a pas été signée par le ${prefet(d.prefecture)} lui-même mais par ${MANQUANT}, qui ne justifie pas d'une délégation de signature régulière, spéciale et publiée. À défaut d'une telle justification, la décision encourt l'annulation.`,
   );
 
@@ -354,7 +354,7 @@ const EXTERNE_MOTIVATION = (d: DonneesActe) =>
   moyen(
     "b",
     "Sur l'insuffisance de motivation et le défaut d'examen complet et sérieux de la situation",
-    "En vertu des articles L. 211-2 et L. 211-5 du code des relations entre le public et l'administration, les décisions individuelles défavorables doivent être motivées et comporter l'énoncé des considérations de droit et de fait qui en constituent le fondement. Une décision qui se borne à viser un texte sans expliciter les considérations retenues n'est pas suffisamment motivée (CE, 10 décembre 2003, Préfet du Bas-Rhin, n° 250138). L'autorité administrative doit en outre procéder à un examen réel et individualisé de la situation de l'intéressé(e) ; l'absence d'examen particulier, révélée par un raisonnement stéréotypé, entraîne l'annulation (CAA Paris, 5 septembre 2022, n° 22PA01751).",
+    "En vertu des articles L. 211-2 et L. 211-5 du code des relations entre le public et l'administration, les décisions individuelles défavorables doivent être motivées et comporter l'énoncé des considérations de droit et de fait qui en constituent le fondement. Une décision qui se borne à viser un texte sans expliciter les considérations retenues n'est pas suffisamment motivée. L'autorité administrative doit en outre procéder à un examen réel et individualisé de la situation de l'intéressé(e) ; l'absence d'examen particulier, révélée par un raisonnement stéréotypé, entraîne l'annulation.",
     `${MANQUANT}. Le ${prefet(d.prefecture)} n'a pas procédé à un examen particulier de la situation de ${nomCourt(d)}, notamment ${MANQUANT}.`,
   );
 
