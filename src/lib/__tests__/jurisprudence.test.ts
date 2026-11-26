@@ -79,3 +79,48 @@ describe("open data de la juridiction administrative", () => {
     expect((await outil("lire_decision_ta_caa", { id: "DTA_2601827_20261119.xml_TA76" })).source?.titre).toContain("Rouen");
   });
 });
+
+describe("passage exact des décisions retenues", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("n'accepte qu'une citation qui figure mot pour mot dans la décision lue", async () => {
+    const { passageExact, rechercherPourActe } = await import("@/lib/serveur/integrations/jurisprudence");
+    const texte = "Considérant que M. X… justifie résider en France depuis dix ans avec son épouse, de nationalité française ; que, dans ces conditions, l’arrêté porte une atteinte disproportionnée à son droit au respect de sa vie privée et familiale.";
+    expect(passageExact("l'arrêté porte une atteinte disproportionnée à son droit au respect de sa vie privée et familiale", texte)).toBe(true);
+    expect(passageExact("l'arrêté méconnaît gravement le droit au respect de la vie privée et familiale", texte)).toBe(false);
+    expect(passageExact("trop court", texte)).toBe(false);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () =>
+        reponse({ decisions: { body: { hits: { hits: [{ _id: "DTA_1_20260101.xml_TA75", _source: { Nom_Juridiction: "Tribunal Administratif de Paris", Numero_Dossier: "1", Date_Lecture: "2026-01-01", paragraph: texte } }] } } } }),
+      ),
+    );
+    const tours = [
+      { content: [{ type: "tool_use", id: "t1", name: "lire_decision_ta_caa", input: { id: "DTA_1_20260101.xml_TA75" } }] },
+      {
+        content: [
+          { type: "tool_use", id: "t2", name: "retenir_passage", input: { id: "DTA_1_20260101.xml_TA75", passage: "l'arrêté méconnaît gravement la vie privée" } },
+          { type: "tool_use", id: "t3", name: "retenir_passage", input: { id: "DTA_1_20260101.xml_TA75", passage: "« l’arrêté porte une atteinte disproportionnée à son droit au respect de sa vie privée et familiale »" } },
+        ],
+      },
+      { content: [{ type: "text", text: "NOTE DE RECHERCHE : …" }] },
+    ];
+    const reponses: string[] = [];
+    const client = {
+      messages: {
+        create: vi.fn(async (p: { messages: { content: unknown }[] }) => {
+          const dernier = p.messages[p.messages.length - 1].content;
+          if (Array.isArray(dernier)) for (const b of dernier as { content?: string }[]) if (typeof b.content === "string") reponses.push(b.content);
+          return tours.shift();
+        }),
+      },
+    };
+    const r = await rechercherPourActe(client as never, "modele", "contexte");
+    expect(reponses.some((x) => x.startsWith("Passage refusé"))).toBe(true);
+    expect(reponses).toContain("Passage vérifié et retenu.");
+    expect(r?.sources).toHaveLength(1);
+    expect(r?.sources[0].passage).toContain("atteinte disproportionnée");
+    expect(r?.appels).toBe(1);
+  });
+});

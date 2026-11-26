@@ -284,6 +284,45 @@ export async function lireDecisionOpenData(id: string): Promise<{ titre: string;
 
 // ---------- Recherche menée par l'IA ----------
 
+/** Décision ou article consulté ; « passage » : extrait exact, vérifié mot pour mot dans le texte lu. */
+export interface SourceConsultee {
+  titre: string;
+  lien: string;
+  passage?: string;
+}
+
+/** Normalisation pour comparer une citation au texte (espaces, apostrophes, guillemets, tirets). */
+export function normaliserCitation(t: string): string {
+  return t
+    .normalize("NFC")
+    .replace(/[\u00a0\u202f\u2009]/g, " ")
+    .replace(/[’‘`´]/g, "'")
+    .replace(/[«»“”„]/g, '"')
+    .replace(/[‐‑‒–—−]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+/** Vrai si le passage figure mot pour mot dans le texte (aux espaces et à la typographie près). */
+export function passageExact(passage: string, texte: string): boolean {
+  const p = normaliserCitation(passage).replace(/^["']|["']$/g, "").replace(/(\.\.\.|…)$/, "").trim();
+  return p.length >= 30 && normaliserCitation(texte).includes(p);
+}
+
+/** Outil par lequel l'IA retient une décision lue en citant le passage exact qui fonde son apport. */
+export const OUTIL_PASSAGE: Anthropic.Tool = {
+  name: "retenir_passage",
+  description:
+    "Retient une décision déjà lue (avec lire_decision_administrative, lire_decision_ta_caa ou lire_decision_judiciaire) en citant, mot pour mot, le passage qui justifie de l'utiliser (une à trois phrases des motifs). " +
+    "Le passage est vérifié dans le texte lu : s'il n'y figure pas exactement, il est refusé et tu dois le recopier fidèlement. Appelle cet outil pour chaque décision retenue dans la note.",
+  input_schema: {
+    type: "object",
+    properties: { id: { type: "string", description: "Identifiant de la décision lue" }, passage: { type: "string", description: "Passage recopié mot pour mot" } },
+    required: ["id", "passage"],
+  },
+};
+
 /** Outils de l'open data de la juridiction administrative (sans clé, toujours disponibles). */
 export const OUTILS_OPENDATA: Anthropic.Tool[] = [
   {
@@ -343,6 +382,7 @@ export const CONSIGNE_RECHERCHE = [
   "Tu es documentaliste juridique d'un cabinet d'avocats en droit des étrangers. Avant la rédaction d'un acte, tu recherches la jurisprudence pertinente et tu vérifies les textes, avec les outils fournis.",
   "Méthode : identifie les moyens que le dossier soutient (motifs de la décision, situation du client) ; pour chacun, lance des recherches ciblées dans la jurisprudence administrative, de préférence récente (Conseil d'État, puis cours administratives d'appel), lis les décisions prometteuses pour vérifier leur apport, et vérifie le texte en vigueur des articles à citer. Cherche aussi, avec rechercher_decisions_ta_caa, des décisions récentes du tribunal administratif compétent et de sa cour administrative d'appel qui ont fait droit à des moyens comparables ; lis-les avant de les retenir. Douze appels d'outils au plus.",
   "N'envoie aucune donnée personnelle du client dans les requêtes : uniquement des notions juridiques.",
+  "Pour chaque décision que tu retiens, appelle retenir_passage avec le passage exact des motifs qui en fonde l'apport, recopié mot pour mot depuis le texte lu (une à trois phrases). L'avocat vérifiera la décision sur ce seul passage.",
   "Termine par une NOTE DE RECHERCHE : pour chaque moyen, les décisions retenues avec leur référence exacte telle que renvoyée par l'outil (juridiction, formation, date, numéro), leur solution et leur apport en une ou deux phrases, et la citation utile s'il y en a une ; puis les articles vérifiés avec leur rédaction en vigueur et toute renumérotation constatée. N'y mets rien que les outils n'aient renvoyé.",
 ].join(" ");
 
@@ -391,29 +431,51 @@ export async function rechercherPourActe(
   client: Anthropic,
   modele: string,
   contexte: string,
-): Promise<{ note: string; sources: { titre: string; lien: string }[]; appels: number } | null> {
+): Promise<{ note: string; sources: SourceConsultee[]; appels: number } | null> {
   // L'open data de la juridiction administrative ne demande aucune clé : la recherche a lieu même sans PISTE.
-  const outilsDispo = (await pisteConfiguree()) ? [...OUTILS_RECHERCHE, ...OUTILS_OPENDATA] : OUTILS_OPENDATA;
+  const outilsDispo = [...((await pisteConfiguree()) ? OUTILS_RECHERCHE : []), ...OUTILS_OPENDATA, OUTIL_PASSAGE];
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: contexte }];
-  const sources: { titre: string; lien: string }[] = [];
+  const sources: SourceConsultee[] = [];
+  const lus = new Map<string, { texte: string; lien: string }>(); // identifiant de la décision → texte lu et lien
   let appels = 0;
-  for (let tour = 0; tour < 14; tour++) {
+  for (let tour = 0; tour < 18; tour++) {
     const rep = await client.messages.create({ model: modele, max_tokens: 4000, system: CONSIGNE_RECHERCHE, tools: outilsDispo, messages });
     const outils = rep.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
-    if (!outils.length || appels >= 12) {
+    if (!outils.length || tour === 17) {
       const note = rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
       return note ? { note, sources, appels } : null;
     }
     messages.push({ role: "assistant", content: rep.content });
     const resultats: Anthropic.ToolResultBlockParam[] = [];
     for (const o of outils) {
+      const entree = (o.input ?? {}) as Record<string, string>;
+      if (o.name === OUTIL_PASSAGE.name) {
+        // Citation vérifiée mot pour mot dans le texte lu ; ne compte pas dans le nombre de recherches.
+        const lu = lus.get(entree.id ?? "");
+        let reponse: string;
+        if (!lu) reponse = "Décision non lue : lis-la d'abord, puis cite le passage.";
+        else if (!passageExact(entree.passage ?? "", lu.texte)) reponse = "Passage refusé : il ne figure pas mot pour mot dans la décision lue. Recopie-le fidèlement, sans reformuler.";
+        else {
+          const s = sources.find((x) => x.lien === lu.lien);
+          const passage = (entree.passage ?? "").trim();
+          if (s) s.passage = s.passage && !s.passage.includes(passage) ? `${s.passage} […] ${passage}` : passage;
+          reponse = "Passage vérifié et retenu.";
+        }
+        resultats.push({ type: "tool_result", tool_use_id: o.id, content: reponse });
+        continue;
+      }
+      if (appels >= 12) {
+        resultats.push({ type: "tool_result", tool_use_id: o.id, content: "Nombre maximal de recherches atteint." });
+        continue;
+      }
       appels++;
-      const r = await executerOutil(o.name, (o.input ?? {}) as Record<string, string>);
-      if (r.source && !sources.some((s) => s.lien === r.source!.lien)) sources.push(r.source);
+      const r = await executerOutil(o.name, entree);
+      if (r.source && !sources.some((s) => s.lien === r.source!.lien)) sources.push({ ...r.source });
+      if (r.source && entree.id) lus.set(entree.id, { texte: r.texte, lien: r.source.lien });
       resultats.push({ type: "tool_result", tool_use_id: o.id, content: r.texte.slice(0, 12_000) });
     }
     const contenu: (Anthropic.ToolResultBlockParam | Anthropic.TextBlockParam)[] = [...resultats];
-    if (appels >= 12) contenu.push({ type: "text", text: "Nombre maximal de recherches atteint : rédige maintenant la NOTE DE RECHERCHE." });
+    if (appels >= 12) contenu.push({ type: "text", text: "Nombre maximal de recherches atteint : cite les passages des décisions retenues avec retenir_passage, puis rédige la NOTE DE RECHERCHE." });
     messages.push({ role: "user", content: contenu });
   }
   return null;

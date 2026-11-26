@@ -360,7 +360,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
   const cle = await valeur("ANTHROPIC_API_KEY");
   // Actes déjà rédigés par le cabinet pour ce type d'acte (back office) : exemples de plan, de style et de moyens.
   const references = cle ? await referencesPour(d, modele) : [];
-  let sources: { titre: string; lien: string }[] = [];
+  let sources: { titre: string; lien: string; passage?: string }[] = [];
   let appelsRecherche = 0;
   if (cle) {
     const joints = await blocsPieces(d, dos);
@@ -373,12 +373,12 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
           (references.length
             ? " Tu reçois aussi des ACTES DE RÉFÉRENCE déjà rédigés par le cabinet pour ce type d'acte : inspire-toi de leur plan, de leur style, de leurs formulations et des moyens qui conviennent à ce dossier. N'en reprends jamais les faits, les noms, les dates, les lieux ni les références propres à l'ancienne affaire."
             : "");
-    // Recherche de jurisprudence et vérification des textes (Légifrance, Judilibre) avant la rédaction, si PISTE est branché.
+    // Recherche de jurisprudence et vérification des textes avant la rédaction : open data de la juridiction administrative, et Légifrance et Judilibre si PISTE est branché.
     const { rechercherPourActe } = await import("./integrations/jurisprudence");
     const recherche = await rechercherPourActe(
       client,
       modeleIA,
-      `Acte à préparer : ${LIBELLES_MODELE[modele] ?? modele}. Procédure : ${dos.procedure}.\nQualification : ${JSON.stringify((await qualificationDossier(d, dos)).pourIA)}\nAnalyse de la décision et du dossier : ${JSON.stringify(dos.analyse ?? null)}\nSituation (sans données d'identité) : ${JSON.stringify({ reponses: x.reponses, algerien: x.algerien, dates: { decision: x.dateDecision, notification: x.dateNotification } })}`,
+      `Acte à préparer : ${LIBELLES_MODELE[modele] ?? modele}. Procédure : ${dos.procedure}.\nQualification : ${JSON.stringify((await qualificationDossier(d, dos)).pourIA)}\nAnalyse de la décision et du dossier : ${JSON.stringify(dos.analyse ?? null)}\nSituation (sans données d'identité) : ${JSON.stringify({ reponses: x.reponses, algerien: x.algerien, dates: { decision: x.dateDecision, notification: x.dateNotification } })}\nTribunal compétent estimé : ${x.prefecture ? tribunalCompetent(x.prefecture) : "à déterminer"}`,
     ).catch((e) => {
       console.error("Recherche de jurisprudence en échec :", e);
       return null;
@@ -388,7 +388,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
     const demande =
               `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, identite: { prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, nationalite: x.nationalite, adresse: x.adresse }, prefecture: x.prefecture, tribunalEstime: x.prefecture ? tribunalCompetent(x.prefecture) : null, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
               references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join("") +
-              (recherche ? `\n\nNOTE DE RECHERCHE (jurisprudence et textes vérifiés sur Légifrance et Judilibre) :\n${recherche.note}` : "");
+              (recherche ? `\n\nNOTE DE RECHERCHE (jurisprudence et textes vérifiés sur Légifrance, Judilibre et l'open data de la juridiction administrative) :\n${recherche.note}` : "");
     // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
     const rep = await client.messages
       .stream({

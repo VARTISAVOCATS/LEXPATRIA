@@ -25,7 +25,7 @@ interface ActeV {
   contenu: string;
   motsModifies: number;
   tempsRevueS: number;
-  sources: { titre: string; lien: string }[];
+  sources: { titre: string; lien: string; passage?: string }[];
 }
 
 export interface ProprietesPoste {
@@ -268,6 +268,7 @@ export default function PosteTravail(p: ProprietesPoste) {
                           <a href={x.lien} target="_blank" rel="noopener noreferrer">
                             {x.titre}
                           </a>
+                          {x.passage && <blockquote className="pt-passage">« {x.passage} »</blockquote>}
                         </li>
                       ))}
                     </ul>
