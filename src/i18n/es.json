@@ -1112,5 +1112,18 @@
   "Attestation de prise en charge": "Certificado de representación",
   "Attestation de dépôt du recours": "Certificado de presentación del recurso",
   "Votre attestation sera disponible ici dès que votre avocat l'aura signée.": "Su certificado estará disponible aquí en cuanto su abogado lo haya firmado.",
-  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "En cuanto su abogado lo firme, tendrá en su espacio un certificado para presentar en caso de control."
+  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "En cuanto su abogado lo firme, tendrá en su espacio un certificado para presentar en caso de control.",
+  "Accepter et confirmer": "Aceptar y confirmar",
+  "Contactez le cabinet pour recevoir un nouveau lien.": "Póngase en contacto con el despacho para recibir un nuevo enlace.",
+  "Convention d'intervention acceptée le {date}": "Convenio de intervención aceptado el {date}",
+  "Convention d'intervention sans honoraires": "Convenio de intervención sin honorarios",
+  "J'accepte la convention d'intervention.": "Acepto el convenio de intervención.",
+  "La convention a déjà été acceptée. Suivez votre dossier depuis votre espace.": "El convenio ya ha sido aceptado. Siga su expediente desde su espacio.",
+  "Le cabinet accepte de prendre en charge votre dossier sans honoraires.": "El despacho acepta encargarse de su expediente sin honorarios.",
+  "Le cabinet accepte de prendre en charge votre dossier sans honoraires. Il sera traité par {avocat}.": "El despacho acepta encargarse de su expediente sin honorarios. Lo llevará {avocat}.",
+  "Pour confirmer, lisez la convention d'intervention puis acceptez-la.": "Para confirmar, lea el convenio de intervención y acéptelo.",
+  "Un e-mail de confirmation vous est envoyé.": "Se le ha enviado un correo de confirmación.",
+  "Votre dossier est pris en charge": "Su expediente está a cargo del despacho",
+  "Votre dossier est pris en charge.": "Su expediente está a cargo del despacho.",
+  "Votre dossier {ref}": "Su expediente {ref}"
 }

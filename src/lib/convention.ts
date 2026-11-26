@@ -296,3 +296,30 @@ export function resumeConvention(d: DonneesConvention): string[] {
     "Délai déjà expiré au jour du paiement : remboursement, 69 € conservés pour l'avis écrit.",
   ];
 }
+
+// ---------- Intervention sans honoraires (pro bono) ----------
+
+export const VERSION_PRO_BONO = "sans-honoraires-2026-11-26.1";
+
+/** Convention d'intervention sans honoraires : même mission et mêmes obligations que la convention du cabinet,
+ *  sans honoraires ni modalités de règlement. */
+export function texteConventionProBono(d: DonneesConvention): string {
+  const code = codeConvention(d);
+  const t = modeleIntegre(code)
+    .replace(/^CONVENTION D'HONORAIRES — /, "CONVENTION D'INTERVENTION SANS HONORAIRES — ")
+    .replace(/EXPOSÉ PRÉALABLE\n[^\n]*\n\n/, "")
+    .replace(
+      /ARTICLE 2 — HONORAIRES\n[\s\S]*?(?=\nARTICLE 4)/,
+      "ARTICLE 2 — HONORAIRES\n" +
+        "Le Cabinet accepte d'assurer la mission décrite à l'article 1 sans percevoir d'honoraires. Aucune somme n'est due par le Client au titre de cette mission.\n" +
+        "Les sommes que la juridiction pourrait mettre à la charge de l'administration au titre de l'article L. 761-1 du code de justice administrative reviennent au Client.\n\n" +
+        "ARTICLE 3 — FRAIS\n" +
+        "Les frais d'envoi des courriers recommandés sont pris en charge par le Cabinet. Aucune autre dépense ne peut être engagée pour le compte du Client sans son accord préalable.\n",
+    )
+    .replace(/, et qu'en cas de rétractation les diligences déjà accomplies resteront dues/, "")
+    .replace(
+      /Toute contestation relative aux honoraires est portée[^\n]*/,
+      "Toute difficulté relative à l'exécution de la présente convention peut être soumise au Bâtonnier de l'Ordre des avocats de Paris.",
+    );
+  return remplir(t, d, VERSION_PRO_BONO);
+}

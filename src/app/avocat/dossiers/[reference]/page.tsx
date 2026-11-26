@@ -211,6 +211,7 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                 <span className={`pill ${statut === "PAYE" ? "warn" : "ok"}`}>{LIBELLES_STATUT[statut]}</span>
                 {dos.traitement === "URGENCE" && <span className="pill bad">Urgence</span>}
                 {x.cli.algerien && <span className="pill warn">Accord franco-algérien</span>}
+                {dos.proBono && <span className="pill ok">Sans honoraires</span>}
                 <span>{x.avocat ? `Me ${x.avocat.prenom} ${x.avocat.nom}` : "Non attribué"}</span>
                 {statut === "PAYE" && dos.acceptationAvant && <span className="pill warn">à accepter avant {frDateHeure(dos.acceptationAvant)}</span>}
                 {!!dos.rendezVous && (

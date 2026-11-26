@@ -1112,5 +1112,18 @@
   "Attestation de prise en charge": "شهادة التكفل بالملف",
   "Attestation de dépôt du recours": "شهادة إيداع الطعن",
   "Votre attestation sera disponible ici dès que votre avocat l'aura signée.": "ستكون شهادتك متاحة هنا فور توقيعها من قبل محاميك.",
-  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "ستتوفر في فضائك شهادة لتقديمها عند أي تفتيش فور توقيعها من قبل محاميك."
+  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "ستتوفر في فضائك شهادة لتقديمها عند أي تفتيش فور توقيعها من قبل محاميك.",
+  "Accepter et confirmer": "قبول وتأكيد",
+  "Contactez le cabinet pour recevoir un nouveau lien.": "اتصل بالمكتب للحصول على رابط جديد.",
+  "Convention d'intervention acceptée le {date}": "اتفاقية التدخل المقبولة بتاريخ {date}",
+  "Convention d'intervention sans honoraires": "اتفاقية تدخل دون أتعاب",
+  "J'accepte la convention d'intervention.": "أوافق على اتفاقية التدخل.",
+  "La convention a déjà été acceptée. Suivez votre dossier depuis votre espace.": "تم قبول الاتفاقية مسبقاً. تابع ملفك من فضائك.",
+  "Le cabinet accepte de prendre en charge votre dossier sans honoraires.": "يقبل المكتب التكفل بملفك دون أتعاب.",
+  "Le cabinet accepte de prendre en charge votre dossier sans honoraires. Il sera traité par {avocat}.": "يقبل المكتب التكفل بملفك دون أتعاب. سيتولاه {avocat}.",
+  "Pour confirmer, lisez la convention d'intervention puis acceptez-la.": "للتأكيد، اقرأ اتفاقية التدخل ثم وافق عليها.",
+  "Un e-mail de confirmation vous est envoyé.": "تم إرسال بريد إلكتروني للتأكيد إليك.",
+  "Votre dossier est pris en charge": "ملفك قيد التكفل",
+  "Votre dossier est pris en charge.": "ملفك قيد التكفل.",
+  "Votre dossier {ref}": "ملفك {ref}"
 }

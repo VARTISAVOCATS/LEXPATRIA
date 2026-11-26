@@ -1112,5 +1112,18 @@
   "Attestation de prise en charge": "Certificate of representation",
   "Attestation de dépôt du recours": "Certificate of filing of the appeal",
   "Votre attestation sera disponible ici dès que votre avocat l'aura signée.": "Your certificate will be available here as soon as your lawyer has signed it.",
-  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "A certificate to show if you are stopped for a check will be available in your personal space as soon as your lawyer has signed it."
+  "Une attestation à présenter en cas de contrôle sera disponible dans votre espace dès que votre avocat l'aura signée.": "A certificate to show if you are stopped for a check will be available in your personal space as soon as your lawyer has signed it.",
+  "Accepter et confirmer": "Accept and confirm",
+  "Contactez le cabinet pour recevoir un nouveau lien.": "Contact the firm to receive a new link.",
+  "Convention d'intervention acceptée le {date}": "Engagement agreement accepted on {date}",
+  "Convention d'intervention sans honoraires": "Engagement agreement without fees",
+  "J'accepte la convention d'intervention.": "I accept the engagement agreement.",
+  "La convention a déjà été acceptée. Suivez votre dossier depuis votre espace.": "The agreement has already been accepted. Follow your case from your personal space.",
+  "Le cabinet accepte de prendre en charge votre dossier sans honoraires.": "The firm agrees to handle your case without fees.",
+  "Le cabinet accepte de prendre en charge votre dossier sans honoraires. Il sera traité par {avocat}.": "The firm agrees to handle your case without fees. It will be handled by {avocat}.",
+  "Pour confirmer, lisez la convention d'intervention puis acceptez-la.": "To confirm, read the engagement agreement and accept it.",
+  "Un e-mail de confirmation vous est envoyé.": "A confirmation email has been sent to you.",
+  "Votre dossier est pris en charge": "Your case is being handled",
+  "Votre dossier est pris en charge.": "Your case is being handled.",
+  "Votre dossier {ref}": "Your case {ref}"
 }

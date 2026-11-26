@@ -58,6 +58,7 @@ export default async function Dossiers({ searchParams }: { searchParams: Promise
                           <b>{dos.reference}</b>
                         </Link>
                         {dos.traitement === "URGENCE" && <span className="pill bad">Urgent</span>}
+                        {dos.proBono && <span className="pill ok">Sans honoraires</span>}
                       </td>
                       <td>
                         {cli.prenom} {cli.nom} {cli.algerien && <span className="pill warn">DZ</span>}

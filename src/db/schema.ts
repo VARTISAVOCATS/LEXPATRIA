@@ -117,6 +117,8 @@ export const dossiers = pgTable("dossiers", {
   dateLimite: text("date_limite"),
   dateLimiteVerifiee: boolean("date_limite_verifiee").notNull().default(false),
   avisPrealable: boolean("avis_prealable").notNull().default(false),
+  /** Dossier pris sans honoraires (décision d'un associé) : pas de paiement, convention d'intervention sans honoraires. */
+  proBono: boolean("pro_bono").notNull().default(false),
   avocatId: text("avocat_id").references(() => utilisateurs.id),
   accepteLe: timestamp("accepte_le", { withTimezone: true }),
   acceptationAvant: timestamp("acceptation_avant", { withTimezone: true }),

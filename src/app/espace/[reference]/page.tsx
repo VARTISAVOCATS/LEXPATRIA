@@ -268,7 +268,7 @@ export default async function DossierClient({ params, searchParams }: { params: 
               {x.conventions.map((c) => (
                 <details key={c.id} className="esp-conv">
                   <summary>
-                    {t("Convention d'honoraires acceptée le {date}", { date: frDateHeure(c.accepteeLe) })} · {t("version {v}", { v: c.version })}
+                    {c.type === "PRO_BONO" ? t("Convention d'intervention acceptée le {date}", { date: frDateHeure(c.accepteeLe) }) : t("Convention d'honoraires acceptée le {date}", { date: frDateHeure(c.accepteeLe) })} · {t("version {v}", { v: c.version })}
                   </summary>
                   <pre>{c.texte}</pre>
                   <p className="note">
