@@ -119,6 +119,8 @@ export const dossiers = pgTable("dossiers", {
   avisPrealable: boolean("avis_prealable").notNull().default(false),
   /** Dossier pris sans honoraires (décision d'un associé) : pas de paiement, convention d'intervention sans honoraires. */
   proBono: boolean("pro_bono").notNull().default(false),
+  /** Données du dossier supprimées 5 ans après la clôture (seules les données de facturation sont conservées). */
+  donneesPurgeesLe: timestamp("donnees_purgees_le", { withTimezone: true }),
   avocatId: text("avocat_id").references(() => utilisateurs.id),
   accepteLe: timestamp("accepte_le", { withTimezone: true }),
   acceptationAvant: timestamp("acceptation_avant", { withTimezone: true }),

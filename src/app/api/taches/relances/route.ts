@@ -9,6 +9,7 @@ import { synchroniserPennylane } from "@/lib/serveur/integrations/pennylane";
 import { synchroniserSharepoint } from "@/lib/serveur/integrations/sharepoint";
 import { relancer } from "@/lib/serveur/relances";
 import { preleverEcheances } from "@/lib/serveur/echeancier";
+import { purgerDossiersClos } from "@/lib/serveur/conservation";
 
 export const runtime = "nodejs";
 
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
   if (!process.env.SECRET_TACHES || req.headers.get("authorization") !== `Bearer ${process.env.SECRET_TACHES}`)
     return NextResponse.json({ erreur: "Non autorisé" }, { status: 401 });
   const d = await db();
-  const resultat = { ...(await relancer(d)), ...(await rappelerEcheances(d)) };
+  const resultat = { ...(await relancer(d)), ...(await rappelerEcheances(d)), dossiersPurges: await purgerDossiersClos(d) };
   // Paiement en trois fois : prélèvements à échéance, nouvelles tentatives, pénalités.
   Object.assign(resultat, await preleverEcheances(d).catch((e: unknown) => ({ echeancier: String(e) })));
   // Intégrations du lot 5 : chacune est ignorée tant qu'elle n'est pas configurée, et une erreur n'arrête pas les autres.

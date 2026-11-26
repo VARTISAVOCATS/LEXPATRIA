@@ -10,7 +10,7 @@ import { dateCourte, type Echeance, type ReglesEcheancier } from "./echeancier";
 import { formatEuros, type Diligence } from "./procedures";
 
 /** Version des modèles intégrés. Un modèle du cabinet porte sa propre version (« cabinet-N »). */
-export const VERSION_CONVENTION = "2026-11-04.1";
+export const VERSION_CONVENTION = "2026-11-27.1";
 
 export interface LigneHonoraires {
   diligence: Diligence;
@@ -197,7 +197,7 @@ ET
 D'AUTRE PART.
 
 EXPOSÉ PRÉALABLE
-Le Client a été informé que le Cabinet n'intervient pas au titre de l'aide juridictionnelle et qu'il lui appartient de vérifier si un contrat d'assurance de protection juridique peut prendre en charge tout ou partie des honoraires.
+Le Client a été informé que le Cabinet n'intervient pas au titre de l'aide juridictionnelle. Il a été informé qu'il peut, s'il remplit les conditions de ressources, solliciter l'aide juridictionnelle auprès du bureau d'aide juridictionnelle et être assisté par un avocat intervenant à ce titre. Il lui appartient également de vérifier si un contrat d'assurance de protection juridique peut prendre en charge tout ou partie des honoraires.
 
 ARTICLE 1 — OBJET ET PÉRIMÈTRE
 Le Client confie au Cabinet la mission suivante : {{mission}}.
@@ -222,7 +222,7 @@ Le Client peut à tout moment dessaisir le Cabinet. Le Cabinet peut se décharge
 La présente convention ne comporte aucune clause de transfert de l'activité ou du dossier à une autre structure.
 
 ARTICLE 5 — OBLIGATIONS DÉONTOLOGIQUES
-Le Cabinet est tenu au secret professionnel. Il a vérifié l'absence de conflit d'intérêts et respecte ses obligations en matière de lutte contre le blanchiment des capitaux. Sa responsabilité civile professionnelle est assurée dans le cadre du contrat collectif du barreau de Paris.
+Le Cabinet est tenu au secret professionnel. Avant d'accepter le dossier, l'avocat vérifie l'absence de conflit d'intérêts. Le Cabinet respecte ses obligations en matière de lutte contre le blanchiment des capitaux. Sa responsabilité civile professionnelle est assurée dans le cadre du contrat collectif du barreau de Paris.
 Le Client est informé que des outils d'intelligence artificielle assistent l'avocat dans la lecture des décisions et des pièces, l'analyse du dossier et la préparation des projets d'actes. L'avocat relit et valide personnellement tout acte et tout avis ; aucune décision n'est prise de manière automatisée. Les données transmises au modèle d'intelligence artificielle sont limitées au strict nécessaire, font l'objet d'un transfert hors de l'Union européenne encadré par contrat et ne sont pas réutilisées pour l'entraînement des modèles.
 Les données personnelles du Client sont traitées conformément à la politique de confidentialité accessible sur le site.
 

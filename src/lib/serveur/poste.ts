@@ -28,6 +28,7 @@ import { adresseEnLignes } from "@/lib/pays";
 import { genre, rang } from "@/lib/statuts";
 import { attestationsClient, TITRE_ATTESTATION, type AttestationClient, type TypeAttestation } from "@/lib/attestations";
 import { minimiser } from "@/lib/triage";
+import { CONSIGNE_BALISES, correspondances, pseudonymiser, reidentifier } from "@/lib/pseudonymes";
 import { referencesPour } from "./actes-reference";
 import { casDuTriage } from "@/lib/cas";
 import { lireParametre } from "./parametres";
@@ -366,7 +367,10 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
     const joints = await blocsPieces(d, dos);
     const client = new Anthropic({ apiKey: cle });
     const modeleIA = (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5";
+    // Identité du client remplacée par des balises avant l'envoi, puis réinsérée dans l'acte reçu.
+    const identite = correspondances({ prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, adresse: x.adresse });
     const systeme =
+          CONSIGNE_BALISES +
           REDACTION_ACTE +
           (duCabinet ? " Ce modèle est celui du cabinet : conserve sa rédaction, son plan et ses intitulés ; développe les moyens et remplace les « XXX » que les éléments du dossier permettent de compléter." : "") +
           " Si une NOTE DE RECHERCHE est fournie, appuie chaque moyen sur la jurisprudence qu'elle retient, en reprenant exactement ses références (juridiction, date, numéro), et cite les articles dans la rédaction qu'elle a vérifiée ; elle prévaut sur le modèle de départ en cas de numérotation différente." +
@@ -385,10 +389,12 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
     });
     sources = recherche?.sources ?? [];
     appelsRecherche = recherche?.appels ?? 0;
-    const demande =
+    const demande = pseudonymiser(
               `MODÈLE DE DÉPART :\n${projet}\n\nÉLÉMENTS DU DOSSIER (minimisés) :\n${JSON.stringify({ civilite: x.civilite, identite: { prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, nationalite: x.nationalite, adresse: x.adresse }, prefecture: x.prefecture, tribunalEstime: x.prefecture ? tribunalCompetent(x.prefecture) : null, qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, faitsConfirmes: dos.faitsExtraits, reponses: x.reponses, dates: { decision: x.dateDecision, notification: x.dateNotification, limite: x.dateLimite }, pieces: x.pieces, analyse: dos.analyse })}` +
               references.map((r, i) => `\n\nACTE DE RÉFÉRENCE ${i + 1} (« ${r.titre} ») :\n${r.texte}`).join("") +
-              (recherche ? `\n\nNOTE DE RECHERCHE (jurisprudence et textes vérifiés sur Légifrance, Judilibre et l'open data de la juridiction administrative) :\n${recherche.note}` : "");
+              (recherche ? `\n\nNOTE DE RECHERCHE (jurisprudence et textes vérifiés sur Légifrance, Judilibre et l'open data de la juridiction administrative) :\n${recherche.note}` : ""),
+      identite,
+    );
     // Flux : une requête longue dépasse sans risque les délais d'attente d'une réponse unique.
     const rep = await client.messages
       .stream({
@@ -418,7 +424,7 @@ export async function genererProjet(d: Base, m: Membre, dos: Dossier, modele: Co
     }
     // Filet : si les conclusions manquent encore, celles du modèle de départ sont ajoutées pour relecture.
     if (texte.length > 200 && !/PAR CES MOTIFS/i.test(texte) && /PAR CES MOTIFS/.test(projet)) texte += `\n\n${projet.slice(projet.indexOf("PAR CES MOTIFS"))}`;
-    if (texte.length > 200) projet = accorder(texte, x.civilite);
+    if (texte.length > 200) projet = accorder(reidentifier(texte, identite), x.civilite);
   }
   const precedent = await dernierActe(d, dos.id);
   const version = precedent && precedent.type === modele ? precedent.version + 1 : 1;
@@ -651,19 +657,24 @@ export async function questionAssistant(d: Base, m: Membre, dos: Dossier, questi
   let reponse: string;
   if (cle) {
     const x = await donneesActe(d, dos);
+    const identite = correspondances({ prenom: x.prenom, nom: x.nom, dateNaissance: x.dateNaissance, adresse: x.adresse });
     const rep = await new Anthropic({ apiKey: cle }).messages.create({
       model: (await valeur("ANTHROPIC_MODEL")) ?? "claude-sonnet-5",
       max_tokens: 1500,
       system:
-        "Tu es l'assistant d'un avocat au barreau de Paris (droit des étrangers). Tu connais le dossier fourni. Réponds en français, de façon précise et sobre. N'invente ni fait ni jurisprudence ; dis clairement quand une vérification dans les textes ou les pièces est nécessaire. Ta réponse s'adresse à l'avocat seul.",
+        CONSIGNE_BALISES +
+        " Tu es l'assistant d'un avocat au barreau de Paris (droit des étrangers). Tu connais le dossier fourni. Réponds en français, de façon précise et sobre. N'invente ni fait ni jurisprudence ; dis clairement quand une vérification dans les textes ou les pièces est nécessaire. Ta réponse s'adresse à l'avocat seul.",
       messages: [
         {
           role: "user",
-          content: `DOSSIER (minimisé) : ${JSON.stringify({ procedure: procedureLibelle(dos.procedure), qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, reponses: x.reponses, analyse: dos.analyse, pieces: x.pieces })}\n\nPROJET D'ACTE ACTUEL :\n${acte?.contenu.slice(0, 30_000) ?? "(aucun)"}\n\nQUESTION : ${q}`,
+          content: pseudonymiser(
+            `DOSSIER (minimisé) : ${JSON.stringify({ procedure: procedureLibelle(dos.procedure), qualification: (await qualificationDossier(d, dos)).pourIA, recit: dos.recit ? minimiser(dos.recit) : null, reponses: x.reponses, analyse: dos.analyse, pieces: x.pieces })}\n\nPROJET D'ACTE ACTUEL :\n${acte?.contenu.slice(0, 30_000) ?? "(aucun)"}\n\nQUESTION : ${q}`,
+            identite,
+          ),
         },
       ],
     });
-    reponse = rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();
+    reponse = reidentifier(rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim(), identite);
   } else {
     const n = acte ? compterManquants(acte.contenu) : 0;
     reponse = `Assistant en mode d'essai (aucune clé Anthropic configurée dans Connexions). ${acte ? `Le projet actuel comporte ${n} mention(s) XXX à compléter.` : "Aucun projet n'est encore généré."} Une fois la clé saisie au back office, l'assistant répondra à partir du dossier, des pièces et du projet.`;

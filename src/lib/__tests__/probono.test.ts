@@ -42,3 +42,27 @@ describe("intervention sans honoraires", () => {
     expect(await d.select().from(schema.conventions).where(eq(schema.conventions.dossierId, dos.id))).toHaveLength(1);
   });
 });
+
+describe("durée de conservation", () => {
+  it("purge un dossier clos depuis plus de 5 ans en gardant les paiements et l'identité de facturation", async () => {
+    const { purgerDossiersClos } = await import("@/lib/serveur/conservation");
+    const d = await db();
+    const [c] = await d.insert(schema.clients).values({ code: await prochainCodeClient(d), email: "ancien@exemple.invalid", telephone: "0600000000", prenom: "Ancien", nom: "Client", adresse: "1 rue X", civilite: "MONSIEUR" }).returning();
+    const il6ans = new Date(Date.now() - 6 * 365 * 86_400_000);
+    const [dos] = await d.insert(schema.dossiers).values({ reference: await prochaineReference(d), clientId: c.id, procedure: "OQTF", statut: "CLOS", recit: "récit sensible", majLe: il6ans }).returning();
+    const [recent] = await d.insert(schema.dossiers).values({ reference: await prochaineReference(d), clientId: c.id, procedure: "OQTF", statut: "CLOS", recit: "récit récent" }).returning();
+    await d.insert(schema.messages).values({ dossierId: dos.id, auteur: "CLIENT", contenu: "message" });
+    await d.insert(schema.paiements).values({ dossierId: dos.id, montant: 99000, statut: "PAYE", lignes: [] });
+    await purgerDossiersClos(d);
+    const [apres] = await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id));
+    expect(apres.recit).toBeNull();
+    expect(apres.donneesPurgeesLe).not.toBeNull();
+    expect(await d.select().from(schema.messages).where(eq(schema.messages.dossierId, dos.id))).toHaveLength(0);
+    expect(await d.select().from(schema.paiements).where(eq(schema.paiements.dossierId, dos.id))).toHaveLength(1);
+    const [r] = await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, recent.id));
+    expect(r.recit).toBe("récit récent");
+    const [cli] = await d.select().from(schema.clients).where(eq(schema.clients.id, c.id));
+    expect(cli.nom).toBe("Client");
+    expect(cli.adresse).toBe("1 rue X");
+  });
+});

@@ -84,7 +84,7 @@ export default function FormulaireConsultation({ source }: { source?: string }) 
           </details>
         </div>
         <p className="lx-aj">
-          <b>{t("Aide juridictionnelle non acceptée.")}</b> {t("Les honoraires sont ceux indiqués ci-dessus.")}
+          <b>{t("Aide juridictionnelle non acceptée.")}</b> {t("Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.")} {t("Les honoraires sont ceux indiqués ci-dessus.")}
         </p>
         <label className="chk p1-acc">
           <input type="checkbox" checked={caseConvention} onChange={(e) => setCaseConvention(e.target.checked)} />
