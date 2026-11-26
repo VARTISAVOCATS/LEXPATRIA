@@ -107,7 +107,7 @@ function premierId(x: unknown, prefixe: string): string | null {
 // ---------- Recherches ----------
 
 export interface DecisionTrouvee {
-  source: "LEGIFRANCE" | "JUDILIBRE";
+  source: "LEGIFRANCE" | "JUDILIBRE" | "OPENDATA";
   id: string;
   titre: string;
   extraits: string[];
@@ -219,7 +219,96 @@ export async function testerPiste(): Promise<{ ok: boolean; message: string }> {
   return { ok: lf.startsWith("Légifrance répond"), message: `Identifiants acceptés (${env}). ${lf}. ${jl}.` };
 }
 
+// ---------- Open data de la juridiction administrative (sans clé) ----------
+// Moteur de recherche public d'opendata.justice-administrative.fr : décisions pseudonymisées du Conseil d'État (depuis 2021),
+// des cours administratives d'appel (depuis 2022) et des tribunaux administratifs (depuis 2022). Syntaxe des requêtes :
+// « + » rend un mot obligatoire, les guillemets cherchent une expression exacte ; sans opérateur, les mots sont alternatifs.
+
+const OPENDATA = "https://opendata.justice-administrative.fr/recherche/api";
+const OPENDATA_SANS_SECOND = "bm9TZWNvbmR2YWx1ZQ=="; // « noSecondvalue », valeur attendue par le moteur
+
+interface SourceOpenData {
+  Identification?: string;
+  Code_Juridiction?: string;
+  Nom_Juridiction?: string;
+  Numero_ECLI?: string;
+  Formation_Jugement?: string;
+  Numero_Dossier?: string;
+  Date_Lecture?: string;
+  Code_Publication?: string;
+  paragraph?: string;
+}
+type ReponseOpenData = { decisions?: { body?: { hits?: { total?: { value?: number }; hits?: { _id: string; _source: SourceOpenData }[] } } } };
+
+async function opendata(chemin: string): Promise<ReponseOpenData> {
+  const r = await fetch(`${OPENDATA}${chemin}`, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(15_000) });
+  if (!r.ok) throw new Error(`open data : ${r.status}`);
+  return (await r.json()) as ReponseOpenData;
+}
+
+const dateFr = (iso?: string) => (iso && /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10).split("-").reverse().join("/") : "");
+const titreOpenData = (id: string, x: SourceOpenData) =>
+  [x.Nom_Juridiction, x.Formation_Jugement, /^OR/.test(id) ? "ordonnance" : null, dateFr(x.Date_Lecture), x.Numero_Dossier ? `n° ${x.Numero_Dossier}` : null]
+    .filter(Boolean)
+    .join(", ");
+
+/** Lien public vers la décision sur la plateforme open data. */
+export const lienOpenData = (id: string) => `https://opendata.justice-administrative.fr/recherche/shareFile/${encodeURIComponent(id)}`;
+
+/** Recherche dans les décisions des TA, CAA et du Conseil d'État ; juridiction facultative (TA75, CAA78, CE…). */
+export async function rechercherOpenData(requete: string, juridiction?: string, taille = 10): Promise<DecisionTrouvee[]> {
+  const q = encodeURIComponent(requete.trim().slice(0, 300));
+  const juri = (juridiction ?? "").trim().toUpperCase();
+  const chemin = /^(TA|CAA)\d{1,3}$|^CE$/.test(juri) ? `/model_search_juri/openData/${juri}/${q}/${taille}` : `/Simple_Search/openData/${q}/${taille}`;
+  const r = await opendata(chemin);
+  return (r.decisions?.body?.hits?.hits ?? []).slice(0, taille).map((h) => ({
+    source: "OPENDATA" as const,
+    id: h._id,
+    titre: titreOpenData(h._id, h._source),
+    extraits: [h._source.Code_Publication ? `Publication : ${h._source.Code_Publication}` : ""].filter(Boolean),
+  }));
+}
+
+/** Texte d'une décision open data : début (conclusions) et fin (motifs et dispositif) si elle est longue. */
+export async function lireDecisionOpenData(id: string): Promise<{ titre: string; texte: string; lien: string }> {
+  const r = await opendata(`/elastic/decisions/${encodeURIComponent(id)}/${OPENDATA_SANS_SECOND}`);
+  const h = r.decisions?.body?.hits?.hits?.[0];
+  if (!h) throw new Error("décision introuvable");
+  const corps = (h._source.paragraph ?? "").split("$$$").map((p) => p.trim()).filter(Boolean).join("\n");
+  return {
+    titre: titreOpenData(h._id, h._source),
+    texte: corps.length > 11_000 ? `${corps.slice(0, 2500)}\n[…]\n${corps.slice(-8000)}` : corps,
+    lien: lienOpenData(h._id),
+  };
+}
+
 // ---------- Recherche menée par l'IA ----------
+
+/** Outils de l'open data de la juridiction administrative (sans clé, toujours disponibles). */
+export const OUTILS_OPENDATA: Anthropic.Tool[] = [
+  {
+    name: "rechercher_decisions_ta_caa",
+    description:
+      "Recherche dans toutes les décisions récentes des tribunaux administratifs, des cours administratives d'appel et du Conseil d'État (open data de la juridiction administrative, depuis 2022). " +
+      "Indispensable pour la jurisprudence du tribunal compétent et de sa cour. Syntaxe : « + » devant chaque mot obligatoire, guillemets pour une expression exacte " +
+      "(ex. « +OQTF +\"conjoint de nationalité française\" +annule »). Sans « + », les mots sont alternatifs et les résultats inexploitables. " +
+      "Juridiction facultative : TA suivi du numéro du département du siège (TA75 Paris, TA93 Montreuil, TA95 Cergy-Pontoise, TA78 Versailles, TA77 Melun, TA13 Marseille, TA69 Lyon), " +
+      "CAA suivi du département du siège (CAA75 Paris, CAA78 Versailles, CAA13 Marseille, CAA69 Lyon), ou CE. Renvoie identifiants et références (juridiction, formation, date, numéro). Aucune donnée personnelle du client.",
+    input_schema: {
+      type: "object",
+      properties: {
+        requete: { type: "string", description: "Mots-clés avec « + » et guillemets" },
+        juridiction: { type: "string", description: "Code facultatif : TA75, TA93, CAA75, CE…" },
+      },
+      required: ["requete"],
+    },
+  },
+  {
+    name: "lire_decision_ta_caa",
+    description: "Lit une décision trouvée par rechercher_decisions_ta_caa (identifiant tel que DTA_2601827_20261119.xml_TA76) : conclusions, motifs et dispositif, pour vérifier la solution avant de la citer.",
+    input_schema: { type: "object", properties: { id: { type: "string" } }, required: ["id"] },
+  },
+];
 
 export const OUTILS_RECHERCHE: Anthropic.Tool[] = [
   {
@@ -252,7 +341,7 @@ export const OUTILS_RECHERCHE: Anthropic.Tool[] = [
 
 export const CONSIGNE_RECHERCHE = [
   "Tu es documentaliste juridique d'un cabinet d'avocats en droit des étrangers. Avant la rédaction d'un acte, tu recherches la jurisprudence pertinente et tu vérifies les textes, avec les outils fournis.",
-  "Méthode : identifie les moyens que le dossier soutient (motifs de la décision, situation du client) ; pour chacun, lance des recherches ciblées dans la jurisprudence administrative, de préférence récente (Conseil d'État, puis cours administratives d'appel), lis les décisions prometteuses pour vérifier leur apport, et vérifie le texte en vigueur des articles à citer. Douze appels d'outils au plus.",
+  "Méthode : identifie les moyens que le dossier soutient (motifs de la décision, situation du client) ; pour chacun, lance des recherches ciblées dans la jurisprudence administrative, de préférence récente (Conseil d'État, puis cours administratives d'appel), lis les décisions prometteuses pour vérifier leur apport, et vérifie le texte en vigueur des articles à citer. Cherche aussi, avec rechercher_decisions_ta_caa, des décisions récentes du tribunal administratif compétent et de sa cour administrative d'appel qui ont fait droit à des moyens comparables ; lis-les avant de les retenir. Douze appels d'outils au plus.",
   "N'envoie aucune donnée personnelle du client dans les requêtes : uniquement des notions juridiques.",
   "Termine par une NOTE DE RECHERCHE : pour chaque moyen, les décisions retenues avec leur référence exacte telle que renvoyée par l'outil (juridiction, formation, date, numéro), leur solution et leur apport en une ou deux phrases, et la citation utile s'il y en a une ; puis les articles vérifiés avec leur rédaction en vigueur et toute renumérotation constatée. N'y mets rien que les outils n'aient renvoyé.",
 ].join(" ");
@@ -272,6 +361,14 @@ export async function executerOutil(nom: string, entree: Record<string, string>)
       case "verifier_article": {
         const r = await lireArticle(entree.code ?? "", entree.numero ?? "");
         return r ? { texte: `${r.titre}\n${r.texte}`, source: { titre: r.titre, lien: r.lien } } : { texte: "Article introuvable dans ce code à la date du jour : vérifie le nom exact du code et le numéro (il a pu être renuméroté)." };
+      }
+      case "rechercher_decisions_ta_caa": {
+        const r = await rechercherOpenData(entree.requete ?? "", entree.juridiction);
+        return { texte: r.length ? r.map((x) => `[${x.id}] ${x.titre}${x.extraits.length ? `\n${x.extraits.join(" … ")}` : ""}`).join("\n\n") : "Aucun résultat : vérifie la syntaxe (« + » et guillemets) ou élargis la recherche." };
+      }
+      case "lire_decision_ta_caa": {
+        const r = await lireDecisionOpenData(entree.id ?? "");
+        return { texte: `${r.titre}\n\n${r.texte}`, source: { titre: r.titre, lien: r.lien } };
       }
       case "rechercher_jurisprudence_judiciaire": {
         const r = await rechercherJudiciaire(entree.requete ?? "");
@@ -295,12 +392,13 @@ export async function rechercherPourActe(
   modele: string,
   contexte: string,
 ): Promise<{ note: string; sources: { titre: string; lien: string }[]; appels: number } | null> {
-  if (!(await pisteConfiguree())) return null;
+  // L'open data de la juridiction administrative ne demande aucune clé : la recherche a lieu même sans PISTE.
+  const outilsDispo = (await pisteConfiguree()) ? [...OUTILS_RECHERCHE, ...OUTILS_OPENDATA] : OUTILS_OPENDATA;
   const messages: Anthropic.MessageParam[] = [{ role: "user", content: contexte }];
   const sources: { titre: string; lien: string }[] = [];
   let appels = 0;
   for (let tour = 0; tour < 14; tour++) {
-    const rep = await client.messages.create({ model: modele, max_tokens: 4000, system: CONSIGNE_RECHERCHE, tools: OUTILS_RECHERCHE, messages });
+    const rep = await client.messages.create({ model: modele, max_tokens: 4000, system: CONSIGNE_RECHERCHE, tools: outilsDispo, messages });
     const outils = rep.content.filter((b): b is Anthropic.ToolUseBlock => b.type === "tool_use");
     if (!outils.length || appels >= 12) {
       const note = rep.content.map((b) => (b.type === "text" ? b.text : "")).join("").trim();

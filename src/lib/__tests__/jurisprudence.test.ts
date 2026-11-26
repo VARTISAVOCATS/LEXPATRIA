@@ -47,3 +47,35 @@ describe("jurisprudence PISTE", () => {
     expect(appels.every((u) => u.includes("sandbox"))).toBe(true); // bac à sable par défaut
   });
 });
+
+describe("open data de la juridiction administrative", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("cherche avec la syntaxe du moteur, filtre par juridiction et lit le texte intégral", async () => {
+    const { rechercherOpenData, lireDecisionOpenData, executerOutil: outil } = await import("@/lib/serveur/integrations/jurisprudence");
+    const urls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        urls.push(url);
+        if (url.includes("/elastic/decisions/"))
+          return reponse({
+            decisions: { body: { hits: { total: { value: 1 }, hits: [{ _id: "DTA_2601827_20261119.xml_TA76", _source: { Nom_Juridiction: "Tribunal Administratif de Rouen", Formation_Jugement: "2 ème Chambre", Numero_Dossier: "2601827", Date_Lecture: "2026-11-19", paragraph: "Vu la procédure suivante :$$$Considérant que…$$$D E C I D E :$$$Article 1er : L'arrêté est annulé." } }] } } },
+          });
+        return reponse({
+          decisions: { body: { hits: { total: { value: 35 }, hits: [{ _id: "DTA_2537854_20261015.xml_TA75", _source: { Nom_Juridiction: "Tribunal Administratif de Paris", Formation_Jugement: "3e Chambre", Numero_Dossier: "2537854", Date_Lecture: "2026-10-15" } }] } } },
+        });
+      }),
+    );
+    const r = await rechercherOpenData('+OQTF +"conjoint de nationalité française"', "ta75");
+    expect(urls[0]).toContain("/model_search_juri/openData/TA75/");
+    expect(urls[0]).toContain(encodeURIComponent('"conjoint de nationalité française"'));
+    expect(r[0].titre).toBe("Tribunal Administratif de Paris, 3e Chambre, 15/10/2026, n° 2537854");
+    await rechercherOpenData("+OQTF");
+    expect(urls[1]).toContain("/Simple_Search/openData/");
+    const d = await lireDecisionOpenData("DTA_2601827_20261119.xml_TA76");
+    expect(d.texte).toContain("Article 1er : L'arrêté est annulé.");
+    expect(d.texte).not.toContain("$$$");
+    expect((await outil("lire_decision_ta_caa", { id: "DTA_2601827_20261119.xml_TA76" })).source?.titre).toContain("Rouen");
+  });
+});
