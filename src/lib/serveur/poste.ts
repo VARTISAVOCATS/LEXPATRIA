@@ -575,11 +575,18 @@ export async function attestationPossible(d: Base, dos: Dossier): Promise<{ type
     if (deja.some((a) => a.type === "DEPOT" && a.acteId === acte!.id)) return { type: null, raison: "L'attestation de dépôt de cette requête est déjà signée." };
     return { type: "DEPOT" };
   }
-  // Recours non juridictionnel (gracieux, préalable, mise en demeure) : attestation de prise en charge seulement.
-  const prealable = genre(dos.procedure) !== "CONTENTIEUX" || (!!acte && acte.type !== "AVIS_ECRIT");
-  if (!prealable) return { type: null, raison: "L'attestation est délivrée après le dépôt de la requête, dont elle mentionne la date." };
-  if (rang(dos.statut) < rang("PRIS_EN_CHARGE")) return { type: null, raison: "Acceptez d'abord le dossier." };
+  // Recours non juridictionnel (gracieux, préalable, mise en demeure…) : attestation de prise en charge,
+  // dès que l'avocat a validé (attesté) le premier acte.
   if (deja.some((a) => a.type === "PRISE_EN_CHARGE")) return { type: null, raison: "L'attestation de prise en charge est déjà signée." };
+  if (!acte || acte.type === "AVIS_ECRIT")
+    return {
+      type: null,
+      raison:
+        genre(dos.procedure) === "CONTENTIEUX"
+          ? "L'attestation est délivrée après le dépôt de la requête, dont elle mentionne la date."
+          : "L'attestation de prise en charge se signe dès que vous avez validé le premier acte (recours gracieux, recours préalable, mise en demeure).",
+    };
+  if (!(await attestationValide(d, acte))) return { type: null, raison: "L'attestation de prise en charge se signe dès que vous avez validé (attesté) le premier acte." };
   return { type: "PRISE_EN_CHARGE" };
 }
 

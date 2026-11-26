@@ -254,7 +254,7 @@ export async function tachesDuJour(d: Base, m: Membre, tout: boolean) {
       !(l.dos.avisPrealable || l.dos.procedure === "DIAGNOSTIC" || l.dos.procedure === "CONSULTATION") &&
       (genre(l.dos.procedure) === "CONTENTIEUX"
         ? rangStatut(l.dos.statut) >= rangStatut("DEPOSE") && !attestationsClient(l.dos.priseEnCharge).some((a) => a.type === "DEPOT")
-        : rangStatut(l.dos.statut) >= rangStatut("PRIS_EN_CHARGE") && attestationsClient(l.dos.priseEnCharge).length === 0),
+        : rangStatut(l.dos.statut) >= rangStatut("ACTE_ATTESTE") && attestationsClient(l.dos.priseEnCharge).length === 0),
   }));
   const ids = lignes.map((l) => l.dos.id);
   const dans30 = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);

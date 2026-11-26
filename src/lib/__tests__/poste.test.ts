@@ -168,11 +168,19 @@ describe("attestation de prise en charge (recours non juridictionnel)", () => {
       .returning();
     expect((await signerPriseEnCharge(d, kachi, dos)).ok).toBe(false);
     await accepter(d, kachi, dos);
+    // Dossier accepté mais aucun acte validé : pas encore d'attestation
+    expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
+    const { empreinteTexte } = await import("@/lib/journal");
+    const contenu = "Recours préalable contre le refus de visa.";
+    const [acte] = await d.insert(schema.actes).values({ dossierId: dos.id, type: "RAPO_VISA", version: 1, contenu }).returning();
+    // Acte non encore validé
+    expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
+    await d.insert(schema.attestations).values({ acteId: acte.id, avocatId: kachi.id, version: 1, empreinte: empreinteTexte(contenu), texte: "atteste" });
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(true);
     const { attestationsClient } = await import("@/lib/attestations");
     const [att] = attestationsClient((await relire(dos.id)).priseEnCharge);
     expect(att.type).toBe("PRISE_EN_CHARGE");
-    expect(att.texte).toContain("notre cabinet a été chargé de");
+    expect(att.texte).toContain("notre cabinet a été chargé de former un recours administratif préalable contre le refus de visa");
     expect(att.texte).not.toContain("saisi le tribunal");
     expect((await signerPriseEnCharge(d, kachi, await relire(dos.id))).ok).toBe(false);
   });

@@ -382,7 +382,7 @@ export default function PosteTravail(p: ProprietesPoste) {
                 <p className="note">
                   {p.attestationASigner === "DEPOT"
                     ? "Attestation de dépôt : elle mentionne la date de dépôt, la juridiction et, s'il est connu, le numéro de la requête."
-                    : "Attestation de prise en charge : recours gracieux, recours préalable ou mise en demeure."}{" "}
+                    : "Attestation de prise en charge : le premier acte (recours gracieux, recours préalable, mise en demeure) est validé."}{" "}
                   Une fois signée, elle est remise au client dans son espace.
                 </p>
                 <button className="btn sm" disabled={!p.peutAttester || !!envoi} onClick={() => agir("priseEnCharge")}>
