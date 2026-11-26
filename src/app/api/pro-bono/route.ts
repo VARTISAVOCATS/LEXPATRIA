@@ -3,10 +3,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/db";
 import { accepterProBono } from "@/lib/serveur/probono";
+import { autoriser, ipDe, tropDeDemandes } from "@/lib/serveur/limiteur";
 
 const Corps = z.object({ jeton: z.string().max(300), executionImmediate: z.boolean() });
 
 export async function POST(req: Request) {
+  if (!autoriser(`probono:${ipDe(req)}`, 20, 60 * 60_000)) return tropDeDemandes();
   const c = Corps.safeParse(await req.json().catch(() => null));
   if (!c.success) return NextResponse.json({ erreur: "Requête invalide." }, { status: 400 });
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "inconnue";

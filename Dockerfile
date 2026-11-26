@@ -6,7 +6,7 @@ RUN npm ci
 
 FROM node:22-alpine AS outils
 WORKDIR /outils
-RUN echo '{"private":true,"type":"module"}' > package.json && npm install --omit=dev drizzle-orm@0.44.5 pg@8.16.3 @aws-sdk/client-s3@3.893.0
+RUN echo '{"private":true,"type":"module"}' > package.json && npm install --omit=dev drizzle-orm@0.45.4 pg@8.16.3 @aws-sdk/client-s3@3.1178.0
 
 FROM node:22-alpine AS build
 WORKDIR /app

@@ -11,6 +11,7 @@ import { trier, trierSimule } from "@/lib/triage";
 import { casDuTriage, vueCas } from "@/lib/cas";
 import { casLibres } from "@/db/schema";
 import { envoyer } from "@/lib/serveur/notifications";
+import { autoriser, ipDe, tropDeDemandes } from "@/lib/serveur/limiteur";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,7 @@ function parseDate(s: string | null): Date | undefined {
 }
 
 export async function POST(req: Request) {
+  if (!autoriser(`triage:${ipDe(req)}`, 30, 60 * 60_000)) return tropDeDemandes();
   const corps = Corps.safeParse(await req.json().catch(() => null));
   if (!corps.success || (!corps.data.recit && !corps.data.images?.length && !corps.data.pdfs?.length)) {
     return NextResponse.json({ erreur: "Décrivez votre situation ou transmettez votre décision." }, { status: 400 });

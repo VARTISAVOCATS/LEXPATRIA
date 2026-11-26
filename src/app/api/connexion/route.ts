@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { demanderCode, verifierCode } from "@/lib/serveur/connexion";
 import { ouvrirSession } from "@/lib/serveur/session";
+import { autoriser, ipDe, tropDeDemandes } from "@/lib/serveur/limiteur";
 
 const Corps = z.discriminatedUnion("etape", [
   z.object({ etape: z.literal("demande"), espace: z.enum(["CLIENT", "EQUIPE"]), email: z.string().max(200) }),
@@ -11,6 +12,7 @@ const Corps = z.discriminatedUnion("etape", [
 ]);
 
 export async function POST(req: Request) {
+  if (!autoriser(`connexion:${ipDe(req)}`, 30, 15 * 60_000)) return tropDeDemandes();
   const c = Corps.safeParse(await req.json().catch(() => null));
   if (!c.success) return NextResponse.json({ erreur: "Requête invalide." }, { status: 400 });
   const d = await db();

@@ -10,6 +10,7 @@ import { evaluerDelai } from "@/lib/delais";
 import { signer } from "@/lib/jeton";
 import { journaliser } from "@/lib/journal";
 import { PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { autoriser, ipDe, tropDeDemandes } from "@/lib/serveur/limiteur";
 
 export const runtime = "nodejs";
 
@@ -58,6 +59,7 @@ const enDate = (s?: string | null) => {
 };
 
 export async function POST(req: Request) {
+  if (!autoriser(`predossier:${ipDe(req)}`, 20, 60 * 60_000)) return tropDeDemandes();
   const p = Corps.safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ erreur: "Vérifiez les informations saisies." }, { status: 400 });
   const c = p.data;

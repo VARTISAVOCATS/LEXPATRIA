@@ -3,6 +3,7 @@
 // Le serveur relaie la requête : le navigateur du client ne contacte aucun service tiers. Rien n'est conservé.
 
 import { NextResponse } from "next/server";
+import { autoriser, ipDe, tropDeDemandes } from "@/lib/serveur/limiteur";
 
 export const runtime = "nodejs";
 
@@ -53,6 +54,7 @@ async function communes(cp: string): Promise<string[]> {
 }
 
 export async function GET(req: Request) {
+  if (!autoriser(`adresse:${ipDe(req)}`, 120, 60_000)) return tropDeDemandes();
   const u = new URL(req.url);
   const cp = (u.searchParams.get("cp") ?? "").trim();
   const q = (u.searchParams.get("q") ?? "").trim().slice(0, 200);

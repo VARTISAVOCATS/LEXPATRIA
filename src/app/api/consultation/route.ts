@@ -6,6 +6,7 @@ import { signer } from "@/lib/jeton";
 import { journaliser } from "@/lib/journal";
 import { adresseComplete } from "@/lib/pays";
 import { consultationOuverte } from "@/lib/serveur/integrations/bookings";
+import { autoriser, ipDe, tropDeDemandes } from "@/lib/serveur/limiteur";
 
 export const runtime = "nodejs";
 
@@ -27,6 +28,7 @@ const Corps = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!autoriser(`consultation:${ipDe(req)}`, 20, 60 * 60_000)) return tropDeDemandes();
   if (!(await consultationOuverte())) return NextResponse.json({ erreur: "La consultation en visio n'est pas encore ouverte." }, { status: 503 });
   const p = Corps.safeParse(await req.json().catch(() => null));
   if (!p.success) return NextResponse.json({ erreur: "Vérifiez les informations saisies." }, { status: 400 });
