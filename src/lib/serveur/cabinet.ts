@@ -132,7 +132,7 @@ export async function reattribuer(d: Base, m: Membre, dos: Dossier, avocatId: st
 
 export async function journee(d: Base, m: Membre) {
   const tous = voitTout(m);
-  const mesDossiers = tous ? sql`true` : sql`${dossiers.avocatId} = ${m.id}`;
+  const mesDossiers = tous ? sql`${dossiers.archiveLe} is null` : sql`${dossiers.avocatId} = ${m.id} and ${dossiers.archiveLe} is null`;
   const aAccepter = await d
     .select({ dos: dossiers, cli: { prenom: clients.prenom, nom: clients.nom } })
     .from(dossiers)
@@ -221,7 +221,7 @@ const nomClient = (c: { prenom: string | null; nom: string | null }) => `${c.pre
 export async function tachesDuJour(d: Base, m: Membre, tout: boolean) {
   const { calculerTaches } = await import("@/lib/taches");
   const { consultations } = await import("./agenda");
-  const portee = tout ? sql`true` : sql`${dossiers.avocatId} = ${m.id}`;
+  const portee = tout ? sql`${dossiers.archiveLe} is null` : sql`${dossiers.avocatId} = ${m.id} and ${dossiers.archiveLe} is null`;
   const lignes = await d
     .select({
       dos: dossiers,
@@ -318,7 +318,7 @@ export async function tableauDeBord(d: Base, m: Membre, vueCabinet: boolean) {
       .select({ ref: dossiers.reference, procedure: dossiers.procedure, cli: { prenom: clients.prenom, nom: clients.nom }, majLe: dossiers.majLe })
       .from(dossiers)
       .innerJoin(clients, eq(clients.id, dossiers.clientId))
-      .where(and(eq(dossiers.statut, "PAYE"), sql`${dossiers.avocatId} is null`))
+      .where(and(eq(dossiers.statut, "PAYE"), sql`${dossiers.avocatId} is null`, sql`${dossiers.archiveLe} is null`))
   ).map((x) => ({ ref: x.ref, procedure: x.procedure, client: nomClient(x.cli), recuLe: x.majLe }));
 
   const absences = (
@@ -376,7 +376,7 @@ export async function tableauSecretariat(d: Base) {
       .from(dossiers)
       .innerJoin(clients, eq(clients.id, dossiers.clientId))
       .leftJoin(utilisateurs, eq(utilisateurs.id, dossiers.avocatId))
-      .where(and(eq(dossiers.statut, "ACTE_ATTESTE"), sql`${dossiers.transmisSecretariatLe} is not null`))
+      .where(and(eq(dossiers.statut, "ACTE_ATTESTE"), sql`${dossiers.transmisSecretariatLe} is not null`, sql`${dossiers.archiveLe} is null`))
   )
     .map((l) => ({
       ref: l.dos.reference,
@@ -400,7 +400,7 @@ export async function tableauSecretariat(d: Base) {
       .from(pieces)
       .innerJoin(dossiers, eq(dossiers.id, pieces.dossierId))
       .innerJoin(clients, eq(clients.id, dossiers.clientId))
-      .where(and(eq(pieces.manquante, true), inArray(dossiers.statut, ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE"])))
+      .where(and(eq(pieces.manquante, true), inArray(dossiers.statut, ["PAYE", "PRIS_EN_CHARGE", "EN_REDACTION", "ACTE_ATTESTE"]), sql`${dossiers.archiveLe} is null`))
       .groupBy(dossiers.reference, clients.prenom, clients.nom, dossiers.dateLimite)
   )
     .map((x) => ({ ref: x.ref, client: nomClient(x.cli), dateLimite: x.dateLimite, n: Number(x.n) }))
@@ -411,9 +411,21 @@ export async function tableauSecretariat(d: Base) {
     .from(echeances)
     .innerJoin(dossiers, eq(dossiers.id, echeances.dossierId))
     .leftJoin(utilisateurs, eq(utilisateurs.id, dossiers.avocatId))
-    .where(and(eq(echeances.type, "AUDIENCE"), eq(echeances.faite, false), gte(echeances.date, aujourdhui)))
+    .where(and(eq(echeances.type, "AUDIENCE"), eq(echeances.faite, false), gte(echeances.date, aujourdhui), sql`${dossiers.archiveLe} is null`))
     .orderBy(echeances.date)
     .limit(20);
 
   return { aujourdhui, aDeposer, relances, audiences: audiences.map((a) => ({ ...a, avocat: nomAvocat(a.avocat) })) };
+}
+
+// ---------- Archivage ----------
+
+/** Archive ou désarchive un dossier : associé ou avocat du dossier. Le dossier archivé sort des listes, du tableau de bord et des relances. */
+export async function archiver(d: Base, m: Membre, dos: Dossier, archive: boolean): Promise<Resultat> {
+  if (m.role === "SECRETARIAT") return refus("Seul un avocat peut archiver un dossier.");
+  if (m.role !== "ASSOCIE" && dos.avocatId !== m.id) return refus("Seul l'avocat du dossier ou un associé peut l'archiver.");
+  if (archive === !!dos.archiveLe) return { ok: true };
+  await d.update(dossiers).set({ archiveLe: archive ? new Date() : null }).where(eq(dossiers.id, dos.id));
+  await journaliser(d, { dossierId: dos.id, acteur: m.id, action: archive ? "DOSSIER_ARCHIVE" : "DOSSIER_DESARCHIVE" });
+  return { ok: true };
 }

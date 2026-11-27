@@ -2,7 +2,7 @@
 // Le client fait le parcours jusqu'à l'écran de paiement ; un associé retrouve ce pré-dossier dans l'espace cabinet,
 // choisit l'avocat et propose l'intervention sans honoraires. Le client reçoit un lien pour accepter la convention
 // d'intervention sans honoraires : le dossier est alors pris en charge par l'avocat choisi, sans paiement.
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, conventions, dossiers, utilisateurs } from "@/db/schema";
 import { texteConventionProBono, VERSION_PRO_BONO } from "@/lib/convention";
@@ -23,7 +23,7 @@ export async function preDossiers(d: Base) {
     .select({ dos: dossiers, cli: clients })
     .from(dossiers)
     .innerJoin(clients, eq(clients.id, dossiers.clientId))
-    .where(inArray(dossiers.statut, ["PRE_DOSSIER", "ATTENTE_PROCHE"]))
+    .where(and(inArray(dossiers.statut, ["PRE_DOSSIER", "ATTENTE_PROCHE"]), isNull(dossiers.archiveLe)))
     .orderBy(desc(dossiers.creeLe))
     .limit(200);
 }

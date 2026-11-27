@@ -228,6 +228,7 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                   </span>
                 )}
                 {dos.procedure === "CONSULTATION" && !dos.rendezVous && statut === "PAYE" && <span className="pill warn">Rendez-vous à choisir par le client</span>}
+                {dos.archiveLe && <span className="pill n">Archivé le {dos.archiveLe.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}</span>}
                 {dos.sharepointUrl && (
                   <a className="pill n" href={dos.sharepointUrl} target="_blank" rel="noreferrer">
                     Dossier SharePoint
@@ -270,6 +271,17 @@ export default async function FicheDossier({ params, searchParams }: { params: P
                     classe="btn sm ghost"
                   />
                 )}
+                {estAvocat && (m.role === "ASSOCIE" || dos.avocatId === m.id) &&
+                  (dos.archiveLe ? (
+                    <ActionForm base={{ reference: ref, action: "desarchiver" }} libelle="Désarchiver" classe="btn sm ghost" />
+                  ) : (
+                    <ActionForm
+                      base={{ reference: ref, action: "archiver" }}
+                      libelle="Archiver"
+                      classe="btn sm ghost"
+                      confirmation="Le dossier sort des listes, du tableau de bord et des relances. Il reste consultable dans « Archivés »."
+                    />
+                  ))}
               </div>
             </section>
 

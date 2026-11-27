@@ -1,4 +1,4 @@
-// Lot 3 : liste des dossiers (à prendre en charge, en cours, terminés, tous), recherche.
+// Lot 3 : liste des dossiers (à prendre en charge, en cours, terminés, tous, archivés), recherche.
 import Link from "next/link";
 import { db } from "@/db";
 import { PROCEDURES, type CodeProcedure } from "@/lib/procedures";
@@ -8,11 +8,12 @@ import { Cadre } from "../cadre";
 
 export const metadata = { title: "Dossiers — Espace cabinet", robots: { index: false } };
 
-const FILTRES: [Filtre, string, "aPrendre" | "enCours" | "termines" | "tous"][] = [
+const FILTRES: [Filtre, string, "aPrendre" | "enCours" | "termines" | "tous" | "archives"][] = [
   ["a_prendre", "À prendre en charge", "aPrendre"],
   ["en_cours", "En cours", "enCours"],
   ["termines", "Terminés", "termines"],
   ["tous", "Tous", "tous"],
+  ["archives", "Archivés", "archives"],
 ];
 
 export default async function Dossiers({ searchParams }: { searchParams: Promise<{ filtre?: string; q?: string }> }) {

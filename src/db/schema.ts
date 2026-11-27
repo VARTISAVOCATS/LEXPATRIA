@@ -121,6 +121,8 @@ export const dossiers = pgTable("dossiers", {
   proBono: boolean("pro_bono").notNull().default(false),
   /** Données du dossier supprimées 5 ans après la clôture (seules les données de facturation sont conservées). */
   donneesPurgeesLe: timestamp("donnees_purgees_le", { withTimezone: true }),
+  /** Dossier archivé par le cabinet : retiré des listes, du tableau de bord et des relances ; désarchivable. */
+  archiveLe: timestamp("archive_le", { withTimezone: true }),
   avocatId: text("avocat_id").references(() => utilisateurs.id),
   accepteLe: timestamp("accepte_le", { withTimezone: true }),
   acceptationAvant: timestamp("acceptation_avant", { withTimezone: true }),

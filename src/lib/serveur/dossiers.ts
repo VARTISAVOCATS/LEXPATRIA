@@ -56,11 +56,12 @@ export async function accesEquipe(d: Base, m: Membre, reference: string): Promis
   return null;
 }
 
-export type Filtre = "a_prendre" | "en_cours" | "termines" | "tous";
+export type Filtre = "a_prendre" | "en_cours" | "termines" | "tous" | "archives";
 
 export async function dossiersEquipe(d: Base, m: Membre, filtre: Filtre, recherche?: string) {
   const conds = [ne(dossiers.statut, "PRE_DOSSIER")];
   if (!voitTout(m)) conds.push(eq(dossiers.avocatId, m.id));
+  conds.push(filtre === "archives" ? sql`${dossiers.archiveLe} is not null` : sql`${dossiers.archiveLe} is null`);
   if (filtre === "a_prendre") conds.push(eq(dossiers.statut, "PAYE"));
   if (filtre === "en_cours") conds.push(notInArray(dossiers.statut, ["PAYE", "CLOS", "CLOS_REMBOURSE", "ATTENTE_PROCHE", "APPEL_PROPOSE"]));
   if (filtre === "termines") conds.push(inArray(dossiers.statut, ["CLOS", "CLOS_REMBOURSE"]));
@@ -86,16 +87,18 @@ export async function dossiersEquipe(d: Base, m: Membre, filtre: Filtre, recherc
 
 export async function compteurs(d: Base, m: Membre) {
   const base = voitTout(m) ? sql`true` : sql`${dossiers.avocatId} = ${m.id}`;
+  const actif = sql`${dossiers.archiveLe} is null`;
   const [r] = await d
     .select({
-      aPrendre: sql<number>`count(*) filter (where ${dossiers.statut} = 'PAYE')`,
-      enCours: sql<number>`count(*) filter (where ${dossiers.statut} not in ('PRE_DOSSIER','PAYE','CLOS','CLOS_REMBOURSE','ATTENTE_PROCHE','APPEL_PROPOSE'))`,
-      termines: sql<number>`count(*) filter (where ${dossiers.statut} in ('CLOS','CLOS_REMBOURSE'))`,
-      tous: sql<number>`count(*) filter (where ${dossiers.statut} <> 'PRE_DOSSIER')`,
+      aPrendre: sql<number>`count(*) filter (where ${actif} and ${dossiers.statut} = 'PAYE')`,
+      enCours: sql<number>`count(*) filter (where ${actif} and ${dossiers.statut} not in ('PRE_DOSSIER','PAYE','CLOS','CLOS_REMBOURSE','ATTENTE_PROCHE','APPEL_PROPOSE'))`,
+      termines: sql<number>`count(*) filter (where ${actif} and ${dossiers.statut} in ('CLOS','CLOS_REMBOURSE'))`,
+      tous: sql<number>`count(*) filter (where ${actif} and ${dossiers.statut} <> 'PRE_DOSSIER')`,
+      archives: sql<number>`count(*) filter (where ${dossiers.archiveLe} is not null and ${dossiers.statut} <> 'PRE_DOSSIER')`,
     })
     .from(dossiers)
     .where(base);
-  return { aPrendre: Number(r.aPrendre), enCours: Number(r.enCours), termines: Number(r.termines), tous: Number(r.tous) };
+  return { aPrendre: Number(r.aPrendre), enCours: Number(r.enCours), termines: Number(r.termines), tous: Number(r.tous), archives: Number(r.archives) };
 }
 
 export async function detailDossier(d: Base, dos: Dossier) {

@@ -134,6 +134,13 @@
       "when": 1793900000000,
       "tag": "0018_purge_donnees",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794000000000,
+      "tag": "0019_archivage",
+      "breakpoints": true
     }
   ]
 }

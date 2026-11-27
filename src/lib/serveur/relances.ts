@@ -3,7 +3,7 @@
 // lien vers le point d'arrêt ; lien de désinscription obligatoire (il coupe les relances). Textes à valider par l'avocat.
 // Purge des pré-dossiers non payés après 30 jours.
 
-import { and, eq, lt, or, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, or, sql } from "drizzle-orm";
 import type { Base } from "@/db";
 import { clients, dossiers, pieces } from "@/db/schema";
 import { signer } from "@/lib/jeton";
@@ -22,7 +22,7 @@ export async function relancer(d: Base, maintenant = new Date(), origine = proce
     .select({ dos: dossiers, cli: clients })
     .from(dossiers)
     .innerJoin(clients, eq(clients.id, dossiers.clientId))
-    .where(and(eq(dossiers.statut, "PRE_DOSSIER"), eq(dossiers.proBono, false), eq(clients.consentRelances, true), lt(dossiers.relancesEnvoyees, 2)));
+    .where(and(eq(dossiers.statut, "PRE_DOSSIER"), eq(dossiers.proBono, false), isNull(dossiers.archiveLe), eq(clients.consentRelances, true), lt(dossiers.relancesEnvoyees, 2)));
 
   let envoyees = 0;
   for (const { dos, cli } of candidats) {

@@ -1,12 +1,12 @@
 import { EnteteParcours } from "../../composants/Entete";
 import { tServeur } from "@/i18n/serveur";
-// Page de règlement par un proche (cahier des charges, 5.3) : référence, procédure, montant et nom du client,
-// jamais le récit ni les pièces (secret professionnel).
+// Page de règlement par un proche (cahier des charges, 5.3) : référence, montant et nom du client seulement.
+// Ni la procédure, ni le récit, ni les pièces (secret professionnel).
 
 import { db } from "@/db";
 import { verifier } from "@/lib/jeton";
 import { tvaApplicable } from "@/lib/pays";
-import { formatEuros, PROCEDURES, type CodeProcedure } from "@/lib/procedures";
+import { formatEuros } from "@/lib/procedures";
 import { charger, offre } from "@/lib/serveur/paiement";
 import ReglementProche from "./ReglementProche";
 
@@ -48,7 +48,6 @@ export default async function Regler({ params }: { params: Promise<{ jeton: stri
                 </h1>
                 <div className="recap">
                   <p>{t("Dossier {ref}", { ref: c.dos.reference })}</p>
-                  <p>{t(PROCEDURES[o.code as CodeProcedure].libelle)}</p>
                   <p>
                     <strong>
                       {formatEuros(o.total)} {tvaApplicable(c.cli.pays) ? t("TTC") : t("(TVA non applicable)")}

@@ -1,6 +1,6 @@
 // « Faire régler par un proche » (cahier des charges, 5.3) : le client accepte la convention,
 // puis transmet un lien de règlement. Le dossier reste à son nom ; le proche ne voit que la référence,
-// la procédure, le montant et le nom du client, jamais le récit ni les pièces.
+// le montant et le nom du client, jamais la procédure, le récit ni les pièces.
 
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";

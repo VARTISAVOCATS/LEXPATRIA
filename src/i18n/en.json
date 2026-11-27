@@ -945,7 +945,6 @@
   "Par prudence, le délai le plus court de 7 jours est retenu jusqu'à vérification.": "As a precaution, the shortest deadline of 7 days is used until it is checked.",
   "Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.": "You submitted your application ({d}) to {p} on {date}. If there is no reply within four months, this silence amounts to a refusal. Your lawyer will first ask the prefecture for its reasons and then challenge the refusal before the administrative court.",
   "Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.": "If there is no reply within four months, the prefecture's silence amounts to a refusal. Your lawyer will first ask the prefecture for its reasons and then challenge the refusal before the administrative court.",
-  "Votre proche voit seulement la référence, la procédure, le montant et votre nom. Vous êtes prévenu dès le règlement.": "Your relative sees only the reference, the procedure, the amount and your name. You are notified as soon as payment is made.",
   "Le tribunal communique la requête à la préfecture. Votre avocat répond à sa défense si nécessaire.": "The court sends the application to the prefecture. Your lawyer replies to its defence if necessary.",
   "La date de l'audience vous est communiquée. Votre présence n'est pas obligatoire.": "You are told the date of the hearing. Your attendance is not compulsory.",
   "Votre avocat dépose la requête au tribunal administratif avant la date limite. Ce recours suspend en principe l'éloignement jusqu'au jugement.": "Your lawyer files the application with the administrative court before the deadline. This appeal in principle suspends removal until judgment.",
@@ -1126,5 +1125,6 @@
   "Votre dossier est pris en charge": "Your case is being handled",
   "Votre dossier est pris en charge.": "Your case is being handled.",
   "Votre dossier {ref}": "Your case {ref}",
-  "Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.": "If you meet the income conditions, you can apply for legal aid and be assisted by a lawyer acting under it."
+  "Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.": "If you meet the income conditions, you can apply for legal aid and be assisted by a lawyer acting under it.",
+  "Votre proche voit seulement la référence, le montant et votre nom. Vous êtes prévenu dès le règlement.": "Your relative sees only the reference, the amount and your name. You are notified as soon as payment is made."
 }

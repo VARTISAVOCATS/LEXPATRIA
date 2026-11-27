@@ -1907,7 +1907,7 @@ function EcranProche({ lien, reference, total, prenom }: { lien: string; referen
       <h1>{t("Envoyez le lien à votre proche")}</h1>
       <p className="aide">
         {t(
-          "Votre proche voit seulement la référence, la procédure, le montant et votre nom. Vous êtes prévenu dès le règlement.",
+          "Votre proche voit seulement la référence, le montant et votre nom. Vous êtes prévenu dès le règlement.",
           { reference },
         )}
         {prenom ? "" : ""}

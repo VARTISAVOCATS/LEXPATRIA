@@ -9,7 +9,7 @@ import { membreConnecte } from "@/lib/serveur/session";
 
 const Corps = z.object({
   reference: z.string().max(20),
-  action: z.enum(["accepter", "statut", "dateLimite", "echeance", "echeanceFaite", "demanderPiece", "verifierPiece", "reattribuer", "proposerAppel", "qualification"]),
+  action: z.enum(["accepter", "statut", "dateLimite", "echeance", "echeanceFaite", "demanderPiece", "verifierPiece", "reattribuer", "proposerAppel", "qualification", "archiver", "desarchiver"]),
   statut: z.string().max(30).optional(),
   date: z.string().max(10).optional(),
   type: z.string().max(40).optional(),
@@ -36,7 +36,9 @@ export async function POST(req: Request) {
     return a.ok ? NextResponse.json({ ok: true, reference: a.reference }) : NextResponse.json({ erreur: a.erreur }, { status: 422 });
   }
   const r =
-    x.action === "qualification"
+    x.action === "archiver" || x.action === "desarchiver"
+      ? await cab.archiver(d, m, dos, x.action === "archiver")
+      : x.action === "qualification"
       ? await cab.validerQualification(d, m, dos, x.cas ?? "")
       : x.action === "accepter"
       ? await cab.accepter(d, m, dos)

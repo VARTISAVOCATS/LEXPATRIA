@@ -945,7 +945,6 @@
   "Par prudence, le délai le plus court de 7 jours est retenu jusqu'à vérification.": "Por prudencia, se toma el plazo más corto de 7 días hasta su comprobación.",
   "Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.": "Usted presentó su solicitud ({d}) ante {p} el {date}. A falta de respuesta en cuatro meses, ese silencio equivale a una denegación. Su abogado solicitará primero los motivos a la prefectura y después impugnará la denegación ante el tribunal administrativo.",
   "Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.": "A falta de respuesta en cuatro meses, el silencio de la prefectura equivale a una denegación. Su abogado solicitará primero los motivos a la prefectura y después impugnará la denegación ante el tribunal administrativo.",
-  "Votre proche voit seulement la référence, la procédure, le montant et votre nom. Vous êtes prévenu dès le règlement.": "Su allegado solo ve la referencia, el procedimiento, el importe y su nombre. Se le avisa en cuanto se efectúa el pago.",
   "Le tribunal communique la requête à la préfecture. Votre avocat répond à sa défense si nécessaire.": "El tribunal comunica la demanda a la prefectura. Su abogado responde a su defensa si es necesario.",
   "La date de l'audience vous est communiquée. Votre présence n'est pas obligatoire.": "Se le comunica la fecha de la audiencia. Su presencia no es obligatoria.",
   "Votre avocat dépose la requête au tribunal administratif avant la date limite. Ce recours suspend en principe l'éloignement jusqu'au jugement.": "Su abogado presenta la demanda ante el tribunal administrativo antes de la fecha límite. Este recurso suspende en principio la expulsión hasta la sentencia.",
@@ -1126,5 +1125,6 @@
   "Votre dossier est pris en charge": "Su expediente está a cargo del despacho",
   "Votre dossier est pris en charge.": "Su expediente está a cargo del despacho.",
   "Votre dossier {ref}": "Su expediente {ref}",
-  "Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.": "Si cumple los requisitos de ingresos, puede solicitar la ayuda jurisdiccional y ser asistido por un abogado que actúe en ese marco."
+  "Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.": "Si cumple los requisitos de ingresos, puede solicitar la ayuda jurisdiccional y ser asistido por un abogado que actúe en ese marco.",
+  "Votre proche voit seulement la référence, le montant et votre nom. Vous êtes prévenu dès le règlement.": "Su allegado solo ve la referencia, el importe y su nombre. Se le avisa en cuanto se efectúa el pago."
 }

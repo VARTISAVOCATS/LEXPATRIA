@@ -945,7 +945,6 @@
   "Par prudence, le délai le plus court de 7 jours est retenu jusqu'à vérification.": "احتياطًا، يُعتمد أقصر أجل وهو 7 أيام إلى حين التحقق.",
   "Vous avez déposé votre dossier ({d}) auprès de {p} le {date}. Faute de réponse dans les quatre mois, ce silence vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.": "أودعت ملفك ({d}) لدى {p} بتاريخ {date}. إذا لم يصدر رد خلال أربعة أشهر، يُعدّ هذا السكوت رفضًا. سيطلب محاميك أولًا الأسباب من المحافظة ثم يطعن في هذا الرفض أمام المحكمة الإدارية.",
   "Faute de réponse dans les quatre mois, le silence de la préfecture vaut refus. Votre avocat demandera d'abord les motifs à la préfecture puis contestera ce refus devant le tribunal administratif.": "إذا لم يصدر رد خلال أربعة أشهر، يُعدّ سكوت المحافظة رفضًا. سيطلب محاميك أولًا الأسباب من المحافظة ثم يطعن في هذا الرفض أمام المحكمة الإدارية.",
-  "Votre proche voit seulement la référence, la procédure, le montant et votre nom. Vous êtes prévenu dès le règlement.": "لا يرى قريبك سوى المرجع والإجراء والمبلغ واسمك. وتُبلَّغ فور الدفع.",
   "Le tribunal communique la requête à la préfecture. Votre avocat répond à sa défense si nécessaire.": "تبلغ المحكمة العريضة إلى المحافظة، ويرد محاميك على دفاعها عند الاقتضاء.",
   "La date de l'audience vous est communiquée. Votre présence n'est pas obligatoire.": "يُبلَّغ إليك تاريخ الجلسة، وحضورك غير إلزامي.",
   "Votre avocat dépose la requête au tribunal administratif avant la date limite. Ce recours suspend en principe l'éloignement jusqu'au jugement.": "يودع محاميك العريضة لدى المحكمة الإدارية قبل الأجل. ويوقف هذا الطعن مبدئيًا الإبعاد إلى حين صدور الحكم.",
@@ -1126,5 +1125,6 @@
   "Votre dossier est pris en charge": "ملفك قيد التكفل",
   "Votre dossier est pris en charge.": "ملفك قيد التكفل.",
   "Votre dossier {ref}": "ملفك {ref}",
-  "Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.": "إذا كنت تستوفي شروط الدخل، يمكنك طلب المساعدة القضائية والاستعانة بمحامٍ يعمل في إطارها."
+  "Si vous remplissez les conditions de ressources, vous pouvez demander l'aide juridictionnelle et être assisté(e) par un avocat intervenant à ce titre.": "إذا كنت تستوفي شروط الدخل، يمكنك طلب المساعدة القضائية والاستعانة بمحامٍ يعمل في إطارها.",
+  "Votre proche voit seulement la référence, le montant et votre nom. Vous êtes prévenu dès le règlement.": "لا يرى قريبك سوى المرجع والمبلغ واسمك. وتُبلَّغ فور الدفع."
 }
