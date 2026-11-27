@@ -1,7 +1,7 @@
 // Consultation en visio (89 €) : création du pré-dossier avant le paiement. Adresse postale exigée.
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { db, prochainCodeClient, prochaineReference, schema } from "@/db";
+import { db, prochainCodeClient, referenceProvisoire, schema } from "@/db";
 import { signer } from "@/lib/jeton";
 import { journaliser } from "@/lib/journal";
 import { adresseComplete } from "@/lib/pays";
@@ -44,7 +44,10 @@ export async function POST(req: Request) {
     const [dossier] = await tx
       .insert(schema.dossiers)
       .values({
-        reference: await prochaineReference(base),
+        ...(() => {
+          const r = referenceProvisoire();
+          return { reference: r, referenceProvisoire: r };
+        })(),
         clientId: client.id,
         procedure: "CONSULTATION",
         traitement: "DIRECT",

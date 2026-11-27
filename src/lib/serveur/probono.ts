@@ -3,7 +3,7 @@
 // choisit l'avocat et propose l'intervention sans honoraires. Le client reçoit un lien pour accepter la convention
 // d'intervention sans honoraires : le dossier est alors pris en charge par l'avocat choisi, sans paiement.
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
-import type { Base } from "@/db";
+import { numeroDefinitif, type Base } from "@/db";
 import { clients, conventions, dossiers, utilisateurs } from "@/db/schema";
 import { texteConventionProBono, VERSION_PRO_BONO } from "@/lib/convention";
 import { signer, verifier } from "@/lib/jeton";
@@ -72,7 +72,12 @@ export async function accepterProBono(d: Base, jeton: string, ip: string, execut
   const { dos, texte } = x;
   await d.insert(conventions).values({ dossierId: dos.id, type: "PRO_BONO", version: VERSION_PRO_BONO, texte, empreinte: empreinteTexte(texte), ip, executionImmediate });
   const maintenant = new Date();
-  await d.update(dossiers).set({ statut: "PRIS_EN_CHARGE", accepteLe: maintenant, majLe: maintenant }).where(eq(dossiers.id, dos.id));
+  const [numerote] = await d
+    .update(dossiers)
+    .set({ statut: "PRIS_EN_CHARGE", reference: numeroDefinitif, accepteLe: maintenant, majLe: maintenant })
+    .where(eq(dossiers.id, dos.id))
+    .returning({ reference: dossiers.reference });
+  dos.reference = numerote.reference;
   await journaliser(d, { dossierId: dos.id, acteur: "CLIENT", action: "CONVENTION_ACCEPTEE", details: { version: VERSION_PRO_BONO, ip, proBono: true } });
   const [av] = dos.avocatId ? await d.select().from(utilisateurs).where(eq(utilisateurs.id, dos.avocatId)) : [];
   if (av)

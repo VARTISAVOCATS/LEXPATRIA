@@ -1,6 +1,7 @@
 // Connexion à la base. En production : PostgreSQL (OVHcloud) via DATABASE_URL.
 // Sans DATABASE_URL (développement, tests) : PGlite, PostgreSQL embarqué en mémoire.
 
+import { randomBytes } from "node:crypto";
 import { sql } from "drizzle-orm";
 import { drizzle as drizzlePg, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "./schema";
@@ -38,6 +39,17 @@ export async function prochainCodeClient(d: Base): Promise<string> {
   const r = await d.execute(sql`select nextval('seq_client') as n`);
   return "C" + String((r.rows[0] as { n: string }).n);
 }
+
+/** Référence provisoire d'un pré-dossier (P + 7 caractères) : le numéro Dxxxx n'est attribué qu'au paiement
+ *  ou à l'acceptation d'une intervention sans honoraires, pour que la numérotation du cabinet reste continue. */
+export function referenceProvisoire(): string {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const octets = randomBytes(7);
+  return "P" + Array.from(octets, (o) => alphabet[o % alphabet.length]).join("");
+}
+
+/** Attribution du numéro définitif dans la mise à jour du dossier (sans effet si le dossier est déjà numéroté). */
+export const numeroDefinitif = sql`case when ${schema.dossiers.reference} like 'P%' then 'D' || nextval('seq_dossier') else ${schema.dossiers.reference} end`;
 
 export async function prochaineReference(d: Base): Promise<string> {
   const r = await d.execute(sql`select nextval('seq_dossier') as n`);

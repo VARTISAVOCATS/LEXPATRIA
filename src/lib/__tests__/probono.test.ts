@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { db, prochainCodeClient, prochaineReference, schema } from "@/db";
+import { db, prochainCodeClient, prochaineReference, referenceProvisoire, schema } from "@/db";
 import { signer } from "@/lib/jeton";
 import { accepterProBono, lireProBono, preDossiers, proposerProBono } from "@/lib/serveur/probono";
 import type { Membre } from "@/lib/serveur/session";
@@ -13,7 +13,8 @@ describe("intervention sans honoraires", () => {
     const associe = await membre("rafik.rabia@exemple.invalid");
     const kachi = await membre("boualem.kachi@exemple.invalid");
     const [c] = await d.insert(schema.clients).values({ code: await prochainCodeClient(d), email: "probono@exemple.invalid", prenom: "Samia", nom: "Test", civilite: "MADAME" }).returning();
-    const [dos] = await d.insert(schema.dossiers).values({ reference: await prochaineReference(d), clientId: c.id, procedure: "OQTF", statut: "PRE_DOSSIER" }).returning();
+    const provisoire = referenceProvisoire();
+    const [dos] = await d.insert(schema.dossiers).values({ reference: provisoire, referenceProvisoire: provisoire, clientId: c.id, procedure: "OQTF", statut: "PRE_DOSSIER" }).returning();
 
     expect((await preDossiers(d)).some((x) => x.dos.id === dos.id)).toBe(true);
     // Un avocat non associé ne peut pas décider
@@ -32,6 +33,7 @@ describe("intervention sans honoraires", () => {
     expect((await accepterProBono(d, jeton, "127.0.0.1", true)).ok).toBe(true);
     const [apres] = await d.select().from(schema.dossiers).where(eq(schema.dossiers.id, dos.id));
     expect(apres.statut).toBe("PRIS_EN_CHARGE");
+    expect(apres.reference).toMatch(/^D\d+$/);
     expect(apres.proBono).toBe(true);
     expect(apres.avocatId).toBe(kachi.id);
     const convs = await d.select().from(schema.conventions).where(eq(schema.conventions.dossierId, dos.id));

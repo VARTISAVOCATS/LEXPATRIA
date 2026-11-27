@@ -4,7 +4,7 @@
 // puis vérifié par l'avocat comme pour tout recours (aucun dépôt avant vérification).
 
 import { and, eq, ne } from "drizzle-orm";
-import { prochaineReference, type Base } from "@/db";
+import { referenceProvisoire, type Base } from "@/db";
 import { dossiers } from "@/db/schema";
 import { ajouterMois, ecartJours, versJour } from "@/lib/calendrier";
 import { journaliser } from "@/lib/journal";
@@ -63,7 +63,10 @@ export async function proposerAppel(
   const [a] = await d
     .insert(dossiers)
     .values({
-      reference: await prochaineReference(d),
+      ...(() => {
+        const r = referenceProvisoire();
+        return { reference: r, referenceProvisoire: r };
+      })(),
       clientId: parent.clientId,
       procedure: parent.procedure,
       statut: "APPEL_PROPOSE",

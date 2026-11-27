@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { adresseComplete } from "@/lib/pays";
 import { z } from "zod";
-import { db, prochainCodeClient, prochaineReference, schema } from "@/db";
+import { db, prochainCodeClient, referenceProvisoire, schema } from "@/db";
 import { jour, versJour } from "@/lib/calendrier";
 import { evaluerDelai } from "@/lib/delais";
 import { signer } from "@/lib/jeton";
@@ -98,7 +98,10 @@ export async function POST(req: Request) {
     const [dossier] = await tx
       .insert(schema.dossiers)
       .values({
-        reference: await prochaineReference(base),
+        ...(() => {
+          const r = referenceProvisoire();
+          return { reference: r, referenceProvisoire: r };
+        })(),
         clientId: client.id,
         procedure: c.procedure,
         traitement: delai.traitement,

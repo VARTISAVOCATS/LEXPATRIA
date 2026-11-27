@@ -3,7 +3,7 @@
 
 import { estLangue, traduire, type Langue } from "@/i18n";
 import { and, eq, inArray } from "drizzle-orm";
-import type { Base } from "@/db";
+import { numeroDefinitif, type Base } from "@/db";
 import { clients, conventions, dossiers, echeancier, paiements, pieces, utilisateurs } from "@/db/schema";
 import { ajouterHeuresOuvrees, instantParis } from "@/lib/calendrier";
 import { adresseEnLignes, tvaApplicable } from "@/lib/pays";
@@ -192,7 +192,7 @@ export async function marquerPaye(d: Base, dossierId: string, ref: { intentId?: 
   await d.update(echeancier).set({ statut: "PAYE", payeLe: new Date() }).where(and(eq(echeancier.dossierId, dossierId), eq(echeancier.rang, 1), eq(echeancier.statut, "EN_ATTENTE")));
   const [dos] = await d
     .update(dossiers)
-    .set({ statut: "PAYE", majLe: new Date() })
+    .set({ statut: "PAYE", reference: numeroDefinitif, majLe: new Date() })
     .where(eq(dossiers.id, dossierId))
     .returning();
   await journaliser(d, { dossierId, acteur: "SYSTEME", action: "PAIEMENT_RECU", details: { montant: maj[0].montant, parTiers: maj[0].parTiers } });

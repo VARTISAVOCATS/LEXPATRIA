@@ -98,7 +98,9 @@ export const clients = pgTable("clients", {
 
 export const dossiers = pgTable("dossiers", {
   id: id(),
-  reference: text("reference").notNull().unique(), // Dxxxx
+  reference: text("reference").notNull().unique(), // Dxxxx ; référence provisoire Pxxxxxxx tant que le dossier n'est ni payé ni accepté sans honoraires
+  /** Référence provisoire du pré-dossier, gardée après la numérotation pour retrouver le dossier depuis un ancien lien. */
+  referenceProvisoire: text("reference_provisoire").unique(),
   clientId: text("client_id").notNull().references(() => clients.id),
   procedure: text("procedure").notNull(), // CodeProcedure
   statut: statutDossier("statut").notNull().default("PRE_DOSSIER"),

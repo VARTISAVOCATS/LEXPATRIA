@@ -2,7 +2,7 @@
 // Client : uniquement ses dossiers payés (même adresse e-mail).
 // Cabinet : associés et secrétariat voient tout ; un avocat voit les dossiers qui lui sont attribués.
 
-import { and, asc, desc, eq, inArray, ne, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, notInArray, or, sql } from "drizzle-orm";
 import type { Base } from "@/db";
 import {
   actes,
@@ -35,12 +35,15 @@ export async function dossiersDuClient(d: Base, email: string) {
     .orderBy(desc(dossiers.creeLe));
 }
 
+/** Dossier désigné par sa référence, ou par sa référence provisoire d'avant le paiement (ancien lien). */
+export const parReference = (reference: string) => or(eq(dossiers.reference, reference), eq(dossiers.referenceProvisoire, reference))!;
+
 export async function accesClient(d: Base, email: string, reference: string): Promise<Dossier | null> {
   const [r] = await d
     .select({ dos: dossiers })
     .from(dossiers)
     .innerJoin(clients, eq(clients.id, dossiers.clientId))
-    .where(and(eq(dossiers.reference, reference), sql`lower(${clients.email}) = ${email}`, notInArray(dossiers.statut, [...EXCLUS_CLIENT])));
+    .where(and(parReference(reference), sql`lower(${clients.email}) = ${email}`, notInArray(dossiers.statut, [...EXCLUS_CLIENT])));
   return r?.dos ?? null;
 }
 
@@ -50,7 +53,7 @@ export function voitTout(m: Membre) {
 }
 
 export async function accesEquipe(d: Base, m: Membre, reference: string): Promise<Dossier | null> {
-  const [dos] = await d.select().from(dossiers).where(eq(dossiers.reference, reference));
+  const [dos] = await d.select().from(dossiers).where(parReference(reference));
   if (!dos || dos.statut === "PRE_DOSSIER") return null;
   if (voitTout(m) || dos.avocatId === m.id) return dos;
   return null;

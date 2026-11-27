@@ -10,6 +10,7 @@ import { marquerPaye } from "@/lib/serveur/paiement";
 import { stripe } from "@/lib/stripe";
 import { verifier } from "@/lib/jeton";
 import { donneesCollecte } from "@/lib/serveur/collecte";
+import { parReference } from "@/lib/serveur/dossiers";
 import Collecte from "./Collecte";
 
 export const metadata = { title: "Paiement validé — LEXPATRIA Avocats", robots: { index: false, follow: false } };
@@ -19,7 +20,7 @@ export default async function Merci({ searchParams }: { searchParams: Promise<Re
   const { t } = await tServeur();
   const p = await searchParams;
   const d = await db();
-  const [dos] = p.ref ? await d.select().from(schema.dossiers).where(eq(schema.dossiers.reference, p.ref)) : [];
+  const [dos] = p.ref ? await d.select().from(schema.dossiers).where(parReference(p.ref)) : [];
 
   // Retour de Stripe avant le webhook : on vérifie l'intention auprès de Stripe, jamais sur la foi de l'adresse.
   if (dos && p.payment_intent && dos.statut !== "PAYE") {
