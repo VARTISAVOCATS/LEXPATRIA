@@ -16,6 +16,8 @@ import { composerOffre, estRecoursPrealable, formatEuros, LIBELLES_REFERE, memeF
 import { dateCourte, echelonnable, planEcheances } from "@/lib/echeancier";
 import type { ResultatTriage } from "@/lib/triage";
 import { ChoixLangue, useLangue, useT } from "@/i18n/client";
+import { COOKIE_LANGUE, estLangue } from "@/i18n";
+import { useRouter } from "next/navigation";
 import { fichiersEnAttente, recitEnAttente } from "./fichiers";
 import PaiementIntegre from "./PaiementIntegre";
 import { EnteteParcours } from "../composants/Entete";
@@ -123,6 +125,19 @@ async function enBase64(f: File): Promise<{ mime: string; base64: string }> {
 export default function Parcours({ modePhoto, modeRecit, source, reprise }: { modePhoto: boolean; modeRecit?: boolean; source?: string; reprise?: string }) {
   const t = useT();
   const langueEcran = useLangue();
+  const router = useRouter();
+  // Le prospect qui écrit dans une autre langue que celle de l'écran reçoit l'orientation et la suite du parcours dans sa langue
+  // (français, arabe, anglais ou espagnol) : l'écran bascule sans perdre la saisie.
+  const suivreLangueRecit = (l?: string | null) => {
+    const code = (l ?? "").toLowerCase().slice(0, 2);
+    if (!estLangue(code) || code === langueEcran) return;
+    try {
+      document.cookie = `${COOKIE_LANGUE}=${code}; path=/; max-age=31536000; samesite=lax`;
+    } catch {
+      return;
+    }
+    router.refresh();
+  };
   const { tarifs, avocats, echeancier: reglesEch, conventions: modelesConvention } = useContenus();
   // Avocats montrés au paiement : ceux du back office (photos comprises), pour inspirer confiance sans nommer l'avocat attribué.
   const EQUIPE = avocats.map((a) => ({
@@ -234,6 +249,7 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
       setEcheance(j.dateEcheance ?? null);
       setAvisPrealable(j.avisPrealable);
       setTriage(j.triage);
+      suivreLangueRecit(j.triage?.langue);
       setCasReconnu(j.cas ?? null);
       setCoord({ adresse: "", codePostal: "", ville: "", pays: "FR", ...j.coordonnees });
       setAlgerien(j.algerien);
@@ -327,12 +343,15 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
   const urgence = delai?.traitement === "URGENCE" && !avisPrealable;
   const casActuel = casReconnu && memeFamille(casReconnu.procedure, procedure) ? casReconnu : null;
   const offre = procedure ? composerOffre(procedure, { urgence, avisPrealable, complements: casActuel?.complements, refere: casActuel?.refere }, tarifs) : [];
+  // Textes de l'IA traduits dans la langue du récit : affichés si c'est la langue de l'écran, ou si l'écran n'existe pas
+  // dans cette langue (turc, persan…), pour que l'orientation reste dans la langue du prospect.
+  const traductionIA = triage?.traduction && (triage.traduction.langue === langueEcran || !estLangue(triage.traduction.langue)) ? triage.traduction : null;
   // Voie affichée : pour un blocage, elle dépend de l'urgence établie (mise en demeure ou référé désigné par le cas).
   const voieCas = (() => {
     if (!casActuel) return "";
     if (casActuel.refere && procedure === "BLOCAGE_SIMPLE") return t("Mise en demeure de la préfecture, puis référé mesures utiles si nécessaire");
     if (casActuel.refere && procedure === "BLOCAGE_EMPLOI") return t(LIBELLES_REFERE[casActuel.refere]);
-    return langueEcran === "fr" ? casActuel.voie : (triage?.traduction?.langue === langueEcran ? triage.traduction.voie : undefined) ?? casActuel.voie;
+    return traductionIA?.voie || casActuel.voie;
   })();
   const total = offre.reduce((s, l) => s + l.montant, 0);
   // Paiement en trois fois sans frais, à partir du seuil fixé au back office : acompte, puis deux échéances.
@@ -501,6 +520,7 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
       const j = await r.json().catch(() => ({}));
       if (!r.ok && r.status !== 400) return secours(procedureIndiquee, liste.length > 0);
       if (!r.ok) throw new Error(j.erreur ?? t("Analyse impossible"));
+      suivreLangueRecit(j.langue ?? j.triage?.langue);
       if (j.question) {
         setQuestionIA({ ...j.question, procedure: procedureIndiquee ?? null });
         return setEtape("PRECISION");
@@ -622,8 +642,8 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
   const libelleOffre = avisPrealable ? "Avis écrit d'un avocat" : titreProcedure;
   // Information personnalisée avant paiement : lecture de la décision par l'IA ; à défaut, phrases construites
   // à partir des réponses (blocages, silence de la préfecture, procédure en cours, diagnostic).
-  const preAnalyseIA = (langueEcran === "fr" ? triage?.preAnalyse : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.preAnalyse : "")) || "";
-  const noteIA = (langueEcran === "fr" ? triage?.noteClient : (triage?.traduction?.langue === langueEcran ? triage?.traduction?.note : "")) || "";
+  const preAnalyseIA = (traductionIA ? traductionIA.preAnalyse : langueEcran === "fr" ? triage?.preAnalyse : "") || "";
+  const noteIA = (traductionIA ? traductionIA.note : langueEcran === "fr" ? triage?.noteClient : "") || "";
   const infoPersonnalisee = (() => {
     if (!procedure) return "";
     // Note de l'IA sur la situation du client, précédée de la lecture de sa décision s'il l'a transmise.
@@ -667,7 +687,7 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
       PROCEDURE_EN_COURS: "Recours déjà engagé devant le tribunal",
       DIAGNOSTIC: "Situation à étudier",
     };
-    const libelleCas = casActuel ? (langueEcran === "fr" ? casActuel.libelle : (triage?.traduction?.langue === langueEcran ? triage.traduction.cas : undefined)) : undefined;
+    const libelleCas = casActuel ? traductionIA?.cas || (langueEcran === "fr" ? casActuel.libelle : undefined) : undefined;
     const parts = [libelleCas || t(base[procedure] ?? titreProcedure)];
     if (procedure === "OQTF" && situation) {
       const s = { LIBRE: "Vous vivez à votre adresse", ASSIGNE: "Vous êtes assigné(e) à résidence", LIBRE_APRES_ASILE: "Après un rejet de votre demande d'asile", INCONNUE: "" }[situation as string];
@@ -692,10 +712,8 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
     () => PAYS.map((c) => [c, nomPays(c, langueEcran)] as const).sort((a, b) => (a[0] === "FR" ? -1 : b[0] === "FR" ? 1 : a[1].localeCompare(b[1], langueEcran))),
     [langueEcran],
   );
-  const traductionIA = triage?.traduction && triage.traduction.langue === langueEcran ? triage.traduction : null;
-  const obtenirAffiche =
-    langueEcran === "fr" ? obtenir : (traductionIA?.obtenir ?? (contenu ? t(contenu.obtenir) : ""));
-  const faitsAffiches = langueEcran === "fr" ? (triage?.faits ?? []) : (traductionIA?.faits ?? []);
+  const obtenirAffiche = traductionIA?.obtenir || (langueEcran === "fr" ? obtenir : contenu ? t(contenu.obtenir) : "");
+  const faitsAffiches = traductionIA?.faits?.length ? traductionIA.faits : langueEcran === "fr" ? (triage?.faits ?? []) : [];
   const avisOuDiagnostic = avisPrealable || procedure === "DIAGNOSTIC";
   const contexteQ = {
     procedure: procedure ?? "DIAGNOSTIC",
@@ -1055,14 +1073,14 @@ export default function Parcours({ modePhoto, modeRecit, source, reprise }: { mo
                 <div className="tr-proc">
                   {casActuel ? (
                     <>
-                      <b>{langueEcran === "fr" ? casActuel.libelle : (traductionIA?.cas ?? casActuel.libelle)}</b>
+                      <b>{traductionIA?.cas || casActuel.libelle}</b>
                       <span className="tr-voie">{voieCas}</span>
                     </>
                   ) : (
                     <b>{t(titreProcedure)}</b>
                   )}
                 </div>
-                {noteIA && <p className="tr-note">{noteIA}</p>}
+                {noteIA && <p className="tr-note" dir="auto">{noteIA}</p>}
 
                 {dateRef && etape === "RESULTAT" && (
                   <div className="dg-done">

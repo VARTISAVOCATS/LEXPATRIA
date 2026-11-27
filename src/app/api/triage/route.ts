@@ -85,7 +85,7 @@ export async function POST(req: Request) {
 
   // Question de précision : l'IA hésite entre plusieurs cas et une réponse suffit à trancher (deux questions au plus).
   if (t.question && (corps.data.precisions?.length ?? 0) < 2 && !t.detentionOuRetention) {
-    return NextResponse.json({ question: t.question });
+    return NextResponse.json({ question: t.question, langue: t.langue });
   }
 
   if (t.detentionOuRetention || t.situationOQTF === "DETENTION" || t.situationOQTF === "RETENTION") {
